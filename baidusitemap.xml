@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://jacoeus.github.io/2020/09/13/hello-world/</loc>
+    <loc>https://jacoeus.github.io/2020/09/14/hexo%E6%91%98%E8%A6%81/</loc>
+    <lastmod>2020-09-14</lastmod>
+  </url>
+  <url>
+    <loc>https://jacoeus.github.io/2020/09/13/Hello-World/</loc>
     <lastmod>2020-09-13</lastmod>
   </url>
 </urlset> 
