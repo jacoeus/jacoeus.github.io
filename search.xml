@@ -13,6 +13,7 @@
 <p>在scipts文件夹中新建example.js，并键入如下命令</p>
 <figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> spawn = <span class="built_in">require</span>(<span class="string">&#x27;hexo-util/lib/spawn&#x27;</span>);</span><br><span class="line"></span><br><span class="line">hexo.on(<span class="string">&#x27;new&#x27;</span>, <span class="function">(<span class="params">data</span>) =&gt;</span> &#123;</span><br><span class="line">  spawn(<span class="string">&#x27;typora&#x27;</span>, [hexo.base_dir, data.path]);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
 
+<p>参考博客 <a href="https://leaferx.online/2018/03/17/hexo-auto-open-vscode/">HEXO小技巧在 hexo new 的时候自动用 VS Code 打开新建文章</a></p>
 <hr>
 <p>Hexo 不支持指定多个同级分类</p>
 <p>分类具有顺序性和层次性</p>
@@ -22,9 +23,9 @@
 
 <hr>
 <p>文章可以先以草稿draft形式存储，待编辑完成后发表</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">hexo new draft &lt;title&gt;</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new draft &lt;title&gt;</span><br></pre></td></tr></table></figure>
 
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">hexo publish post &lt;title&gt;</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo publish post &lt;title&gt;</span><br></pre></td></tr></table></figure>
 
 <p>草稿默认不会显示在页面中，您可在执行时加上 <code>--draft</code> 参数，或是把 <code>render_drafts</code> 参数设为 <code>true</code> 来预览草稿</p>
 <hr>
