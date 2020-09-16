@@ -81,4 +81,215 @@
 <p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>
 ]]></content>
   </entry>
+  <entry>
+    <title>TimescaleDB学习</title>
+    <url>/2020/09/16/TimescaleDB%E5%AD%A6%E4%B9%A0/</url>
+    <content><![CDATA[<p><a href="https://docs.timescale.com/latest/main">TimescaleDB</a>是基于关系数据库PostgreSQL的一个开源时序数据库</p>
+<p>在股票价格预测、物联网传感器数据变动、网络流量异常检测等场景下，时间这个因素在整个数据分析过程中尤为重要，因此在处理大量类似数据的时候，便需要TimescaleDB或其他时序数据库来实现高效的数据存取</p>
+<p>最近尝试对网络流量的时序特征进行提取分析，于是开始学习TimescaleDB，并就主要内容进行整理</p>
+<a id="more"></a>
+
+<h1 id="TimescaleDB"><a href="#TimescaleDB" class="headerlink" title="TimescaleDB"></a>TimescaleDB</h1><p>TimescaleDB是作为PostgreSQL上的一个扩展来进行实现的，在PostgreSQL的基础上定义了一些抽象概念并实现了一系列相关API，这部分主要对TimescaleDB的一些设计实现进行简单的整理，下一章节会介绍PostgreSQL的SQL语法等内容，然后就TimescaleDB的一些简单应用进行说明</p>
+<h2 id="时序数据"><a href="#时序数据" class="headerlink" title="时序数据"></a>时序数据</h2><p>TimescaleDB主要针对时序数据进行设计，下面罗列了时序数据的主要特征</p>
+<ul>
+<li><strong>Time-centric</strong>: 数据记录始终带有时间戳</li>
+<li><strong>Append-only</strong>: 只能以追加的形式插入数据</li>
+<li><strong>Recent</strong>: 新数据一般是在最近一个interval时间间隔的数据</li>
+</ul>
+<h2 id="Data-model"><a href="#Data-model" class="headerlink" title="Data model"></a>Data model</h2><p>根据时序数据的特征，TimescaleDB为用户提供了两种<a href="https://docs.timescale.com/latest/introduction/data-model">数据模型</a>：窄表模型和宽表模型</p>
+<p>在大多情况下，我们使用宽表模型来对数据进行存储，也就是一个时间戳配合当前时间点一系列数据（指标）</p>
+<ul>
+<li><p>Narrow-table Model，有兴趣进一步了解可以参考<a href="https://docs.timescale.com/latest/introduction/data-model">官方文档</a>，下面只进行简单的描述</p>
+<ul>
+<li>使用一组唯一的标签集合来定义时间序列    </li>
+<li>适用于需要对每个度量分别收集的情况</li>
+</ul>
+</li>
+<li><p>Wide-table Model</p>
+<ul>
+<li>与数据流匹配，一个时间戳配合当前时间点一系列数据（指标）</li>
+<li>便于多指标查询</li>
+<li>针对多个指标仅写入一个时间戳，因此提取速度更快</li>
+</ul>
+</li>
+<li><p>JOINs with Relational Data</p>
+<ul>
+<li>类似于外键，通过JOIN命令可以进行多表查询</li>
+</ul>
+</li>
+</ul>
+<h2 id="Concepts"><a href="#Concepts" class="headerlink" title="Concepts"></a>Concepts</h2><p>TimescaleDB在PostgreSQL基础上定义的一些抽象概念</p>
+<p>在timescaledb的简单应用上对这些概念的理解要求不高，需要对大量数据进行更高效的存储则需要结合<a href="https://docs.timescale.com/latest/introduction/architecture">官方文档</a>进一步学习理解</p>
+<ul>
+<li><p>Hypertables超表，为完成用户交互实现的对单个连续表的抽象，以便通过标准SQL进行查询</p>
+<blockquote>
+<p>Hypertables in TimescaleDB are designed to be easy to manage and to behave predictably to users familiar with standard PostgreSQL tables</p>
+</blockquote>
+</li>
+<li><p>Chunks块，每个超表被拆分为多个块，通过对每个块对应的时间间隔和分区键的区域进行散列</p>
+</li>
+<li><p>Native Compression原生压缩，对旧的块进行压缩，操作对用户透明</p>
+</li>
+<li><p>Single Node vs. Clustering单节点和集群，使用分区实现</p>
+</li>
+<li><p>Time intervals时间间隔</p>
+<ul>
+<li>v0.11.0后默认时间间隔为7天</li>
+<li>可以通过<code>chunk_time_interval</code>在创建超表时设置时间间隔</li>
+<li>创建超表后可以通过<code>set_chunk_time_interval</code>来改变新chunks的时间间隔</li>
+<li>需要根据数据速率进行设置</li>
+</ul>
+</li>
+<li><p>Space partitions空间分区</p>
+<ul>
+<li>空间分区的主要目的是使并行I/O具有相同的时间间隔</li>
+<li>针对多个并发查询或者多个磁盘并行读取的情况可以使用区间分区</li>
+</ul>
+</li>
+</ul>
+<h2 id="安装-amp-配置"><a href="#安装-amp-配置" class="headerlink" title="安装&amp;配置"></a>安装&amp;配置</h2><p><a href="https://docs.timescale.com/latest/getting-started/installation">https://docs.timescale.com/latest/getting-started/installation</a></p>
+<p>在ubuntu上可以直接通过apt命令安装，然后需要在postgresSQL上配置扩展</p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line">psql -U postgres -h localhost</span><br><span class="line"></span><br><span class="line"><span class="keyword">CREATE</span> <span class="keyword">database</span> tutorial;</span><br><span class="line">\c tutorial</span><br><span class="line"><span class="keyword">CREATE</span> EXTENSION <span class="keyword">IF</span> <span class="keyword">NOT</span> <span class="keyword">EXISTS</span> timescaledb <span class="keyword">CASCADE</span>;</span><br><span class="line"></span><br><span class="line">psql -U postgres -h localhost -d tutorial</span><br></pre></td></tr></table></figure>
+
+<h1 id="PostgreSQL"><a href="#PostgreSQL" class="headerlink" title="PostgreSQL"></a>PostgreSQL</h1><p>参考<a href="https://www.postgresql.org/">PostgreSQL官网</a>、<a href="http://www.postgres.cn/index.php/v2/home">PostgreSQL中文社区</a>和<a href="http://www.postgres.cn/docs/10/">手册</a>，可以通过搜索框比较方便的查找相应SQL命令</p>
+<p>该部分主要介绍PostgreSQL，然后结合TimescaleDB定义的一些函数给出了一些查询操作的demo</p>
+<h2 id="常见的psql命令"><a href="#常见的psql命令" class="headerlink" title="常见的psql命令"></a>常见的psql命令</h2><p>用于在终端对PostgreSQL进行操作</p>
+<table>
+<thead>
+<tr>
+<th align="left">命令</th>
+<th align="left">动作</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><code>\l</code></td>
+<td align="left">列出可用的数据库</td>
+</tr>
+<tr>
+<td align="left"><code>\c dbname</code></td>
+<td align="left">连接到新数据库</td>
+</tr>
+<tr>
+<td align="left"><code>\dt</code></td>
+<td align="left">列出可用表</td>
+</tr>
+<tr>
+<td align="left"><code>\d tablename</code></td>
+<td align="left">描述给定表的细节</td>
+</tr>
+<tr>
+<td align="left"><code>\dn</code></td>
+<td align="left">列出当前数据库中的所有架构</td>
+</tr>
+<tr>
+<td align="left"><code>\df</code></td>
+<td align="left">列出当前数据库中的函数</td>
+</tr>
+<tr>
+<td align="left"><code>\h</code></td>
+<td align="left">获取有关SQL命令语法的帮助</td>
+</tr>
+<tr>
+<td align="left"><code>\?</code></td>
+<td align="left">列出所有<code>psql</code>斜杠命令</td>
+</tr>
+<tr>
+<td align="left"><code>\set</code></td>
+<td align="left">系统变量列表</td>
+</tr>
+<tr>
+<td align="left"><code>\timing</code></td>
+<td align="left">显示查询执行所需的时间</td>
+</tr>
+<tr>
+<td align="left"><code>\x</code></td>
+<td align="left">显示扩展的查询结果</td>
+</tr>
+<tr>
+<td align="left"><code>\q</code></td>
+<td align="left">退出 <code>psql</code></td>
+</tr>
+</tbody></table>
+<h2 id="SQL语句"><a href="#SQL语句" class="headerlink" title="SQL语句"></a>SQL语句</h2><p>对官方给出的demo选取部分有代表性的进行整理</p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> create_hypertable(<span class="string">&#x27;conditions&#x27;</span>, <span class="string">&#x27;time&#x27;</span>);</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>The ‘time’ column used in the <code>create_hypertable</code> function supports timestamp, date, or integer types</p>
+</blockquote>
+<p>create_hypertable是timescaledb定义的函数，用于建立超表，以conditions表为基础，time列对应为时间戳</p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="comment">-- 基本的建表、插入、查询、修改、删表操作</span></span><br><span class="line"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> conditions (</span><br><span class="line"> <span class="built_in">time</span>        TIMESTAMPTZ       <span class="keyword">NOT</span> <span class="literal">NULL</span>,</span><br><span class="line"> location    <span class="built_in">TEXT</span>              <span class="keyword">NOT</span> <span class="literal">NULL</span>,</span><br><span class="line"> temperature <span class="keyword">DOUBLE</span> <span class="keyword">PRECISION</span>  <span class="literal">NULL</span></span><br><span class="line">);</span><br><span class="line"></span><br><span class="line"><span class="keyword">SELECT</span> create_hypertable(<span class="string">&#x27;conditions&#x27;</span>, <span class="string">&#x27;time&#x27;</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> conditions(<span class="built_in">time</span>, location, temperature)</span><br><span class="line">  <span class="keyword">VALUES</span> (<span class="keyword">NOW</span>(), <span class="string">&#x27;office&#x27;</span>, <span class="number">70.0</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> conditions <span class="keyword">ORDER</span> <span class="keyword">BY</span> <span class="built_in">time</span> <span class="keyword">DESC</span> <span class="keyword">LIMIT</span> <span class="number">100</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">TABLE</span> conditions</span><br><span class="line">  <span class="keyword">ADD</span> <span class="keyword">COLUMN</span> humidity <span class="keyword">DOUBLE</span> <span class="keyword">PRECISION</span> <span class="literal">NULL</span>;  </span><br><span class="line"></span><br><span class="line"><span class="keyword">DROP</span> <span class="keyword">TABLE</span> conditions;</span><br></pre></td></tr></table></figure>
+
+<h3 id="数据类型"><a href="#数据类型" class="headerlink" title="数据类型"></a>数据类型</h3><figure class="highlight sql"><table><tr><td class="code"><pre><span class="line">TIMESTAMP WITHOUT TIME ZONE <span class="comment">--日期和时间（无时区）</span></span><br><span class="line">TIME <span class="keyword">WITH</span> <span class="built_in">TIME</span> ZONE <span class="comment">--一日内的时间（有时区）</span></span><br><span class="line"><span class="built_in">DATE</span> <span class="comment">--日期</span></span><br><span class="line"><span class="built_in">INTERVAL</span> <span class="comment">--时间间隔</span></span><br></pre></td></tr></table></figure>
+
+<p>PostgreSQL定义的<a href="http://www.postgres.cn/docs/9.4/datatype-datetime.html">日期/时间类型</a></p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line">NUMERIC(precision, scale) <span class="comment">--可选精度的准确数值数据类型</span></span><br><span class="line">NUMERIC <span class="comment">--创建一个可以存储一个直到实现精度上限的任意精度和标度的数值</span></span><br></pre></td></tr></table></figure>
+
+<p>PostgreSQL定义的<a href="http://www.postgres.cn/docs/9.4/datatype.html">数据类型</a></p>
+<h3 id="时间-日期函数和操作符"><a href="#时间-日期函数和操作符" class="headerlink" title="时间/日期函数和操作符"></a>时间/日期函数和操作符</h3><figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="comment">-- 基于time将conditions表转换为超表，并基于location建立空间二分区</span></span><br><span class="line"><span class="keyword">SELECT</span> create_hypertable(<span class="string">&#x27;conditions&#x27;</span>, <span class="string">&#x27;time&#x27;</span>, <span class="string">&#x27;location&#x27;</span>, <span class="number">2</span>);</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="comment">-- 按照day对pickup_datetime进行截断并计算每天的记录数量</span></span><br><span class="line"><span class="keyword">SELECT</span> date_trunc(<span class="string">&#x27;day&#x27;</span>, pickup_datetime) <span class="keyword">as</span> <span class="keyword">day</span>, <span class="keyword">COUNT</span>(*) <span class="keyword">FROM</span> rides <span class="keyword">GROUP</span> <span class="keyword">BY</span> <span class="keyword">day</span> <span class="keyword">ORDER</span> <span class="keyword">BY</span> <span class="keyword">day</span>;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="comment">-- EXTRACT函数从日期/时间数值里抽取子域，比如年、小时等</span></span><br><span class="line"><span class="comment">-- trunc截断（向零靠近）</span></span><br><span class="line"><span class="comment">-- GROUP BY将拥有相同值的行分为一组，进一步可以使用HAVING子句筛选分组</span></span><br><span class="line"><span class="comment">-- 不在GROUP BY中列出的字段只能在聚合表达式中被引用</span></span><br><span class="line"><span class="keyword">SELECT</span></span><br><span class="line">  <span class="keyword">EXTRACT</span>(<span class="keyword">hour</span> <span class="keyword">from</span> pickup_datetime) <span class="keyword">as</span> <span class="keyword">hours</span>,</span><br><span class="line">  trunc(<span class="keyword">EXTRACT</span>(<span class="keyword">minute</span> <span class="keyword">from</span> pickup_datetime) / <span class="number">5</span>)*<span class="number">5</span> <span class="keyword">AS</span> five_mins,</span><br><span class="line">  <span class="keyword">COUNT</span>(*)</span><br><span class="line"><span class="keyword">FROM</span> rides</span><br><span class="line"><span class="keyword">WHERE</span> pickup_datetime &lt; <span class="string">&#x27;2016-01-02 00:00&#x27;</span></span><br><span class="line"><span class="keyword">GROUP</span> <span class="keyword">BY</span> <span class="keyword">hours</span>, five_mins;</span><br></pre></td></tr></table></figure>
+
+<p>PostgreSQL定义的<a href="http://postgres.cn/docs/9.4/functions-datetime.html">时间/日期函数和操作符</a></p>
+<h3 id="JOIN"><a href="#JOIN" class="headerlink" title="JOIN"></a>JOIN</h3><figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="comment">-- JOIN实现多表查询</span></span><br><span class="line"><span class="keyword">SELECT</span> rates.description, <span class="keyword">COUNT</span>(vendor_id) <span class="keyword">AS</span> num_trips <span class="keyword">FROM</span> rides</span><br><span class="line">  <span class="keyword">JOIN</span> rates <span class="keyword">ON</span> rides.rate_code = rates.rate_code</span><br><span class="line">  <span class="keyword">WHERE</span> pickup_datetime &lt; <span class="string">&#x27;2016-02-01&#x27;</span></span><br><span class="line">  <span class="keyword">GROUP</span> <span class="keyword">BY</span> rates.description</span><br><span class="line">  <span class="keyword">ORDER</span> <span class="keyword">BY</span> rates.description;</span><br></pre></td></tr></table></figure>
+
+<h3 id="WITH"><a href="#WITH" class="headerlink" title="WITH"></a>WITH</h3><figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">DROP</span> <span class="keyword">TABLE</span> <span class="keyword">IF</span> <span class="keyword">EXISTS</span> rides_length <span class="keyword">CASCADE</span>;</span><br><span class="line"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> rides_length(</span><br><span class="line">	three_hour <span class="built_in">TIMESTAMP</span> <span class="keyword">WITHOUT</span> <span class="built_in">TIME</span> ZONE <span class="keyword">NOT</span> <span class="literal">NULL</span>,</span><br><span class="line">	trip_length <span class="built_in">INTERVAL</span></span><br><span class="line">);</span><br><span class="line"><span class="keyword">SELECT</span> create_hypertable(<span class="string">&#x27;rides_length&#x27;</span>, <span class="string">&#x27;three_hour&#x27;</span>);</span><br><span class="line"><span class="comment">-- WITH提供了一种在更大的查询中编写辅助语句的方式</span></span><br><span class="line"><span class="keyword">WITH</span> <span class="keyword">data</span> <span class="keyword">AS</span> (</span><br><span class="line">	<span class="keyword">SELECT</span></span><br><span class="line">	time_bucket(<span class="string">&#x27;3 hour&#x27;</span>, pickup_datetime) <span class="keyword">AS</span> three_hour,</span><br><span class="line">	<span class="keyword">AVG</span>(trip_length) <span class="keyword">AS</span> <span class="keyword">length</span></span><br><span class="line">	<span class="keyword">FROM</span> rides</span><br><span class="line">	<span class="keyword">WHERE</span></span><br><span class="line">	ST_Distance(pickup_geom, ST_Transform(ST_SetSRID(ST_MakePoint(<span class="number">-74.0113</span>,<span class="number">40.7075</span>),<span class="number">4326</span>),<span class="number">2163</span>)) &lt; <span class="number">400</span> <span class="keyword">AND</span></span><br><span class="line">	ST_Distance(dropoff_geom, ST_Transform(ST_SetSRID(ST_MakePoint(<span class="number">-73.9851</span>,<span class="number">40.7589</span>),<span class="number">4326</span>),<span class="number">2163</span>)) &lt; <span class="number">400</span></span><br><span class="line">	<span class="keyword">GROUP</span> <span class="keyword">BY</span> three_hour <span class="keyword">ORDER</span> <span class="keyword">BY</span> three_hour</span><br><span class="line">	),</span><br><span class="line"><span class="keyword">period</span> <span class="keyword">AS</span> (</span><br><span class="line">	<span class="keyword">SELECT</span> time_bucket(<span class="string">&#x27;3 hour&#x27;</span>,  no_gaps) three_hour</span><br><span class="line">	<span class="keyword">FROM</span>  generate_series(<span class="string">&#x27;2016-01-01 00:00:00&#x27;</span>::<span class="built_in">timestamp</span>, <span class="string">&#x27;2016-01-31 23:59:59&#x27;</span>, <span class="string">&#x27;3 hour&#x27;</span>) no_gaps</span><br><span class="line">	)</span><br><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> rides_length</span><br><span class="line"><span class="keyword">SELECT</span> period.three_hour,</span><br><span class="line">(<span class="keyword">SELECT</span> data.length <span class="keyword">FROM</span> <span class="keyword">data</span></span><br><span class="line">	<span class="keyword">WHERE</span> data.three_hour &lt;= period.three_hour</span><br><span class="line">	<span class="keyword">ORDER</span> <span class="keyword">BY</span> data.three_hour <span class="keyword">DESC</span> <span class="keyword">LIMIT</span> <span class="number">1</span>) <span class="keyword">AS</span> trip_length</span><br><span class="line"><span class="keyword">FROM</span> <span class="keyword">period</span></span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> period.three_hour;</span><br></pre></td></tr></table></figure>
+
+<h3 id="TimescaleDB自定义函数"><a href="#TimescaleDB自定义函数" class="headerlink" title="TimescaleDB自定义函数"></a>TimescaleDB自定义函数</h3><figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="comment">-- 按5 minute对pickup_datetime进行划分</span></span><br><span class="line"><span class="keyword">SELECT</span> time_bucket(<span class="string">&#x27;5 minute&#x27;</span>, pickup_datetime) <span class="keyword">AS</span> five_min, <span class="keyword">count</span>(*)</span><br><span class="line"><span class="keyword">FROM</span> rides</span><br><span class="line"><span class="keyword">WHERE</span> pickup_datetime &lt; <span class="string">&#x27;2016-01-02 00:00&#x27;</span></span><br><span class="line"><span class="keyword">GROUP</span> <span class="keyword">BY</span> five_min</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> five_min;</span><br></pre></td></tr></table></figure>
+
+<p>类似time_bucket，TimescaleDB具有许多自定义的<a href="https://docs.timescale.com/latest/api">SQL函数</a>，可以使时间序列分析变得快速而简单</p>
+<h2 id="Scheme-management"><a href="#Scheme-management" class="headerlink" title="Scheme management"></a>Scheme management</h2><p>TimescaleDB支持PostgreSQL支持的所有表对象</p>
+<p>设计适当的表对象是使用PostgreSQL的关键部分，为给定的工作负载创建适当的索引和表架构可以显着提高性能</p>
+<h3 id="Indexing"><a href="#Indexing" class="headerlink" title="Indexing"></a>Indexing</h3><figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> <span class="keyword">INDEX</span> <span class="keyword">ON</span> conditions (location, <span class="built_in">time</span> <span class="keyword">DESC</span>);</span><br></pre></td></tr></table></figure>
+
+<p>可以在将表转换为超表之前或之后执行此操作</p>
+<ul>
+<li>索引选择取决于数据</li>
+<li>对于离散值的列<code>CREATE INDEX ON conditions (location, time DESC);</code></li>
+<li>对于连续值的列<code>CREATE INDEX ON conditions (time DESC, temperature);</code></li>
+<li>在原有索引的基础上加上<code>time DESC</code>定义复合索引对部分查询实现优化</li>
+<li>默认索引<ul>
+<li><code>CREATE INDEX ON conditions (time DESC);</code></li>
+<li>指定了可选的空间分区，TimescaleDB将自动创建索引<code>CREATE INDEX ON conditions (location, time DESC);</code></li>
+</ul>
+</li>
+</ul>
+<h3 id="Triggers"><a href="#Triggers" class="headerlink" title="Triggers"></a>Triggers</h3><figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> <span class="keyword">OR</span> <span class="keyword">REPLACE</span> <span class="keyword">FUNCTION</span> record_error()</span><br><span class="line">  <span class="keyword">RETURNS</span> <span class="keyword">trigger</span> <span class="keyword">AS</span> $record_error$</span><br><span class="line"><span class="keyword">BEGIN</span></span><br><span class="line"> <span class="keyword">IF</span> NEW.temperature &gt;= <span class="number">1000</span> <span class="keyword">OR</span> NEW.humidity &gt;= <span class="number">1000</span> <span class="keyword">THEN</span></span><br><span class="line">   <span class="keyword">INSERT</span> <span class="keyword">INTO</span> error_conditions</span><br><span class="line">     <span class="keyword">VALUES</span>(NEW.time, NEW.location, NEW.temperature, NEW.humidity);</span><br><span class="line"> <span class="keyword">END</span> <span class="keyword">IF</span>;</span><br><span class="line"> RETURN NEW;</span><br><span class="line"><span class="keyword">END</span>;</span><br><span class="line">$record_error$ LANGUAGE plpgsql;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> <span class="keyword">TRIGGER</span> record_error</span><br><span class="line">  <span class="keyword">BEFORE</span> <span class="keyword">INSERT</span> <span class="keyword">ON</span> conditions</span><br><span class="line">  <span class="keyword">FOR</span> <span class="keyword">EACH</span> <span class="keyword">ROW</span></span><br><span class="line">  <span class="keyword">EXECUTE</span> <span class="keyword">PROCEDURE</span> record_error();</span><br></pre></td></tr></table></figure>
+
+<p>当超表插入新行时，触发器调用函数</p>
+<blockquote>
+<p>TimescaleDB支持触发器的全域：<code>BEFORE INSERT</code>，<code>AFTER INSERT</code>，<code>BEFORE UPDATE</code>，<code>AFTER UPDATE</code>，<code>BEFORE DELETE</code>，<code>AFTER DELETE</code></p>
+</blockquote>
+<h3 id="Constraints"><a href="#Constraints" class="headerlink" title="Constraints"></a>Constraints</h3><p>在超级表上创建，删除或更改约束将传播到块中</p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> conditions (</span><br><span class="line">    <span class="built_in">time</span>       TIMESTAMPTZ</span><br><span class="line">    temp       <span class="built_in">FLOAT</span> <span class="keyword">NOT</span> <span class="literal">NULL</span>,</span><br><span class="line">    device_id  <span class="built_in">INTEGER</span> <span class="keyword">CHECK</span> (device_id &gt; <span class="number">0</span>),</span><br><span class="line">    location   <span class="built_in">INTEGER</span> <span class="keyword">REFERENCES</span> locations (<span class="keyword">id</span>),</span><br><span class="line">    PRIMARY <span class="keyword">KEY</span>(<span class="built_in">time</span>, device_id)</span><br><span class="line">);</span><br><span class="line"></span><br><span class="line"><span class="keyword">SELECT</span> create_hypertable(<span class="string">&#x27;conditions&#x27;</span>, <span class="string">&#x27;time&#x27;</span>);</span><br></pre></td></tr></table></figure>
+
+<p><a href="https://www.postgresql.org/docs/current/ddl-constraints.html">PostgreSQL Constraints</a></p>
+<h3 id="JSON-amp-半结构化数据"><a href="#JSON-amp-半结构化数据" class="headerlink" title="JSON &amp; 半结构化数据"></a>JSON &amp; 半结构化数据</h3><p>TimescaleDB可以使用PostgreSQL中可用的任何数据类型，包括JSON和JSONB</p>
+<p>用于存储包含用户定义的字段，即由各个用户定义且随用户而异的字段名称的这类数据</p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> metrics (</span><br><span class="line">  <span class="built_in">time</span> TIMESTAMPTZ,</span><br><span class="line">  user_id <span class="built_in">INT</span>,</span><br><span class="line">  device_id <span class="built_in">INT</span>,</span><br><span class="line">  <span class="keyword">data</span> JSONB</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>类似time，user_id和device_id之类的通用字段被拉到 JSONB 结构之外并存储为列，在表列上的字段访问比在JSONB结构内部更有效</li>
+<li>JSONB数据类型（即以二进制格式存储的JSON）在存储开销和查找性能上都优于JSON数据类型</li>
+</ul>
+<h2 id="Writing-data"><a href="#Writing-data" class="headerlink" title="Writing data"></a>Writing data</h2><p>可以使用标准<code>INSERT</code>SQL命令（<a href="https://www.postgresql.org/docs/current/static/sql-insert.html">PostgreSQL docs</a>）将数据插入到超表中</p>
+<p><code>UPDATE</code>SQL命令（<a href="https://www.postgresql.org/docs/current/static/sql-update.html">PostgreSQL docs</a>）</p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> conditions(<span class="built_in">time</span>, location, temperature, humidity)</span><br><span class="line">  <span class="keyword">VALUES</span> (<span class="keyword">NOW</span>(), <span class="string">&#x27;office&#x27;</span>, <span class="number">70.0</span>, <span class="number">50.0</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">--多行插入</span></span><br><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> conditions</span><br><span class="line">  <span class="keyword">VALUES</span></span><br><span class="line">    (<span class="keyword">NOW</span>(), <span class="string">&#x27;office&#x27;</span>, <span class="number">70.0</span>, <span class="number">50.0</span>),</span><br><span class="line">    (<span class="keyword">NOW</span>(), <span class="string">&#x27;basement&#x27;</span>, <span class="number">66.5</span>, <span class="number">60.0</span>),</span><br><span class="line">    (<span class="keyword">NOW</span>(), <span class="string">&#x27;garage&#x27;</span>, <span class="number">77.0</span>, <span class="number">65.2</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">--UPDATE</span></span><br><span class="line"><span class="keyword">UPDATE</span> conditions <span class="keyword">SET</span> temperature = <span class="number">70.2</span>, humidity = <span class="number">50.0</span></span><br><span class="line">  <span class="keyword">WHERE</span> <span class="built_in">time</span> = <span class="string">&#x27;2017-07-28 11:42:42.846621+00&#x27;</span> <span class="keyword">AND</span> location = <span class="string">&#x27;office&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">--更新多行</span></span><br><span class="line"><span class="keyword">UPDATE</span> conditions <span class="keyword">SET</span> temperature = temperature + <span class="number">0.1</span></span><br><span class="line">  <span class="keyword">WHERE</span> <span class="built_in">time</span> &gt;= <span class="string">&#x27;2017-07-28 11:40&#x27;</span> <span class="keyword">AND</span> <span class="built_in">time</span> &lt; <span class="string">&#x27;2017-07-28 11:50&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">--UPSERT</span></span><br><span class="line"><span class="comment">#TODO</span></span><br><span class="line"></span><br><span class="line"><span class="comment">--DELETE</span></span><br><span class="line"><span class="keyword">DELETE</span> <span class="keyword">FROM</span> conditions <span class="keyword">WHERE</span> temperature &lt; <span class="number">35</span> <span class="keyword">OR</span> humidity &lt; <span class="number">60</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">DELETE</span> <span class="keyword">FROM</span> conditions <span class="keyword">WHERE</span> <span class="built_in">time</span> &lt; <span class="keyword">NOW</span>() - <span class="built_in">INTERVAL</span> <span class="string">&#x27;1 month&#x27;</span>;</span><br></pre></td></tr></table></figure>
+
+<p>TimescaleDB通过可选<code>ON CONFLICT</code>子句（<a href="https://www.postgresql.org/docs/current/static/sql-insert.html#SQL-ON-CONFLICT">PostgreSQL docs</a>）以与PostgreSQL相同的方式支持UPSERT </p>
+<p>运行较大的<code>DELETE</code>操作后，建议用户<code>VACUUM</code>或<code>VACUUM FULL</code>通过超表来回收已删除或废弃的行所占用的存储（<a href="https://www.postgresql.org/docs/current/static/sql-vacuum.html">PostgreSQL docs</a>）</p>
+<h2 id="Reading-data"><a href="#Reading-data" class="headerlink" title="Reading data"></a>Reading data</h2><p>可以使用标准<code>SELECT</code>SQL命令（<a href="https://www.postgresql.org/docs/current/static/sql-select.html">PostgreSQL docs</a>）从超表中查询数据，包括使用任意<code>WHERE</code>子句，<code>GROUP BY</code>以及<code>ORDER BY</code>命令，联接，子查询，窗口函数，用户定义函数（UDF），<code>HAVING</code>子句等</p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> conditions <span class="keyword">ORDER</span> <span class="keyword">BY</span> <span class="built_in">time</span> <span class="keyword">DESC</span> <span class="keyword">LIMIT</span> <span class="number">100</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">SELECT</span> <span class="keyword">COUNT</span>(*) <span class="keyword">FROM</span> conditions</span><br><span class="line">  <span class="keyword">WHERE</span> <span class="built_in">time</span> &gt; <span class="keyword">NOW</span>() - <span class="built_in">INTERVAL</span> <span class="string">&#x27;12 hours&#x27;</span>;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">-- Information about each 15-min period for each location</span></span><br><span class="line"><span class="comment">-- over the past 3 hours, ordered by time and temperature</span></span><br><span class="line"><span class="keyword">SELECT</span> time_bucket(<span class="string">&#x27;15 minutes&#x27;</span>, <span class="built_in">time</span>) <span class="keyword">AS</span> fifteen_min,</span><br><span class="line">    location, <span class="keyword">COUNT</span>(*),</span><br><span class="line">    <span class="keyword">MAX</span>(temperature) <span class="keyword">AS</span> max_temp,</span><br><span class="line">    <span class="keyword">MAX</span>(humidity) <span class="keyword">AS</span> max_hum</span><br><span class="line">  <span class="keyword">FROM</span> conditions</span><br><span class="line">  <span class="keyword">WHERE</span> <span class="built_in">time</span> &gt; <span class="keyword">NOW</span>() - <span class="built_in">INTERVAL</span> <span class="string">&#x27;3 hours&#x27;</span></span><br><span class="line">  <span class="keyword">GROUP</span> <span class="keyword">BY</span> fifteen_min, location</span><br><span class="line">  <span class="keyword">ORDER</span> <span class="keyword">BY</span> fifteen_min <span class="keyword">DESC</span>, max_temp <span class="keyword">DESC</span>;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">-- How many distinct locations with air conditioning</span></span><br><span class="line"><span class="comment">-- have reported data in the past day</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="keyword">COUNT</span>(<span class="keyword">DISTINCT</span> location) <span class="keyword">FROM</span> conditions</span><br><span class="line">  <span class="keyword">JOIN</span> locations</span><br><span class="line">    <span class="keyword">ON</span> conditions.location = locations.location</span><br><span class="line">  <span class="keyword">WHERE</span> locations.air_conditioning = <span class="literal">True</span></span><br><span class="line">    <span class="keyword">AND</span> <span class="built_in">time</span> &gt; <span class="keyword">NOW</span>() - <span class="built_in">INTERVAL</span> <span class="string">&#x27;1 day&#x27;</span></span><br></pre></td></tr></table></figure>
+]]></content>
+      <categories>
+        <category>Database</category>
+        <category>TimescaleDB</category>
+      </categories>
+      <tags>
+        <tag>TimescaleDB</tag>
+      </tags>
+  </entry>
 </search>
