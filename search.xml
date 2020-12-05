@@ -264,14 +264,15 @@
 </ul>
 <h2 id="梯度计算-amp-数学原理"><a href="#梯度计算-amp-数学原理" class="headerlink" title="梯度计算 &amp; 数学原理"></a>梯度计算 &amp; 数学原理</h2><h3 id="目标函数"><a href="#目标函数" class="headerlink" title="目标函数"></a>目标函数</h3><ol>
 <li><p>GBDT 一般是由 $k$ 个基模型（基决策树）组成的一个加法运算式 $\hat{y_i} = \sum_{t=1}^kf_t(x_i)$ ，其中 $f_k$ 为第 $k$ 个基模型， $\hat{y_i}$ 为第 $i$ 个样本的预测值</p>
-<p><img src="f1_xgboost.png" alt="f1_xgboost"></p>
+<img src="/2020/11/30/GBDT%E5%8D%8F%E4%BD%9C%E5%AD%A6%E4%B9%A0%E5%AE%9E%E7%8E%B0/f1_xgboost.png" class="" title="f1_xgboost">
+
 <blockquote>
 <p>Tree Ensemble Model. The final prediction for a given example is the sum of predictions from each tree.</p>
 </blockquote>
 </li>
 <li><p>损失函数可由预测值 $\hat{y_i}$ 与真实值  $y_i$ 进行表示，$L = \sum_{i=1}^nl(y_i,\hat{y_i})$ ，其中 n 为样本数量</p>
 </li>
-<li><p>由于模型的预测精度由模型的偏差和方差共同决定，损失函数代表了模型的偏差，想要方差小则需要简单的模型，所以目标函数由模型的损失函数 $L$ 与抑制模型复杂度的正则项 $\Omega$ 组成，于是建立目标函数 $Obj = \sum_{i=1}^nl(\hat{y_i},y_i) + \sum_{t=1}^k\Omega(f_t)$</p>
+<li><p>由于模型的预测精度由模型的偏差和方差共同决定，损失函数代表了模型的偏差，想要方差小则需要简单的模型，所以目标函数由模型的损失函数 $L$ 与抑制模型复杂度的正则项 $\Omega$ 组成，于是建立目标函数：<br>$$<br>Obj = \sum_{i=1}^nl(\hat{y_i},y_i) + \sum_{t=1}^k\Omega(f_t)<br>$$</p>
 </li>
 <li><p>boosting 模型是前向加法，以第 $t$ 步的模型为例，模型对第 $i$ 个样本 $x_i$ 的预测为 $\hat{y_i}^t = \hat{y_i}^{t-1} + f_t(x_i)$</p>
 <p>其中 $\hat{y_i}^{t-1}$ 由第  $t - 1$ 步的模型给出的预测值，是已知常数， $f_t(x_i)$ 是我们这次需要加入的新模型的预测值，此时，目标函数就可以写成：<br>$$<br>Obj^{(t)} = \sum_{i=1}^nl(y_i,\hat{y_i}^t) + \sum_{t=1}^t\Omega(f_i) = \sum_{i=1}^nl(y_i,\hat{y_i}^{t-1}+f_t(x_i)+\sum_{i=1}^t\Omega(f_t))<br>$$</p>
@@ -279,8 +280,7 @@
 </ol>
 <p>​        求此时最优化目标函数，就相当于求解 $f_t(x_i)$ </p>
 <ol start="5">
-<li><p>根据泰勒公式我们把函数 $f(x+\Delta x)$ 在点 $x$ 处进行泰勒的二阶展开，可得到等式 $f(x+\Delta x) \approx f(x) + f^{‘}(x) + \frac{1}{2}f^{‘’}(x)\Delta x^2$</p>
-<p>将把 $\hat{y_i}^{t-1}$ 视为 $x$ ， $f_t(x_i)$ 视为 $\Delta x$ ，故可以将目标函数写为 ：<br>$$<br>Obj^{(t)} = \sum_{t=1}^n\left[l(y_i,\hat{y_i}^{t-1}) + g_if_t(x_i) + \frac{1}{2}h_if_t^2(x_i)\right] + \sum_{t=1}^t\Omega(f_i)<br>$$<br>其中 $g_i$ 为损失函数对 $\hat{y_i}^{t-1}$ 的一阶导， $h_i$ 为损失函数对 $\hat{y_i}^{t-1}$ 的二阶导</p>
+<li><p>根据泰勒公式我们把函数 $f(x+\Delta x)$ 在点 $x$ 处进行泰勒的二阶展开，可得到等式：<br>$$<br>f(x+\Delta x) \approx f(x) + f^{‘}(x) + \frac{1}{2}f^{‘’}(x)\Delta x^2<br>$$<br>将把 $\hat{y_i}^{t-1}$ 视为 $x$ ， $f_t(x_i)$ 视为 $\Delta x$ ，故可以将目标函数写为 ：<br>$$<br>Obj^{(t)} = \sum_{t=1}^n\left[l(y_i,\hat{y_i}^{t-1}) + g_if_t(x_i) + \frac{1}{2}h_if_t^2(x_i)\right] + \sum_{t=1}^t\Omega(f_i)<br>$$<br>其中 $g_i$ 为损失函数对 $\hat{y_i}^{t-1}$ 的一阶导， $h_i$ 为损失函数对 $\hat{y_i}^{t-1}$ 的二阶导</p>
 </li>
 <li><p>由于在第 $t$ 步时 $\hat{y_i}^{t-1}$ 其实是一个已知的值，所以 $l(y_i,\hat{y_i}^{t-1})$ 是一个常数，其对函数的优化不会产生影响，因此目标函数可以写成：<br>$$<br>Obj^{(t)} \approx \sum_{t=1}^n\left[g_if_t(x_i) + \frac{1}{2}h_if_t^2(x_i)\right] + \sum_{t=1}^t\Omega(f_i)<br>$$<br>所以只需根据前一步的 $\hat{y_i}^{t-1}$ 求出每一步损失函数的一阶导和二阶导的值，然后最优化目标函数（保证最大的分裂增益），就可以得到一步的  $f(x)$，最后根据加法模型得到一个整体模型</p>
 </li>
@@ -288,11 +288,13 @@
 <h3 id="基于决策树的目标函数"><a href="#基于决策树的目标函数" class="headerlink" title="基于决策树的目标函数"></a>基于决策树的目标函数</h3><ol>
 <li><p>将决策树定义为 $f_t(x) = w_{q(x)}$ ， $x$ 为某一样本，这里的 $q(x)$ 代表了该样本所处叶子结点上，而 $w_q$ 则代表了叶子结点取值  ，所以 $w_{q(x)}$ 就代表了某个样本$x$（属于 $q(x)$ 叶子节点）的取值  $w$（即预测值）</p>
 </li>
-<li><p>决策树的复杂度可由叶子数 <img src="https://www.zhihu.com/equation?tex=T" alt="[公式]"> 体现，叶子节点越少模型越简单，此外叶子节点也不应该含有过高的权重 <img src="https://www.zhihu.com/equation?tex=w" alt="[公式]"> ，因此目标函数的正则项被定义为：<br>$$<br>\Omega(f_t) = \gamma T + \frac{1}{2}\lambda\sum_{j=1}^Tw_j^2<br>$$<br>即决策树模型的复杂度由生成决策树的叶子节点数量和所有节点权重所组成的向量的 <img src="https://www.zhihu.com/equation?tex=L_2" alt="[公式]"> 范式共同决定</p>
+<li><p>决策树的复杂度可由叶子数 $T$ 体现，叶子节点越少模型越简单，此外叶子节点也不应该含有过高的权重 $w$ ，因此目标函数的正则项被定义为：<br>$$<br>\Omega(f_t) = \gamma T + \frac{1}{2}\lambda\sum_{j=1}^Tw_j^2<br>$$<br>即决策树模型的复杂度由生成决策树的叶子节点数量和所有节点权重所组成的向量的 $L_2$ 范式共同决定</p>
 </li>
 <li><p>设 $I_j = {i|q(x_i) = j}$ 为第 $j$ 个叶子节点的样本集合，故我们的目标函数可以写成：<br>$$<br>\begin{aligned}<br>Obj^{(t)} &amp;\approx \sum_{i=1}^n\left[g_if_t(x_i)+\frac{1}{2}h_if_t^2(x_i)\right] + \Omega(f_t)<br>\\&amp;= \sum_{i=1}^n\left[g_iw_{q(x_i)}^2\right] + \gamma T + \frac{1}{2}\lambda\sum_{j=1}^Tw_j^2<br>\\&amp;= \sum_{j=1}^T\left[(\sum_{i\in I_j}g_i)w_j + \frac{1}{2}(\sum_{i\in I_j}h_i + \lambda)w_j^2\right] + \gamma T<br>\end{aligned}<br>$$<br>其中，第二步是遍历所有的样本后求每个样本的损失函数，但样本最终会落在叶子节点上，所以我们也可以遍历叶子节点，然后获取叶子节点上的样本集合，最后在求损失函数。即我们之前样本的集合，现在都改写成叶子结点的集合，由于一个叶子结点有多个样本存在，因此才有了 $\sum_{i\in I_j}g_i$ 和 $\sum_{i\in I_j}h_i$ 这两项，  $w_j$ 为第 $j$ 个叶子节点取值</p>
 </li>
-<li><p>为简化表达式，定义 $G_j = \sum_{i\in I_j}g_i$ ， $H_j = \sum_{i\in I_j}h_i$ ，则目标函数为：<br>$$<br>Obj^{(t)} = \sum_{j=1}^T\left[G_jw_j + \frac{1}{2}(H_j + \lambda)w_j^2\right] + \gamma T<br>$$<br>这里我们要注意 $G_j$ 和 $H_j$ 是前 $t-1$ 步得到的结果，其值已知可视为常数，只有最后一棵树的叶子节点 $w_j$ 不确定，那么将目标函数对 $w_j$ 求一阶导，并令其等于 $0$ ，则可以求得叶子结点 $j$ 对应的权值：<br>$$<br>w_j^* = -\frac{G_j}{H_j + \lambda}<br>$$<br>所以目标函数可以化简为：<br>$$<br>Obj = -\frac{1}{2}\sum_{j=1}^T\frac{G_j^2}{H_j+\lambda} + \gamma T<br>$$<br><img src="f2_xgboost.png" alt="f2_xgboost"></p>
+<li><p>为简化表达式，定义 $G_j = \sum_{i\in I_j}g_i$ ， $H_j = \sum_{i\in I_j}h_i$ ，则目标函数为：<br>$$<br>Obj^{(t)} = \sum_{j=1}^T\left[G_jw_j + \frac{1}{2}(H_j + \lambda)w_j^2\right] + \gamma T<br>$$<br>这里我们要注意 $G_j$ 和 $H_j$ 是前 $t-1$ 步得到的结果，其值已知可视为常数，只有最后一棵树的叶子节点 $w_j$ 不确定，那么将目标函数对 $w_j$ 求一阶导，并令其等于 $0$ ，则可以求得叶子结点 $j$ 对应的权值：<br>$$<br>w_j^* = -\frac{G_j}{H_j + \lambda}<br>$$<br>所以目标函数可以化简为：<br>$$<br>Obj = -\frac{1}{2}\sum_{j=1}^T\frac{G_j^2}{H_j+\lambda} + \gamma T<br>$$</p>
+<img src="/2020/11/30/GBDT%E5%8D%8F%E4%BD%9C%E5%AD%A6%E4%B9%A0%E5%AE%9E%E7%8E%B0/f2_xgboost.png" class="" title="f2_xgboost">
+
 <blockquote>
 <p>Structure Score Calculation. We only need to sum up the gradient and second order gradient statistics on each leaf, then apply the scoring formula to get the quality score.</p>
 </blockquote>
@@ -308,7 +310,8 @@
 <h2 id="梯度直方图-amp-分裂点计算"><a href="#梯度直方图-amp-分裂点计算" class="headerlink" title="梯度直方图 &amp; 分裂点计算"></a>梯度直方图 &amp; 分裂点计算</h2><blockquote>
 <p>梯度直方图：对于一个树结点，扫描树结点上的所有训练样本，根据其特征值，将样本梯度累加到对应的直方图桶中（候选节点将特征的值域分割成n个桶）</p>
 </blockquote>
-<p><img src="histogram.png" alt="histogram"></p>
+<img src="/2020/11/30/GBDT%E5%8D%8F%E4%BD%9C%E5%AD%A6%E4%B9%A0%E5%AE%9E%E7%8E%B0/histogram.png" class="" title="histogram">
+
 <blockquote>
 <p>Histogram-based split finding for one feature</p>
 </blockquote>
@@ -316,7 +319,8 @@
 <li><p><strong>计算梯度直方图：</strong> 从待处理树节点的队列中取出待处理的树节点，在Worker上，根据本节点的训练数据计算局部一阶和二阶梯度直方图，此时直方图的</p>
 </li>
 <li><p><strong>同步&amp;合并直方图：</strong> Worker将局部梯度直方图推送到参数服务器，PS节点在接收到Worker发送的局部梯度直方图后，根据梯度直方图对应的树节点，将其加到全局梯度直方图上</p>
-<p><img src="f4-LSGBDT.png" alt="f4-LSGBDT"></p>
+<img src="/2020/11/30/GBDT%E5%8D%8F%E4%BD%9C%E5%AD%A6%E4%B9%A0%E5%AE%9E%E7%8E%B0/f4-LSGBDT.png" class="" title="f4-LSGBDT">
+
 <blockquote>
 <p>Workers construct local histograms for all features and aggregate into global ones.</p>
 </blockquote>
