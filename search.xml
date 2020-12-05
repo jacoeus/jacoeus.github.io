@@ -237,6 +237,101 @@
       </tags>
   </entry>
   <entry>
+    <title>GBDT协作学习实现</title>
+    <url>/2020/11/30/GBDT%E5%8D%8F%E4%BD%9C%E5%AD%A6%E4%B9%A0%E5%AE%9E%E7%8E%B0/</url>
+    <content><![CDATA[<p>GBDT梯度提升树因其本身是基于梯度来进行决策树构建的，使得他能够实现无损的分布式决策树构建</p>
+<p>通过GBDT结合同态加密技术可以应用于横向联邦学习的情况（数据集的特征保证统一）</p>
+<p>GBDT的工程实现包括XGBoost以及LightGBM，两者在几大主流大数据平台有分布式的实现</p>
+<h1 id="GBDT-amp-XGBoost-amp-LightGBM"><a href="#GBDT-amp-XGBoost-amp-LightGBM" class="headerlink" title="GBDT &amp; XGBoost &amp; LightGBM"></a>GBDT &amp; XGBoost &amp; LightGBM</h1><p><a href="https://zhuanlan.zhihu.com/p/87885678">https://zhuanlan.zhihu.com/p/87885678</a></p>
+<p><a href="https://zhuanlan.zhihu.com/p/99069186">https://zhuanlan.zhihu.com/p/99069186</a></p>
+<p><a href="https://github.com/Angel-ML/angel/blob/master/docs/algo/gbdt_on_angel.md">https://github.com/Angel-ML/angel/blob/master/docs/algo/gbdt_on_angel.md</a></p>
+<p><code># TODO</code></p>
+<h1 id="协作学习实现"><a href="#协作学习实现" class="headerlink" title="协作学习实现"></a>协作学习实现</h1><p>先以二分类问题为例说明协作学习实现的过程和原理，再对多分类问题进行讨论</p>
+<h2 id="二分类问题大致流程"><a href="#二分类问题大致流程" class="headerlink" title="二分类问题大致流程"></a>二分类问题大致流程</h2><ul>
+<li><p>Parameter Server</p>
+<figure class="highlight"><table><tr><td class="code"><pre><span class="line">获取全局 Quantile Sketch (merge) &lt;- Worker</span><br><span class="line">计算全局候选分裂点 -&gt; Worker</span><br><span class="line"><span class="keyword">for</span> epoch_idx <span class="keyword">in</span> range(self.boosting_round)：</span><br><span class="line">	获取所有局部 g h &lt;- Worker</span><br><span class="line">    计算全局 g h -&gt; Worker</span><br><span class="line">    <span class="keyword">for</span> dep <span class="keyword">in</span> range(self.max_depth):</span><br><span class="line">        获取全局的梯度直方图 (+) &lt;- Worker</span><br><span class="line">        计算最佳分裂点 -&gt; Worker</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>Worker</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line">计算局部 Quantile Sketch -&gt; PS</span><br><span class="line">初始化(候选分裂点，计算y_hat等) &lt;- PS</span><br><span class="line"><span class="keyword">for</span> epoch_idx <span class="keyword">in</span> range(self.boosting_round)：</span><br><span class="line">	根据 y_hat 计算局部 g h -&gt; PS</span><br><span class="line">	初始化决策树（根据全局 g h 、数据集等建立根节点，初始当前层节点为根节点等） &lt;- PS</span><br><span class="line">    <span class="keyword">for</span> dep <span class="keyword">in</span> range(self.max_depth):</span><br><span class="line">        <span class="keyword">if</span> 树达到最大深度：</span><br><span class="line">        	停止树的构建</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            计算当前层各个节点各个特征的梯度直方图 -&gt; PS</span><br><span class="line">            获取当前层各个节点最佳分裂点 &lt;- PS</span><br><span class="line">            根据最佳分裂点建立下一层节点</span><br><span class="line">    根据叶子节点 weight 预测新的 y_hat</span><br></pre></td></tr></table></figure>
+
+</li>
+</ul>
+<h2 id="数据结构"><a href="#数据结构" class="headerlink" title="数据结构"></a>数据结构</h2><p><code># TODO</code></p>
+<h2 id="Quantile-Sketch获取全局候选节点"><a href="#Quantile-Sketch获取全局候选节点" class="headerlink" title="Quantile Sketch获取全局候选节点"></a>Quantile Sketch获取全局候选节点</h2><ul>
+<li>每个worker分别收集对应数据集中每个feature 的所有数值并以Quantile Sketch（GK Sketch）进行存储</li>
+<li>参数服务器 PS 汇集所有worker的sketch并merge，得到全局的quantile sketch</li>
+<li>根据给定的全局参数 bin_num 确定分位点，查询sketch得到对应的数值</li>
+</ul>
+<h2 id="梯度计算-amp-数学原理"><a href="#梯度计算-amp-数学原理" class="headerlink" title="梯度计算 &amp; 数学原理"></a>梯度计算 &amp; 数学原理</h2><h3 id="目标函数"><a href="#目标函数" class="headerlink" title="目标函数"></a>目标函数</h3><ol>
+<li><p>GBDT 一般是由 $k$ 个基模型（基决策树）组成的一个加法运算式 $\hat{y_i} = \sum_{t=1}^kf_t(x_i)$ ，其中 $f_k$ 为第 $k$ 个基模型， $\hat{y_i}$ 为第 $i$ 个样本的预测值</p>
+<p><img src="f1_xgboost.png" alt="f1_xgboost"></p>
+<blockquote>
+<p>Tree Ensemble Model. The final prediction for a given example is the sum of predictions from each tree.</p>
+</blockquote>
+</li>
+<li><p>损失函数可由预测值 $\hat{y_i}$ 与真实值  $y_i$ 进行表示，$L = \sum_{i=1}^nl(y_i,\hat{y_i})$ ，其中 n 为样本数量</p>
+</li>
+<li><p>由于模型的预测精度由模型的偏差和方差共同决定，损失函数代表了模型的偏差，想要方差小则需要简单的模型，所以目标函数由模型的损失函数 $L$ 与抑制模型复杂度的正则项 $\Omega$ 组成，于是建立目标函数 $Obj = \sum_{i=1}^nl(\hat{y_i},y_i) + \sum_{t=1}^k\Omega(f_t)$</p>
+</li>
+<li><p>boosting 模型是前向加法，以第 $t$ 步的模型为例，模型对第 $i$ 个样本 $x_i$ 的预测为 $\hat{y_i}^t = \hat{y_i}^{t-1} + f_t(x_i)$</p>
+<p>其中 $\hat{y_i}^{t-1}$ 由第  $t - 1$ 步的模型给出的预测值，是已知常数， $f_t(x_i)$ 是我们这次需要加入的新模型的预测值，此时，目标函数就可以写成：<br>$$<br>Obj^{(t)} = \sum_{i=1}^nl(y_i,\hat{y_i}^t) + \sum_{t=1}^t\Omega(f_i) = \sum_{i=1}^nl(y_i,\hat{y_i}^{t-1}+f_t(x_i)+\sum_{i=1}^t\Omega(f_t))<br>$$</p>
+</li>
+</ol>
+<p>​        求此时最优化目标函数，就相当于求解 $f_t(x_i)$ </p>
+<ol start="5">
+<li><p>根据泰勒公式我们把函数 $f(x+\Delta x)$ 在点 $x$ 处进行泰勒的二阶展开，可得到等式 $f(x+\Delta x) \approx f(x) + f^{‘}(x) + \frac{1}{2}f^{‘’}(x)\Delta x^2$</p>
+<p>将把 $\hat{y_i}^{t-1}$ 视为 $x$ ， $f_t(x_i)$ 视为 $\Delta x$ ，故可以将目标函数写为 ：<br>$$<br>Obj^{(t)} = \sum_{t=1}^n\left[l(y_i,\hat{y_i}^{t-1}) + g_if_t(x_i) + \frac{1}{2}h_if_t^2(x_i)\right] + \sum_{t=1}^t\Omega(f_i)<br>$$<br>其中 $g_i$ 为损失函数对 $\hat{y_i}^{t-1}$ 的一阶导， $h_i$ 为损失函数对 $\hat{y_i}^{t-1}$ 的二阶导</p>
+</li>
+<li><p>由于在第 $t$ 步时 $\hat{y_i}^{t-1}$ 其实是一个已知的值，所以 $l(y_i,\hat{y_i}^{t-1})$ 是一个常数，其对函数的优化不会产生影响，因此目标函数可以写成：<br>$$<br>Obj^{(t)} \approx \sum_{t=1}^n\left[g_if_t(x_i) + \frac{1}{2}h_if_t^2(x_i)\right] + \sum_{t=1}^t\Omega(f_i)<br>$$<br>所以只需根据前一步的 $\hat{y_i}^{t-1}$ 求出每一步损失函数的一阶导和二阶导的值，然后最优化目标函数（保证最大的分裂增益），就可以得到一步的  $f(x)$，最后根据加法模型得到一个整体模型</p>
+</li>
+</ol>
+<h3 id="基于决策树的目标函数"><a href="#基于决策树的目标函数" class="headerlink" title="基于决策树的目标函数"></a>基于决策树的目标函数</h3><ol>
+<li><p>将决策树定义为 $f_t(x) = w_{q(x)}$ ， $x$ 为某一样本，这里的 $q(x)$ 代表了该样本所处叶子结点上，而 $w_q$ 则代表了叶子结点取值  ，所以 $w_{q(x)}$ 就代表了某个样本$x$（属于 $q(x)$ 叶子节点）的取值  $w$（即预测值）</p>
+</li>
+<li><p>决策树的复杂度可由叶子数 <img src="https://www.zhihu.com/equation?tex=T" alt="[公式]"> 体现，叶子节点越少模型越简单，此外叶子节点也不应该含有过高的权重 <img src="https://www.zhihu.com/equation?tex=w" alt="[公式]"> ，因此目标函数的正则项被定义为：<br>$$<br>\Omega(f_t) = \gamma T + \frac{1}{2}\lambda\sum_{j=1}^Tw_j^2<br>$$<br>即决策树模型的复杂度由生成决策树的叶子节点数量和所有节点权重所组成的向量的 <img src="https://www.zhihu.com/equation?tex=L_2" alt="[公式]"> 范式共同决定</p>
+</li>
+<li><p>设 $I_j = {i|q(x_i) = j}$ 为第 $j$ 个叶子节点的样本集合，故我们的目标函数可以写成：<br>$$<br>\begin{aligned}<br>Obj^{(t)} &amp;\approx \sum_{i=1}^n\left[g_if_t(x_i)+\frac{1}{2}h_if_t^2(x_i)\right] + \Omega(f_t)<br>\\&amp;= \sum_{i=1}^n\left[g_iw_{q(x_i)}^2\right] + \gamma T + \frac{1}{2}\lambda\sum_{j=1}^Tw_j^2<br>\\&amp;= \sum_{j=1}^T\left[(\sum_{i\in I_j}g_i)w_j + \frac{1}{2}(\sum_{i\in I_j}h_i + \lambda)w_j^2\right] + \gamma T<br>\end{aligned}<br>$$<br>其中，第二步是遍历所有的样本后求每个样本的损失函数，但样本最终会落在叶子节点上，所以我们也可以遍历叶子节点，然后获取叶子节点上的样本集合，最后在求损失函数。即我们之前样本的集合，现在都改写成叶子结点的集合，由于一个叶子结点有多个样本存在，因此才有了 $\sum_{i\in I_j}g_i$ 和 $\sum_{i\in I_j}h_i$ 这两项，  $w_j$ 为第 $j$ 个叶子节点取值</p>
+</li>
+<li><p>为简化表达式，定义 $G_j = \sum_{i\in I_j}g_i$ ， $H_j = \sum_{i\in I_j}h_i$ ，则目标函数为：<br>$$<br>Obj^{(t)} = \sum_{j=1}^T\left[G_jw_j + \frac{1}{2}(H_j + \lambda)w_j^2\right] + \gamma T<br>$$<br>这里我们要注意 $G_j$ 和 $H_j$ 是前 $t-1$ 步得到的结果，其值已知可视为常数，只有最后一棵树的叶子节点 $w_j$ 不确定，那么将目标函数对 $w_j$ 求一阶导，并令其等于 $0$ ，则可以求得叶子结点 $j$ 对应的权值：<br>$$<br>w_j^* = -\frac{G_j}{H_j + \lambda}<br>$$<br>所以目标函数可以化简为：<br>$$<br>Obj = -\frac{1}{2}\sum_{j=1}^T\frac{G_j^2}{H_j+\lambda} + \gamma T<br>$$<br><img src="f2_xgboost.png" alt="f2_xgboost"></p>
+<blockquote>
+<p>Structure Score Calculation. We only need to sum up the gradient and second order gradient statistics on each leaf, then apply the scoring formula to get the quality score.</p>
+</blockquote>
+<p>上图给出目标函数计算的例子，求每个节点每个样本的一阶导数 $g_i$ 和二阶导数 $h_i$ ，然后针对每个节点对所含样本求和得到的 $G_j$ 和  $H_j$ ，最后遍历决策树的节点即可得到目标函数</p>
+</li>
+</ol>
+<h3 id="Softmax交叉熵损失函数"><a href="#Softmax交叉熵损失函数" class="headerlink" title="Softmax交叉熵损失函数"></a>Softmax交叉熵损失函数</h3><ul>
+<li>$Softmax(\hat{y_i}) = y_i log(1 + e^{−\hat{y_i}} ) + (1 − y_i )log(1 + e^{\hat{y_i}} )$</li>
+<li>$g_i = \hat{y_i}^{(t-1)} - y_i$</li>
+<li>$h_i = \hat{y_i}^{(t-1)} * (1-\hat{y_i}^{(t-1)})$ </li>
+<li>$\hat{y_i}^{(t)} = Softmax(w_j^*) = Softmax(-\frac{G_j}{H_j+\lambda}) = Softmax(-\frac{\sum_{i \in I_j}g_i}{\sum_{i \in I_j}h_i + \lambda})$</li>
+</ul>
+<h2 id="梯度直方图-amp-分裂点计算"><a href="#梯度直方图-amp-分裂点计算" class="headerlink" title="梯度直方图 &amp; 分裂点计算"></a>梯度直方图 &amp; 分裂点计算</h2><blockquote>
+<p>梯度直方图：对于一个树结点，扫描树结点上的所有训练样本，根据其特征值，将样本梯度累加到对应的直方图桶中（候选节点将特征的值域分割成n个桶）</p>
+</blockquote>
+<p><img src="histogram.png" alt="histogram"></p>
+<blockquote>
+<p>Histogram-based split finding for one feature</p>
+</blockquote>
+<ol>
+<li><p><strong>计算梯度直方图：</strong> 从待处理树节点的队列中取出待处理的树节点，在Worker上，根据本节点的训练数据计算局部一阶和二阶梯度直方图，此时直方图的</p>
+</li>
+<li><p><strong>同步&amp;合并直方图：</strong> Worker将局部梯度直方图推送到参数服务器，PS节点在接收到Worker发送的局部梯度直方图后，根据梯度直方图对应的树节点，将其加到全局梯度直方图上</p>
+<p><img src="f4-LSGBDT.png" alt="f4-LSGBDT"></p>
+<blockquote>
+<p>Workers construct local histograms for all features and aggregate into global ones.</p>
+</blockquote>
+</li>
+<li><p><strong>寻找最佳分裂点：</strong> Worker根据每个特征的梯度直方图计算对于该特征的最佳分裂点及其增益，选取其中目标函数增益最大的特征以及对应的候选分裂点作为全局的最佳分裂点</p>
+</li>
+<li><p><strong>分裂树节点：</strong> Worker根据计算得到的最佳分裂点，创建叶子节点，将本节点的训练数据切分到两个叶子节点上。如果树的高度没有达到最大限制，则将两个叶子节点加入到待处理树节点的队列</p>
+</li>
+</ol>
+<h2 id="Parameter-Server与Worker通讯过程"><a href="#Parameter-Server与Worker通讯过程" class="headerlink" title="Parameter Server与Worker通讯过程"></a>Parameter Server与Worker通讯过程</h2><p><code>#TODO</code></p>
+<h2 id="多分类实现"><a href="#多分类实现" class="headerlink" title="多分类实现"></a>多分类实现</h2><p><code>#TODO</code></p>
+<h2 id="预测"><a href="#预测" class="headerlink" title="预测"></a>预测</h2><p><code>#TODO</code></p>
+]]></content>
+  </entry>
+  <entry>
     <title>Hello World</title>
     <url>/2020/09/22/Hello-World/</url>
     <content><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
