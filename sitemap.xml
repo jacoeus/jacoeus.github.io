@@ -4,7 +4,7 @@
   <url>
     <loc>https://jacoeus.github.io/2020/11/30/GBDT%E5%8D%8F%E4%BD%9C%E5%AD%A6%E4%B9%A0%E5%AE%9E%E7%8E%B0/</loc>
     
-    <lastmod>2020-12-05</lastmod>
+    <lastmod>2020-12-07</lastmod>
     
   </url>
   
@@ -53,7 +53,7 @@
 
   <url>
     <loc>https://jacoeus.github.io/</loc>
-    <lastmod>2020-12-05</lastmod>
+    <lastmod>2020-12-07</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
@@ -61,35 +61,63 @@
   
   <url>
     <loc>https://jacoeus.github.io/tags/Hexo/</loc>
-    <lastmod>2020-12-05</lastmod>
+    <lastmod>2020-12-07</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://jacoeus.github.io/tags/Docker/</loc>
-    <lastmod>2020-12-05</lastmod>
+    <lastmod>2020-12-07</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://jacoeus.github.io/tags/Zeek/</loc>
-    <lastmod>2020-12-05</lastmod>
+    <lastmod>2020-12-07</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://jacoeus.github.io/tags/Kafka/</loc>
-    <lastmod>2020-12-05</lastmod>
+    <lastmod>2020-12-07</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://jacoeus.github.io/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/</loc>
+    <lastmod>2020-12-07</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://jacoeus.github.io/tags/%E5%8D%8F%E4%BD%9C%E5%AD%A6%E4%B9%A0/</loc>
+    <lastmod>2020-12-07</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://jacoeus.github.io/tags/%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0/</loc>
+    <lastmod>2020-12-07</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://jacoeus.github.io/tags/%E5%86%B3%E7%AD%96%E6%A0%91%E7%AE%97%E6%B3%95/</loc>
+    <lastmod>2020-12-07</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://jacoeus.github.io/tags/TimescaleDB/</loc>
-    <lastmod>2020-12-05</lastmod>
+    <lastmod>2020-12-07</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
@@ -98,14 +126,14 @@
   
   <url>
     <loc>https://jacoeus.github.io/categories/Database/</loc>
-    <lastmod>2020-12-05</lastmod>
+    <lastmod>2020-12-07</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://jacoeus.github.io/categories/Database/TimescaleDB/</loc>
-    <lastmod>2020-12-05</lastmod>
+    <lastmod>2020-12-07</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>

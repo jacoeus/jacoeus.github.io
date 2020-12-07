@@ -242,12 +242,65 @@
     <content><![CDATA[<p>GBDT梯度提升树因其本身是基于梯度来进行决策树构建的，使得他能够实现无损的分布式决策树构建</p>
 <p>通过GBDT结合同态加密技术可以应用于横向联邦学习的情况（数据集的特征保证统一）</p>
 <p>GBDT的工程实现包括XGBoost以及LightGBM，两者在几大主流大数据平台有分布式的实现</p>
-<h1 id="GBDT-amp-XGBoost-amp-LightGBM"><a href="#GBDT-amp-XGBoost-amp-LightGBM" class="headerlink" title="GBDT &amp; XGBoost &amp; LightGBM"></a>GBDT &amp; XGBoost &amp; LightGBM</h1><p><a href="https://zhuanlan.zhihu.com/p/87885678">https://zhuanlan.zhihu.com/p/87885678</a></p>
-<p><a href="https://zhuanlan.zhihu.com/p/99069186">https://zhuanlan.zhihu.com/p/99069186</a></p>
-<p><a href="https://github.com/Angel-ML/angel/blob/master/docs/algo/gbdt_on_angel.md">https://github.com/Angel-ML/angel/blob/master/docs/algo/gbdt_on_angel.md</a></p>
-<p><code># TODO</code></p>
-<h1 id="协作学习实现"><a href="#协作学习实现" class="headerlink" title="协作学习实现"></a>协作学习实现</h1><p>先以二分类问题为例说明协作学习实现的过程和原理，再对多分类问题进行讨论</p>
-<h2 id="二分类问题大致流程"><a href="#二分类问题大致流程" class="headerlink" title="二分类问题大致流程"></a>二分类问题大致流程</h2><ul>
+<a id="more"></a>
+
+<h1 id="GBDT-amp-XGBoost-amp-LightGBM"><a href="#GBDT-amp-XGBoost-amp-LightGBM" class="headerlink" title="GBDT &amp; XGBoost &amp; LightGBM"></a>GBDT &amp; XGBoost &amp; LightGBM</h1><p>GBDT，梯度提升树，使用集成学习的boosting方法，根据当前模型损失函数的负梯度信息来训练新加入的弱分类器，然后将训练好的弱分类器以累加的形式结合到现有模型中。<a href="https://arxiv.org/pdf/1603.02754.pdf">XGBoost</a> 和 <a href="https://papers.nips.cc/paper/2017/file/6449f44a102fde848669bdd9eb6b76fa-Paper.pdf">LightGBM</a>是GBDT的两个工程实现</p>
+<h2 id="XGBoost"><a href="#XGBoost" class="headerlink" title="XGBoost"></a>XGBoost</h2><p>XGBoost在GDBT的基础上进行了一些算法和工程方面的优化</p>
+<ol>
+<li><p><strong>引入二阶导：</strong>GBDT 只用到一阶泰勒展开，而 XGBoost 对损失函数进行了二阶泰勒展开。XGBoost 引入二阶导一方面是为了增加精度，另一方面也是为了能够自定义损失函数，二阶泰勒展开可以近似大量损失函数；</p>
+</li>
+<li><p><strong>正则项：</strong>XGBoost 在目标函数中加入了正则项，用于控制模型的复杂度。正则项里包含了树的叶子节点个数、叶子节点权重的 L2 范式。正则项降低了模型的方差，使学习出来的模型更加简单，有助于防止过拟合；</p>
+</li>
+<li><p><strong>Shrinkage（缩减）：</strong>类似于学习率，XGBoost 在进行完一次迭代后，会将叶子节点的权重乘上该系数，主要是为了削弱每棵树的影响，让后面有更大的学习空间；</p>
+</li>
+<li><p>列抽样：XGBoost 借鉴了随机森林的做法，支持列抽样，不仅能降低过拟合，还能减少计算；</p>
+</li>
+<li><p>缺失值处理：XGBoost 采用的稀疏感知算法极大的加快了节点分裂的速度；</p>
+<hr>
+</li>
+<li><p>并行化：块结构可以很好的支持并行计算；</p>
+</li>
+</ol>
+<p>但仍存在如下的缺点</p>
+<ol>
+<li>虽然利用预排序和近似算法可以降低寻找最佳分裂点的计算量，但在节点分裂过程中仍需要遍历数据集；</li>
+<li>预排序过程的空间复杂度过高，不仅需要存储特征值，还需要存储特征对应样本的梯度统计值的索引，相当于消耗了两倍的内存；</li>
+</ol>
+<h2 id="LightGBM"><a href="#LightGBM" class="headerlink" title="LightGBM"></a>LightGBM</h2><p>LightGBM 由微软提出，主要用于解决 GDBT 在<strong>海量数据</strong>中遇到的问题，以便其可以更好更快地用于工业实践中</p>
+<p>LightGBM 为了解决这些问题提出了以下几点解决方案：</p>
+<ol>
+<li><p>单边梯度抽样算法：对样本进行抽样，减少了大量梯度小的样本；</p>
+</li>
+<li><p><strong>直方图算法（直方图做差加速）</strong>：将连续的特征离散化为 k 个离散特征，同时构造一个宽度为 k 的直方图用于统计信息（包括 k 个 bin）；</p>
+</li>
+<li><p>互斥特征捆绑算法：将一些特征进行融合绑定，则可以降低特征数量（高维特征往往是稀疏的，而且特征间可能是相互排斥的）；</p>
+</li>
+<li><p>基于最大深度的 Leaf-wise 的垂直生长算法：减少了计算量，配合最大深度的限制防止过拟合，由于每次都需要计算增益最大的节点，所以无法并行分裂；</p>
+</li>
+<li><p>类别特征最优分割；</p>
+<hr>
+</li>
+<li><p>特征并行/数据并行/投票并行；</p>
+</li>
+<li><p>缓存优化；</p>
+</li>
+</ol>
+<h2 id="FATE"><a href="#FATE" class="headerlink" title="FATE"></a>FATE</h2><blockquote>
+<p> FATE (Federated AI Technology Enabler) 是微众银行AI部门发起的开源项目，为联邦学习生态系统提供了可靠的安全计算框架。FATE项目使用多方安全计算 (MPC) 以及同态加密 (HE) 技术构建底层安全计算协议，以此支持不同种类的机器学习的安全计算，包括逻辑回归、基于树的算法、深度学习和迁移学习等</p>
+</blockquote>
+<p>FATE官方网站：<a href="https://fate.fedai.org/">https://fate.fedai.org/</a></p>
+<p>在进行协作学习实现时，我们主要参考了FATE的homo-secureboost部分代码，并根据需要进行了一些调整</p>
+<ul>
+<li>采用全局的近似算法作为最优切分点划分算法，即学习每棵树前就提出候选切分点，并在每次分裂时都采用这种分割；</li>
+<li>使用softmax交叉熵损失函数，并取其一阶导和二阶导建立直方图；</li>
+<li>实现LightGBM的直方图算法，包括直方图作差加速；</li>
+<li>采用类似于XGBoost的Level-wise增长策略，方便并行计算每一层的分裂节点，提高了训练速度，但同时也因为节点增益过小增加了很多不必要的分裂；</li>
+<li>稀疏感知算法 TODO</li>
+<li>特征选择 TODO</li>
+</ul>
+<h1 id="协作学习实现"><a href="#协作学习实现" class="headerlink" title="协作学习实现"></a>协作学习实现</h1><p>在具体实现上，通过参考FATE项目的相关代码，实现了</p>
+<p>先以二分类问题为例说明协作学习实现的过程和原理，再对多分类问题进行讨论</p>
+<h2 id="大致流程"><a href="#大致流程" class="headerlink" title="大致流程"></a>大致流程</h2><ul>
 <li><p>Parameter Server</p>
 <figure class="highlight"><table><tr><td class="code"><pre><span class="line">获取全局 Quantile Sketch (merge) &lt;- Worker</span><br><span class="line">计算全局候选分裂点 -&gt; Worker</span><br><span class="line"><span class="keyword">for</span> epoch_idx <span class="keyword">in</span> range(self.boosting_round)：</span><br><span class="line">	获取所有局部 g h &lt;- Worker</span><br><span class="line">    计算全局 g h -&gt; Worker</span><br><span class="line">    <span class="keyword">for</span> dep <span class="keyword">in</span> range(self.max_depth):</span><br><span class="line">        获取全局的梯度直方图 (+) &lt;- Worker</span><br><span class="line">        计算最佳分裂点 -&gt; Worker</span><br></pre></td></tr></table></figure>
 </li>
@@ -264,8 +317,7 @@
 </ul>
 <h2 id="梯度计算-amp-数学原理"><a href="#梯度计算-amp-数学原理" class="headerlink" title="梯度计算 &amp; 数学原理"></a>梯度计算 &amp; 数学原理</h2><h3 id="目标函数"><a href="#目标函数" class="headerlink" title="目标函数"></a>目标函数</h3><ol>
 <li><p>GBDT 一般是由 $k$ 个基模型（基决策树）组成的一个加法运算式 $\hat{y_i} = \sum_{t=1}^kf_t(x_i)$ ，其中 $f_k$ 为第 $k$ 个基模型， $\hat{y_i}$ 为第 $i$ 个样本的预测值</p>
-<img src="/2020/11/30/GBDT%E5%8D%8F%E4%BD%9C%E5%AD%A6%E4%B9%A0%E5%AE%9E%E7%8E%B0/f1_xgboost.png" class="" title="f1_xgboost">
-
+<p><img src="f1_xgboost.png" alt="f1_xgboost"></p>
 <blockquote>
 <p>Tree Ensemble Model. The final prediction for a given example is the sum of predictions from each tree.</p>
 </blockquote>
@@ -275,12 +327,9 @@
 <li><p>由于模型的预测精度由模型的偏差和方差共同决定，损失函数代表了模型的偏差，想要方差小则需要简单的模型，所以目标函数由模型的损失函数 $L$ 与抑制模型复杂度的正则项 $\Omega$ 组成，于是建立目标函数：<br>$$<br>Obj = \sum_{i=1}^nl(\hat{y_i},y_i) + \sum_{t=1}^k\Omega(f_t)<br>$$</p>
 </li>
 <li><p>boosting 模型是前向加法，以第 $t$ 步的模型为例，模型对第 $i$ 个样本 $x_i$ 的预测为 $\hat{y_i}^t = \hat{y_i}^{t-1} + f_t(x_i)$</p>
-<p>其中 $\hat{y_i}^{t-1}$ 由第  $t - 1$ 步的模型给出的预测值，是已知常数， $f_t(x_i)$ 是我们这次需要加入的新模型的预测值，此时，目标函数就可以写成：<br>$$<br>Obj^{(t)} = \sum_{i=1}^nl(y_i,\hat{y_i}^t) + \sum_{t=1}^t\Omega(f_i) = \sum_{i=1}^nl(y_i,\hat{y_i}^{t-1}+f_t(x_i)+\sum_{i=1}^t\Omega(f_t))<br>$$</p>
+<p>其中 $\hat{y_i}^{t-1}$ 由第  $t - 1$ 步的模型给出的预测值，是已知常数， $f_t(x_i)$ 是我们这次需要加入的新模型的预测值，此时，目标函数就可以写成：<br>$$<br>Obj^{(t)} = \sum_{i=1}^nl(y_i,\hat{y_i}^t) + \sum_{t=1}^t\Omega(f_i) = \sum_{i=1}^nl(y_i,\hat{y_i}^{t-1}+f_t(x_i)+\sum_{i=1}^t\Omega(f_t))<br>$$<br>求此时最优化目标函数，就相当于求解 $f_t(x_i)$ </p>
 </li>
-</ol>
-<p>​        求此时最优化目标函数，就相当于求解 $f_t(x_i)$ </p>
-<ol start="5">
-<li><p>根据泰勒公式我们把函数 $f(x+\Delta x)$ 在点 $x$ 处进行泰勒的二阶展开，可得到等式：<br>$$<br>f(x+\Delta x) \approx f(x) + f^{‘}(x) + \frac{1}{2}f^{‘’}(x)\Delta x^2<br>$$<br>将把 $\hat{y_i}^{t-1}$ 视为 $x$ ， $f_t(x_i)$ 视为 $\Delta x$ ，故可以将目标函数写为 ：<br>$$<br>Obj^{(t)} = \sum_{t=1}^n\left[l(y_i,\hat{y_i}^{t-1}) + g_if_t(x_i) + \frac{1}{2}h_if_t^2(x_i)\right] + \sum_{t=1}^t\Omega(f_i)<br>$$<br>其中 $g_i$ 为损失函数对 $\hat{y_i}^{t-1}$ 的一阶导， $h_i$ 为损失函数对 $\hat{y_i}^{t-1}$ 的二阶导</p>
+<li><p>根据泰勒公式我们把函数 $f(x+\Delta x)$ 在点 $x$ 处进行泰勒的二阶展开，可得到等式：<br>$$<br>f(x+\Delta x) \approx f(x) + f^{‘’}(x) + \frac{1}{2}f^{‘’}(x)\Delta x^2f(x+\Delta x) \approx f(x) + f^{‘}(x) + \frac{1}{2}f^{‘’}(x)\Delta x^2<br>$$<br>将把 $\hat{y_i}^{t-1}$ 视为 $x$ ， $f_t(x_i)$ 视为 $\Delta x$ ，故可以将目标函数写为 ：<br>$$<br>Obj^{(t)} = \sum_{t=1}^n\left[l(y_i,\hat{y_i}^{t-1}) + g_if_t(x_i) + \frac{1}{2}h_if_t^2(x_i)\right] + \sum_{t=1}^t\Omega(f_i)<br>$$<br>其中 $g_i$ 为损失函数对 $\hat{y_i}^{t-1}$ 的一阶导， $h_i$ 为损失函数对 $\hat{y_i}^{t-1}$ 的二阶导</p>
 </li>
 <li><p>由于在第 $t$ 步时 $\hat{y_i}^{t-1}$ 其实是一个已知的值，所以 $l(y_i,\hat{y_i}^{t-1})$ 是一个常数，其对函数的优化不会产生影响，因此目标函数可以写成：<br>$$<br>Obj^{(t)} \approx \sum_{t=1}^n\left[g_if_t(x_i) + \frac{1}{2}h_if_t^2(x_i)\right] + \sum_{t=1}^t\Omega(f_i)<br>$$<br>所以只需根据前一步的 $\hat{y_i}^{t-1}$ 求出每一步损失函数的一阶导和二阶导的值，然后最优化目标函数（保证最大的分裂增益），就可以得到一步的  $f(x)$，最后根据加法模型得到一个整体模型</p>
 </li>
@@ -288,13 +337,11 @@
 <h3 id="基于决策树的目标函数"><a href="#基于决策树的目标函数" class="headerlink" title="基于决策树的目标函数"></a>基于决策树的目标函数</h3><ol>
 <li><p>将决策树定义为 $f_t(x) = w_{q(x)}$ ， $x$ 为某一样本，这里的 $q(x)$ 代表了该样本所处叶子结点上，而 $w_q$ 则代表了叶子结点取值  ，所以 $w_{q(x)}$ 就代表了某个样本$x$（属于 $q(x)$ 叶子节点）的取值  $w$（即预测值）</p>
 </li>
-<li><p>决策树的复杂度可由叶子数 $T$ 体现，叶子节点越少模型越简单，此外叶子节点也不应该含有过高的权重 $w$ ，因此目标函数的正则项被定义为：<br>$$<br>\Omega(f_t) = \gamma T + \frac{1}{2}\lambda\sum_{j=1}^Tw_j^2<br>$$<br>即决策树模型的复杂度由生成决策树的叶子节点数量和所有节点权重所组成的向量的 $L_2$ 范式共同决定</p>
+<li><p>决策树的复杂度可由叶子数 $T$ 体现，叶子节点越少模型越简单，此外叶子节点也不应该含有过高的权重 $w$ ，因此目标函数的正则项被定义为：<br>$$<br>\Omega(f_t) = \gamma T + \frac{1}{2}\lambda\sum_{j=1}^Tw_j^2<br>$$<br>即决策树模型的复杂度由生成决策树的叶子节点数量 $T$ 和所有节点权重所组成的向量的 $L_2$ 范式共同决定</p>
 </li>
 <li><p>设 $I_j = {i|q(x_i) = j}$ 为第 $j$ 个叶子节点的样本集合，故我们的目标函数可以写成：<br>$$<br>\begin{aligned}<br>Obj^{(t)} &amp;\approx \sum_{i=1}^n\left[g_if_t(x_i)+\frac{1}{2}h_if_t^2(x_i)\right] + \Omega(f_t)<br>\\&amp;= \sum_{i=1}^n\left[g_iw_{q(x_i)}^2\right] + \gamma T + \frac{1}{2}\lambda\sum_{j=1}^Tw_j^2<br>\\&amp;= \sum_{j=1}^T\left[(\sum_{i\in I_j}g_i)w_j + \frac{1}{2}(\sum_{i\in I_j}h_i + \lambda)w_j^2\right] + \gamma T<br>\end{aligned}<br>$$<br>其中，第二步是遍历所有的样本后求每个样本的损失函数，但样本最终会落在叶子节点上，所以我们也可以遍历叶子节点，然后获取叶子节点上的样本集合，最后在求损失函数。即我们之前样本的集合，现在都改写成叶子结点的集合，由于一个叶子结点有多个样本存在，因此才有了 $\sum_{i\in I_j}g_i$ 和 $\sum_{i\in I_j}h_i$ 这两项，  $w_j$ 为第 $j$ 个叶子节点取值</p>
 </li>
-<li><p>为简化表达式，定义 $G_j = \sum_{i\in I_j}g_i$ ， $H_j = \sum_{i\in I_j}h_i$ ，则目标函数为：<br>$$<br>Obj^{(t)} = \sum_{j=1}^T\left[G_jw_j + \frac{1}{2}(H_j + \lambda)w_j^2\right] + \gamma T<br>$$<br>这里我们要注意 $G_j$ 和 $H_j$ 是前 $t-1$ 步得到的结果，其值已知可视为常数，只有最后一棵树的叶子节点 $w_j$ 不确定，那么将目标函数对 $w_j$ 求一阶导，并令其等于 $0$ ，则可以求得叶子结点 $j$ 对应的权值：<br>$$<br>w_j^* = -\frac{G_j}{H_j + \lambda}<br>$$<br>所以目标函数可以化简为：<br>$$<br>Obj = -\frac{1}{2}\sum_{j=1}^T\frac{G_j^2}{H_j+\lambda} + \gamma T<br>$$</p>
-<img src="/2020/11/30/GBDT%E5%8D%8F%E4%BD%9C%E5%AD%A6%E4%B9%A0%E5%AE%9E%E7%8E%B0/f2_xgboost.png" class="" title="f2_xgboost">
-
+<li><p>为简化表达式，定义 $G_j = \sum_{i\in I_j}g_i$ ， $H_j = \sum_{i\in I_j}h_i$ ，则目标函数为：<br>$$<br>Obj^{(t)} = \sum_{j=1}^T\left[G_jw_j + \frac{1}{2}(H_j + \lambda)w_j^2\right] + \gamma T<br>$$<br>这里我们要注意 $G_j$ 和 $H_j$ 是前 $t-1$ 步得到的结果，其值已知可视为常数，只有最后一棵树的叶子节点 $w_j$ 不确定，那么将目标函数对 $w_j$ 求一阶导，并令其等于 $0$ ，则可以求得叶子结点 $j$ 对应的权值：<br>$$<br>w_j^* = -\frac{G_j}{H_j + \lambda}<br>$$<br>所以目标函数可以化简为：<br>$$<br>Obj = -\frac{1}{2}\sum_{j=1}^T\frac{G_j^2}{H_j+\lambda} + \gamma T<br>$$<br><img src="f2_xgboost.png" alt="f2_xgboost"></p>
 <blockquote>
 <p>Structure Score Calculation. We only need to sum up the gradient and second order gradient statistics on each leaf, then apply the scoring formula to get the quality score.</p>
 </blockquote>
@@ -310,8 +357,7 @@
 <h2 id="梯度直方图-amp-分裂点计算"><a href="#梯度直方图-amp-分裂点计算" class="headerlink" title="梯度直方图 &amp; 分裂点计算"></a>梯度直方图 &amp; 分裂点计算</h2><blockquote>
 <p>梯度直方图：对于一个树结点，扫描树结点上的所有训练样本，根据其特征值，将样本梯度累加到对应的直方图桶中（候选节点将特征的值域分割成n个桶）</p>
 </blockquote>
-<img src="/2020/11/30/GBDT%E5%8D%8F%E4%BD%9C%E5%AD%A6%E4%B9%A0%E5%AE%9E%E7%8E%B0/histogram.png" class="" title="histogram">
-
+<p><img src="histogram.png" alt="histogram"></p>
 <blockquote>
 <p>Histogram-based split finding for one feature</p>
 </blockquote>
@@ -319,8 +365,7 @@
 <li><p><strong>计算梯度直方图：</strong> 从待处理树节点的队列中取出待处理的树节点，在Worker上，根据本节点的训练数据计算局部一阶和二阶梯度直方图，此时直方图的</p>
 </li>
 <li><p><strong>同步&amp;合并直方图：</strong> Worker将局部梯度直方图推送到参数服务器，PS节点在接收到Worker发送的局部梯度直方图后，根据梯度直方图对应的树节点，将其加到全局梯度直方图上</p>
-<img src="/2020/11/30/GBDT%E5%8D%8F%E4%BD%9C%E5%AD%A6%E4%B9%A0%E5%AE%9E%E7%8E%B0/f4-LSGBDT.png" class="" title="f4-LSGBDT">
-
+<p><img src="f4-LSGBDT.png" alt="f4-LSGBDT"></p>
 <blockquote>
 <p>Workers construct local histograms for all features and aggregate into global ones.</p>
 </blockquote>
@@ -331,9 +376,18 @@
 </li>
 </ol>
 <h2 id="Parameter-Server与Worker通讯过程"><a href="#Parameter-Server与Worker通讯过程" class="headerlink" title="Parameter Server与Worker通讯过程"></a>Parameter Server与Worker通讯过程</h2><p><code>#TODO</code></p>
-<h2 id="多分类实现"><a href="#多分类实现" class="headerlink" title="多分类实现"></a>多分类实现</h2><p><code>#TODO</code></p>
-<h2 id="预测"><a href="#预测" class="headerlink" title="预测"></a>预测</h2><p><code>#TODO</code></p>
+<h2 id="多分类实现"><a href="#多分类实现" class="headerlink" title="多分类实现"></a>多分类实现</h2><ul>
+<li>在每一轮boost中对每个class分别训练决策树，将当前类别的 y 值视为 1，其他类别视为 0 进行1 vs rest二分类进行树的构建以及weight的计算</li>
+<li>计算对于某一class在boosting_round轮训练中得到的weight，并进行累加，得到所有class的最终weight，取其值最大的class作为分类结果</li>
+</ul>
+<h2 id="预测过程"><a href="#预测过程" class="headerlink" title="预测过程"></a>预测过程</h2><p><code>#TODO</code></p>
 ]]></content>
+      <tags>
+        <tag>机器学习</tag>
+        <tag>协作学习</tag>
+        <tag>联邦学习</tag>
+        <tag>决策树算法</tag>
+      </tags>
   </entry>
   <entry>
     <title>Hello World</title>
