@@ -376,7 +376,7 @@
 <h2 id="多分类实现"><a href="#多分类实现" class="headerlink" title="多分类实现"></a>多分类实现</h2><ul>
 <li><p>在每一轮boost中对每个class分别训练决策树，将当前类别的 y 值视为 1，其他类别视为 0 进行1 vs rest二分类进行树的构建以及weight的计算</p>
 </li>
-<li><p>遵循 1 vs rest 分解策略，训练好 $|\mathcal Y|$ 个二分类器后，将每个分类器的实值输出 $W(\boldsymbol x) = \sum_{t=1}^T \alpha _tw_t(\boldsymbol x)$ 用于识别最有可能的多分类类别，即<br>$$<br>H(x) = \underset{y \in \mathcal Y}{\arg\max} H_y(\boldsymbol x)<br>$$</p>
+<li><p>遵循 1 vs rest 分解策略，训练好 $|\mathcal Y|$ 个二分类器后，将每个分类器的实值输出 $W(\boldsymbol{x}) = \sum_{t=1}^T \alpha _tw_t(\boldsymbol{x})$ 用于识别最有可能的多分类类别，即<br>$$<br>H(x) = \underset{y \in \mathcal Y}{\arg\max} H_y(\boldsymbol{x})<br>$$</p>
 </li>
 </ul>
 ]]></content>
