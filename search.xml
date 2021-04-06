@@ -64,7 +64,7 @@
   <entry>
     <title>Docker学习&amp;使用Docker构建zeek到kafka的连接</title>
     <url>/2020/09/19/Docker%E5%AD%A6%E4%B9%A0-%E4%BD%BF%E7%94%A8Docker%E6%9E%84%E5%BB%BAzeek%E5%88%B0kafka%E7%9A%84%E8%BF%9E%E6%8E%A5/</url>
-    <content><![CDATA[<p>记录一个又是在debug的下午，试图通过kafka将zeek解析pcap文件的结果导入Timescaledb，在开心的参照官方给出的使用docker构建zeek到kafka连接的<a href="https://github.com/blacktop/docker-zeek/blob/master/docs/kafka.md">教程</a>复制粘贴的过程中碰到了奇怪的问题<code>can&#39;t update DNS cache</code>，尝试了一段时间，在搜寻解决方案的过程中发现<a href="https://github.com/blacktop/docker-zeek">docker-zeek</a>的作者对类似问题有过解答，表示正在与zeek-kafka plugin的作者进行联系，可能是因为版本更新过程中出现的问题</p>
+    <content><![CDATA[<p>记录一个又是在debug的下午，试图通过kafka将zeek解析pcap文件的结果导入Timescaledb，在开心的参照官方给出的使用docker构建zeek到kafka连接的<a href="https://github.com/blacktop/docker-zeek/blob/master/docs/kafka.md">教程</a>复制粘贴的过程中碰到了奇怪的问题<code>can&#39;t update DNS cache</code>，后来发现似乎只要删除命令中的<code>-P</code>就能解决问题</p>
 <p>在尝试解决问题的过程中，对docker进行了简单的学习，也尝试理解blacktop/kafka以及blacktop/zeek:kafka两个容器以及docker容器之间的通信机制，本文就docker的学习内容进行简单的整理</p>
 <a id="more"></a>
 
@@ -216,24 +216,347 @@
 <p>参考文章<a href="https://www.jianshu.com/p/21d66ca6115e">https://www.jianshu.com/p/21d66ca6115e</a></p>
 <h2 id="docker-run创建zeek以及kafka容器"><a href="#docker-run创建zeek以及kafka容器" class="headerlink" title="docker run创建zeek以及kafka容器"></a>docker run创建zeek以及kafka容器</h2><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> docker run -d \</span></span><br><span class="line">           --name kafka \</span><br><span class="line">           -p 9092:9092 \</span><br><span class="line">           -e KAFKA_ADVERTISED_HOST_NAME=localhost \</span><br><span class="line">           -e KAFKA_CREATE_TOPICS=&quot;zeek:1:1&quot; \</span><br><span class="line">           blacktop/kafka:0.11</span><br></pre></td></tr></table></figure>
 
-<p>上述命令表示使用 blacktop/kafka:0.11 镜像建立名为 kafka 的容器并置于后台运行，其中建立宿主机9092端口到容器9092端口的映射，其中9092是kafka默认端口，并且在之后给容器赋环境变量<code>KAFKA_ADVERTISED_HOST_NAME=localhost</code>和<code>KAFKA_CREATE_TOPICS=&quot;zeek:1:1&quot;</code></p>
+<p>上述命令表示使用blacktop/kafka:0.11镜像建立名为kafka的容器并置于后台运行，其中建立宿主机9092端口到容器9092端口的映射，其中9092是kafka默认端口，并且在之后给容器赋环境变量<code>KAFKA_ADVERTISED_HOST_NAME=localhost</code>和<code>KAFKA_CREATE_TOPICS=&quot;zeek:1:1&quot;</code></p>
 <p>直接运行此命令可以docker会自动pull blacktop/kafka:0.11镜像</p>
 <p>另外，通过<code>docker exec -it [容器名] /bin/bash</code>进入容器（在运行时添加-it选项则可以用attach命令直接进入）后输入env可查看环境变量</p>
 <figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> docker <span class="built_in">exec</span> -it kafka /bin/bash</span></span><br></pre></td></tr></table></figure>
 
 <p>上面的kafka容器作为源容器（被链接的容器），下面是基于blacktop/zeek:kafka镜像构建容器作为接收容器（主动去链接的容器）的命令</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> docker run --rm \</span></span><br><span class="line">         -v `pwd`:/pcap \</span><br><span class="line">         --link kafka:localhost \</span><br><span class="line">         blacktop/zeek:kafka -P -r heartbleed.pcap local &quot;Site::local_nets += &#123; 192.168.11.0/24 &#125;&quot;</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> docker run --rm \</span></span><br><span class="line">         -v `pwd`:/pcap \</span><br><span class="line">         --link kafka:localhost \</span><br><span class="line">         blacktop/zeek:kafka -r heartbleed.pcap local &quot;Site::local_nets += &#123; 192.168.11.0/24 &#125;&quot;</span><br></pre></td></tr></table></figure>
 
 <p>其中<code>--rm</code>表示退出时自动删除容器</p>
 <p><code>-v &#96;pwd&#96;:/pcap</code>表示挂载宿主机当前目录到容器内/pcap目录</p>
 <p><code>--link kafka:localhost</code>可以实现与kafka容器的链接，其中localhost是当前容器在kafka中的别名</p>
-<p>另外，在blacktop/zeek:kafka后的部分<code>-P -r heartbleed.pcap local &quot;Site::local_nets += &#123; 192.168.11.0/24 &#125;&quot;</code>是容器默认执行的命令，即在运行<code>docker run</code>命令时会在容器内运行<code>zeek -P -r heartbleed.pcap local &quot;Site::local_nets += &#123; 192.168.11.0/24 &#125;&quot;</code>，即在容器内通过读取pcap文件生成日志文件</p>
+<p>另外，在blacktop/zeek:kafka后的部分<code>-r heartbleed.pcap local &quot;Site::local_nets += &#123; 192.168.11.0/24 &#125;&quot;</code>是容器默认执行的命令，即在运行<code>docker run</code>命令时会在容器内运行<code>zeek -r heartbleed.pcap local &quot;Site::local_nets += &#123; 192.168.11.0/24 &#125;&quot;</code>，即在容器内通过读取pcap文件生成日志文件</p>
 <h1 id="TODO"><a href="#TODO" class="headerlink" title="TODO"></a>TODO</h1><p><a href="https://www.docker.com/">Docker</a> 是个划时代的开源项目，它彻底释放了计算虚拟化的威力，极大提高了应用的维护效率，降低了云计算应用开发的成本。后面有机会会继续对docker的学习整理。另外，从zeek到timescaledb的入库因为使用将log文件转为csv已经实现入库，使用docker以及kafka作为中转的方案也暂时搁置，这方面之后也希望有机会能彻底分析问题来源以及尝试用其他方法构建容器间的连接</p>
 ]]></content>
       <tags>
         <tag>Docker</tag>
         <tag>Zeek</tag>
         <tag>Kafka</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>ELK环境搭建&amp;流量分析</title>
+    <url>/2021/01/20/ELK%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA-%E6%B5%81%E9%87%8F%E5%88%86%E6%9E%90/</url>
+    <content><![CDATA[<p>记录使用Prometheus或ELK来搭建一个最基础的流量监控平台的过程（针对原始流量和Zeek的日志文件），对Prometheus和ELK做了一个简单的调研和整理，然后对配置过程中部分关键步骤进行一个整理</p>
+ <a id="more"></a>
+
+<p><a href="https://www.metricfire.com/blog/prometheus-vs-elk/?GAID=167038562.1611213247#span-stylefontweight-400Use-ELK-in-the-following-casesspan">https://www.metricfire.com/blog/prometheus-vs-elk/?GAID=167038562.1611213247#span-stylefontweight-400Use-ELK-in-the-following-casesspan</a></p>
+<h1 id="Prometheus-amp-ELK"><a href="#Prometheus-amp-ELK" class="headerlink" title="Prometheus &amp; ELK"></a>Prometheus &amp; ELK</h1><blockquote>
+<p>Prometheus和ELK都是当前流行的开源监控系统，两者各有特色</p>
+<p>Prometheus专攻指标，ELK专攻日志，大多数产品会同时使用两者</p>
+</blockquote>
+<h2 id="Prometheus"><a href="#Prometheus" class="headerlink" title="Prometheus"></a>Prometheus</h2><p>Prometheus是一个开源的监视和警报系统，可以从指定的目标源获取指标，主要针对需要跨多种来源来收集指标并进行警报的情况</p>
+<p><strong>优势</strong></p>
+<ul>
+<li><p>提供与Kubernetes高度集成的服务发现功能</p>
+</li>
+<li><p>其他部分的基础架构损坏不影响Prometheus的工作</p>
+</li>
+<li><p>配置简单，操作简单</p>
+</li>
+<li><p>对受监视服务的负载较低</p>
+</li>
+</ul>
+<p><strong>缺点</strong></p>
+<ul>
+<li>不提供可靠的长期数据存储、异常检测、水平扩展以及用户管理</li>
+</ul>
+<p>Prometheus一般配合Grafana进行可视化</p>
+<p>prometheus_client是一个python包，可用于很方便的创建Prometheus可以抓取的指标对象</p>
+<h2 id="ELK"><a href="#ELK" class="headerlink" title="ELK"></a>ELK</h2><p>ELK是Elasticsearch、Logstash、Kibana三个开源工具的组合，从而来对日志进行可视化的分析研究，主要针对结合大量日志数据来对特定事件进行分析的情况</p>
+<p>ELK一般结合filebeat来使用，filebeat将日志信息收集，发送到logstash进行处理后存入elasticsearch，然后通过kibana来进行可视化</p>
+<ul>
+<li><p>Filebeat：轻量级的日志采集器</p>
+</li>
+<li><p>Logstash：能从一个或多个来源采集、转换并将数据发送到Elasticsearch的数据处理管道</p>
+</li>
+<li><p>Elasticsearch：提供分布式数据存储的NoSQL数据库</p>
+</li>
+<li><p>Kibana：用于Elasticsearch日志的最佳可视化工具</p>
+</li>
+</ul>
+<p><strong>优势</strong></p>
+<ul>
+<li>能够对大量日志数据源进行分布式的管理</li>
+<li>支持纵向和水平的扩展，提供了一系列SDK</li>
+</ul>
+<p><strong>缺点</strong></p>
+<ul>
+<li>安装、设置和调试较为复杂</li>
+<li>需要额外的工作来保证可靠性</li>
+</ul>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><ul>
+<li>Prometheus用于指标收集，并根据这些指标来设计存储模式；ELK能获取所有类型的数据，更有效的保留数据用于后续分析，同时使用倒排索引的结构，保证快速的全文搜索</li>
+<li>ELK提供更长时间的数据存储，Prometheus需要结合其他存储方案来实现长期数据存储</li>
+</ul>
+<h1 id="zeek-Elastic-Stack"><a href="#zeek-Elastic-Stack" class="headerlink" title="zeek + Elastic Stack"></a>zeek + Elastic Stack</h1><p>使用docker来搭建ELK环境</p>
+<p><a href="https://github.com/deviantony/docker-elk">https://github.com/deviantony/docker-elk</a></p>
+<blockquote>
+<p>docker-compose up</p>
+</blockquote>
+<p>Docker Compose构建ELK环境</p>
+<blockquote>
+<p>docker-compose down -v</p>
+</blockquote>
+<p>暂停容器并清除数据</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">version:</span> <span class="string">&#x27;3.2&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="attr">services:</span></span><br><span class="line">  <span class="attr">elasticsearch:</span></span><br><span class="line">    <span class="attr">build:</span></span><br><span class="line">      <span class="attr">context:</span> <span class="string">elasticsearch/</span></span><br><span class="line">      <span class="attr">args:</span></span><br><span class="line">        <span class="attr">ELK_VERSION:</span> <span class="string">$ELK_VERSION</span></span><br><span class="line">    <span class="attr">volumes:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">type:</span> <span class="string">bind</span></span><br><span class="line">        <span class="attr">source:</span> <span class="string">./elasticsearch/config/elasticsearch.yml</span></span><br><span class="line">        <span class="attr">target:</span> <span class="string">/usr/share/elasticsearch/config/elasticsearch.yml</span></span><br><span class="line">        <span class="attr">read_only:</span> <span class="literal">true</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">type:</span> <span class="string">volume</span></span><br><span class="line">        <span class="attr">source:</span> <span class="string">elasticsearch</span></span><br><span class="line">        <span class="attr">target:</span> <span class="string">/usr/share/elasticsearch/data</span></span><br><span class="line">    <span class="attr">ports:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;9200:9200&quot;</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;9300:9300&quot;</span></span><br><span class="line">    <span class="attr">environment:</span></span><br><span class="line">      <span class="attr">ES_JAVA_OPTS:</span> <span class="string">&quot;-Xmx256m -Xms256m&quot;</span></span><br><span class="line">      <span class="attr">ELASTIC_PASSWORD:</span> <span class="string">changeme</span></span><br><span class="line">      <span class="comment"># Use single node discovery in order to disable production mode and avoid bootstrap checks.</span></span><br><span class="line">      <span class="comment"># see: https://www.elastic.co/guide/en/elasticsearch/reference/current/bootstrap-checks.html</span></span><br><span class="line">      <span class="attr">discovery.type:</span> <span class="string">single-node</span></span><br><span class="line">    <span class="attr">networks:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">elk</span></span><br><span class="line"></span><br><span class="line">  <span class="attr">logstash:</span></span><br><span class="line">    <span class="attr">build:</span></span><br><span class="line">      <span class="attr">context:</span> <span class="string">logstash/</span></span><br><span class="line">      <span class="attr">args:</span></span><br><span class="line">        <span class="attr">ELK_VERSION:</span> <span class="string">$ELK_VERSION</span></span><br><span class="line">    <span class="attr">volumes:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">type:</span> <span class="string">bind</span></span><br><span class="line">        <span class="attr">source:</span> <span class="string">./logstash/config/logstash.yml</span></span><br><span class="line">        <span class="attr">target:</span> <span class="string">/usr/share/logstash/config/logstash.yml</span></span><br><span class="line">        <span class="attr">read_only:</span> <span class="literal">true</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">type:</span> <span class="string">bind</span></span><br><span class="line">        <span class="attr">source:</span> <span class="string">./logstash/pipeline</span></span><br><span class="line">        <span class="attr">target:</span> <span class="string">/usr/share/logstash/pipeline</span></span><br><span class="line">        <span class="attr">read_only:</span> <span class="literal">true</span></span><br><span class="line">    <span class="attr">ports:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;5044:5044&quot;</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;5000:5000/tcp&quot;</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;5000:5000/udp&quot;</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;9600:9600&quot;</span></span><br><span class="line">    <span class="attr">environment:</span></span><br><span class="line">      <span class="attr">LS_JAVA_OPTS:</span> <span class="string">&quot;-Xmx256m -Xms256m&quot;</span></span><br><span class="line">    <span class="attr">networks:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">elk</span></span><br><span class="line">    <span class="attr">depends_on:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">elasticsearch</span></span><br><span class="line"></span><br><span class="line">  <span class="attr">kibana:</span></span><br><span class="line">    <span class="attr">build:</span></span><br><span class="line">      <span class="attr">context:</span> <span class="string">kibana/</span></span><br><span class="line">      <span class="attr">args:</span></span><br><span class="line">        <span class="attr">ELK_VERSION:</span> <span class="string">$ELK_VERSION</span></span><br><span class="line">    <span class="attr">volumes:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">type:</span> <span class="string">bind</span></span><br><span class="line">        <span class="attr">source:</span> <span class="string">./kibana/config/kibana.yml</span></span><br><span class="line">        <span class="attr">target:</span> <span class="string">/usr/share/kibana/config/kibana.yml</span></span><br><span class="line">        <span class="attr">read_only:</span> <span class="literal">true</span></span><br><span class="line">    <span class="attr">ports:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;5601:5601&quot;</span></span><br><span class="line">    <span class="attr">networks:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">elk</span></span><br><span class="line">    <span class="attr">depends_on:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">elasticsearch</span></span><br><span class="line"></span><br><span class="line"><span class="attr">networks:</span></span><br><span class="line">  <span class="attr">elk:</span></span><br><span class="line">    <span class="attr">driver:</span> <span class="string">bridge</span></span><br><span class="line"></span><br><span class="line"><span class="attr">volumes:</span></span><br><span class="line">  <span class="attr">elasticsearch:</span></span><br></pre></td></tr></table></figure>
+
+<p>上面是docker-compose的配置文件，ELK的配置文件分别在docker-elk的elasticsearch、logstash、kibana文件夹下的config文件夹下，三个容器通过使用docker建立的elk网络桥接起来，通过命令<code>docker network network ls</code>可以查看该网络</p>
+<p>ELK提供了通过filebeat来收集zeek日志的方法</p>
+<blockquote>
+<p>sudo docker run –rm –cap-add=NET_RAW –net=host -v <code>pwd</code>:/pcap:rw blacktop/zeek:elastic -i af_packet::eth0 local</p>
+</blockquote>
+<p>使用docker运行zeek来监听eth0网口的流量</p>
+<p>参考官方在<a href="http://localhost:5601/app/home#/tutorial/zeekLogs%E7%9A%84%E6%96%B9%E6%B3%95%E5%AE%89%E8%A3%85filebeat">http://localhost:5601/app/home#/tutorial/zeekLogs的方法安装filebeat</a></p>
+<p>其中，可以对zeek.yml进行修改</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="bullet">-</span> <span class="attr">module:</span> <span class="string">zeek</span></span><br><span class="line">  <span class="attr">capture_loss:</span></span><br><span class="line">    <span class="attr">enabled:</span> <span class="literal">false</span></span><br><span class="line">  <span class="attr">connection:</span></span><br><span class="line">    <span class="attr">enabled:</span> <span class="literal">true</span></span><br><span class="line">    <span class="attr">var.paths:</span> [<span class="string">&quot;[path]/conn.log&quot;</span>]</span><br></pre></td></tr></table></figure>
+
+<p>上面是一个简单的例子，对不需要的日志置false，为需要收集的日志配置响应日志所在的路径，ubuntu系统zeek采集实时流量的日志应在<code>/usr/local/zeek/logs/current</code>文件夹下，即<code>var.paths: [&quot;/usr/local/zeek/logs/current/conn.log&quot;]</code></p>
+<p>回到<a href="http://localhost:5601/app/home#/tutorial/zeekLogs%EF%BC%8C%E5%9C%A8%E6%9C%80%E5%90%8E%E4%B8%80%E6%AD%A5check">http://localhost:5601/app/home#/tutorial/zeekLogs，在最后一步check</a> data，成功则点击Zeek Overview进入kibana为zeek设计的界面</p>
+<p>侧边栏Kibana的Discover可以查看存储在elasticsearch的数据</p>
+<h2 id="离线分析的情况"><a href="#离线分析的情况" class="headerlink" title="离线分析的情况"></a>离线分析的情况</h2><p>使用logstash来做日志收集，logstash会根据事件传输的当前时间自动给事件加上@timestamp字段，但针对离线分析的情况，则需要手动指定时间戳</p>
+<p>通过使用filebeat来处理zeek能够自动将zeek的ts时间作为索引存入elasticsearch，以此为基础可以进行离线分析</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo filebeat setup</span><br><span class="line"></span><br><span class="line">sudo service filebeat start</span><br><span class="line"></span><br><span class="line">sudo docker run --rm -v `<span class="built_in">pwd</span>`:/pcap blacktop/zeek -r dns-traffic.20140409.pcap <span class="built_in">local</span> <span class="string">&quot;Site::local_nets += &#123; 192.168.11.0/24 &#125;&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h1 id="ELK监测网络流量"><a href="#ELK监测网络流量" class="headerlink" title="ELK监测网络流量"></a>ELK监测网络流量</h1><p><a href="https://www.elastic.co/guide/en/beats/packetbeat/current/packetbeat-installation-configuration.html">https://www.elastic.co/guide/en/beats/packetbeat/current/packetbeat-installation-configuration.html</a></p>
+<p>以ubuntu为例，使用命令</p>
+<blockquote>
+<p>curl -L -O <a href="https://artifacts.elastic.co/downloads/beats/packetbeat/packetbeat-7.10.2-amd64.deb">https://artifacts.elastic.co/downloads/beats/packetbeat/packetbeat-7.10.2-amd64.deb</a></p>
+</blockquote>
+<blockquote>
+<p>sudo dpkg -i packetbeat-7.10.2-amd64.deb</p>
+</blockquote>
+<p>配置/etc/packetbeat/packetbeat.yml</p>
+<p>修改kibana和elasticsearch的配置部分</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">setup.kibana:</span></span><br><span class="line">  <span class="attr">host:</span> <span class="string">&quot;localhost:5601&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="attr">output.elasticsearch:</span></span><br><span class="line">  <span class="attr">hosts:</span> [<span class="string">&quot;localhost:9200&quot;</span>]</span><br><span class="line">  <span class="attr">username:</span> <span class="string">&quot;elastic&quot;</span></span><br><span class="line">  <span class="attr">password:</span> <span class="string">&quot;changeme&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>在配置文件上加上嗅探类型</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">packetbeat.interfaces.type:</span> <span class="string">af_packet</span></span><br></pre></td></tr></table></figure>
+
+<p>选择网络接口，packetbeat提供了<code>packetbeat devices</code>的命令来查询</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">packetbeat.interfaces.device:</span> <span class="string">eth0</span></span><br></pre></td></tr></table></figure>
+
+<p>其他配置参考<a href="https://www.elastic.co/guide/en/beats/packetbeat/current/configuring-howto-packetbeat.html">https://www.elastic.co/guide/en/beats/packetbeat/current/configuring-howto-packetbeat.html</a></p>
+<p>类似于filebeat，使用下述命令启动服务</p>
+<blockquote>
+<p>packetbeat setup</p>
+</blockquote>
+<blockquote>
+<p>sudo service packetbeat start</p>
+</blockquote>
+<p>侧边栏Kibana的Discover可以查看存储在elasticsearch的数据</p>
+<p>可以在Dashboard处自定义图表来可视化监控到的流量</p>
+<h2 id="离线分析的情况-1"><a href="#离线分析的情况-1" class="headerlink" title="离线分析的情况"></a>离线分析的情况</h2><p><a href="https://www.elastic.co/cn/blog/analyzing-network-packets-with-wireshark-elasticsearch-and-kibana">https://www.elastic.co/cn/blog/analyzing-network-packets-with-wireshark-elasticsearch-and-kibana</a></p>
+<p><a href="https://harrunisk.github.io/2018-09-12-ElasticWifiAnalysisEn/">https://harrunisk.github.io/2018-09-12-ElasticWifiAnalysisEn/</a></p>
+<p>上面几种方案尝试了一下都没能成功将pcap导入elasticsearch，可能是哪里疏忽了</p>
+<p>使用tshark导出pcap包中流量的三元组</p>
+<blockquote>
+<p>tshark -r example.pcap -T fields -e frame.time -e ip.src -e ip.dst -e ip.proto -E header=y -E separator=, -E quote=d -E occurrence=f &gt; pcap.csv</p>
+</blockquote>
+<p><code>#TODO</code></p>
+<h1 id="kafka-amp-prometheus"><a href="#kafka-amp-prometheus" class="headerlink" title="kafka&amp;prometheus"></a>kafka&amp;prometheus</h1><p>之后尝试使用kafka和prometheus来进行流量分析，发现使用jmx_exporter和node_exporter prometheus只能采集到kafka本身的指标，官方似乎也没有提供将流量数据通过kafka导入prometheus的方案，具体原因<code>#TODO</code></p>
+<p><a href="https://www.metricfire.com/blog/kafka-monitoring-using-prometheus/?GAID=167038562.1611213247&amp;GAID=167038562.1611213247">https://www.metricfire.com/blog/kafka-monitoring-using-prometheus/?GAID=167038562.1611213247&amp;GAID=167038562.1611213247</a></p>
+<ul>
+<li>注意缩进</li>
+<li><code>sudo chown -R 472:472 grafana/</code></li>
+</ul>
+<p><a href="https://www.confluent.io/blog/kafka-client-cannot-connect-to-broker-on-aws-on-docker-etc/">https://www.confluent.io/blog/kafka-client-cannot-connect-to-broker-on-aws-on-docker-etc/</a></p>
+]]></content>
+      <tags>
+        <tag>Prometheus</tag>
+        <tag>ELK</tag>
+        <tag>流量分析</tag>
+        <tag>环境搭建</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>EffectiveJava学习笔记</title>
+    <url>/2021/04/06/EffectiveJava%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/</url>
+    <content><![CDATA[<p>这篇文章是对在EffectiveJava一书阅读过程中的要点和一些相关学习资料的整理，旨在对内容进行整理和辅助快速回忆。另外，因为EffectiveJava书中本来的结构比较松散，而且是以一条条建议的形式给出，对像我这样的初学者不容易一下子抓到重点，我在文章按照个人理解对结构进行了一些微调，个人感觉会容易理解一点</p>
+<a id="more"></a>
+
+<h1 id="EffectiveJava面向对象编程部分整理"><a href="#EffectiveJava面向对象编程部分整理" class="headerlink" title="EffectiveJava面向对象编程部分整理"></a>EffectiveJava面向对象编程部分整理</h1><p>里氏替换原则：一个类型的任何重要属性也将适用于它的子类型</p>
+<h2 id="创建对象"><a href="#创建对象" class="headerlink" title="创建对象"></a>创建对象</h2><p>在对类进行创建和实例化过程中的一些技巧</p>
+<h3 id="静态工厂"><a href="#静态工厂" class="headerlink" title="静态工厂"></a>静态工厂</h3><blockquote>
+<p>用静态工厂方法代替构造器</p>
+</blockquote>
+<p>使用静态工厂<a href="https://www.jianshu.com/p/ceb5ec8f1174">https://www.jianshu.com/p/ceb5ec8f1174</a></p>
+<ul>
+<li>静态工厂相较于构造器更加灵活，但不适用于需要子类化的情况（鼓励使用复合） 8</li>
+</ul>
+<h3 id="包含多个构造器参数的类"><a href="#包含多个构造器参数的类" class="headerlink" title="包含多个构造器参数的类"></a>包含多个构造器参数的类</h3><blockquote>
+<p>多个构造器参数时考虑使用构建器</p>
+</blockquote>
+<p>构建器（生成器）<a href="https://www.liaoxuefeng.com/wiki/1252599548343744/1281319155793953">https://www.liaoxuefeng.com/wiki/1252599548343744/1281319155793953</a></p>
+<ul>
+<li>重叠构造器模式在参数量较多的时候，代码会较难编写且难以阅读 10</li>
+<li>JavaBean模式在构造过程中可能处于不一致状态 11</li>
+</ul>
+<h3 id="仅可被实例化一次的类"><a href="#仅可被实例化一次的类" class="headerlink" title="仅可被实例化一次的类"></a>仅可被实例化一次的类</h3><blockquote>
+<p>用私有构造器或者枚举类型强化Singleton属性</p>
+</blockquote>
+<p>单例<a href="https://www.jianshu.com/p/eb30a388c5fc">https://www.jianshu.com/p/eb30a388c5fc</a></p>
+<ul>
+<li>单元素的枚举类型经常成为实现Singleton的最佳方法，但不适用于需要继承的场景 16</li>
+</ul>
+<h3 id="不希望被实例化的类"><a href="#不希望被实例化的类" class="headerlink" title="不希望被实例化的类"></a>不希望被实例化的类</h3><blockquote>
+<p>通过私有构造器强化不可实例化的能力</p>
+</blockquote>
+<ul>
+<li>编写只包含静态方法和静态域的工具类时，让该类包含一个私有的构造器来防止被实例化 17</li>
+<li>通过这种方法实现的工具类不可被子类化 18</li>
+</ul>
+<h3 id="需要引用底层资源的类"><a href="#需要引用底层资源的类" class="headerlink" title="需要引用底层资源的类"></a>需要引用底层资源的类</h3><blockquote>
+<p>优先考虑依赖注入来引用资源</p>
+</blockquote>
+<ul>
+<li>静态工具类和Singleton类不适合于需要引用底层资源的类 18</li>
+<li>依赖注入：当创建一个新的实例时，就将该资源传到构造器中 18</li>
+<li>依赖注入的对象具有不可变性 19</li>
+<li>依赖注入框架：Dagger Guice Spring 19</li>
+</ul>
+<h3 id="建议：避免创建不必要的类"><a href="#建议：避免创建不必要的类" class="headerlink" title="建议：避免创建不必要的类"></a>建议：避免创建不必要的类</h3><ul>
+<li>如果对象是不可变的，它就始终可以被重用 20</li>
+<li>要优先使用基本类型，注意无意识的自动装箱 22</li>
+</ul>
+<h3 id="创建型模式"><a href="#创建型模式" class="headerlink" title="创建型模式"></a>创建型模式</h3><p>创建型模式<a href="https://www.liaoxuefeng.com/wiki/1252599548343744/1281319090782242">https://www.liaoxuefeng.com/wiki/1252599548343744/1281319090782242</a></p>
+<p>创建型模式关注点是如何创建对象，其核心思想是要把对象的创建和使用相分离，这样使得两者能相对独立地变换</p>
+<p>创建型模式包括：</p>
+<ul>
+<li>工厂方法：Factory Method</li>
+<li>抽象工厂：Abstract Factory</li>
+<li>建造者：Builder</li>
+<li>原型：Prototype</li>
+<li>单例：Singleton</li>
+</ul>
+<h2 id="销毁对象"><a href="#销毁对象" class="headerlink" title="销毁对象"></a>销毁对象</h2><p>Java垃圾回收机制<a href="https://juejin.cn/post/6844904057602064391">https://juejin.cn/post/6844904057602064391</a></p>
+<p><a href="https://segmentfault.com/a/1190000023637649">https://segmentfault.com/a/1190000023637649</a></p>
+<p>垃圾回收机制保证在合适的时间清理不可到达的对象并整理相关联的存储空间，从而在一定程度降低了内存泄漏的风险</p>
+<h3 id="消除过期的对象引用"><a href="#消除过期的对象引用" class="headerlink" title="消除过期的对象引用"></a>消除过期的对象引用</h3><ul>
+<li>注意无意识的对象保持（过期引用）而不会被垃圾回收机制处理导致的内存泄漏 24</li>
+<li>一旦元素被释放掉，则该元素包含的任何对象引用都应该被清空 24</li>
+<li>注意缓存以及监听器和其他回调导致的内存泄漏 24</li>
+<li>Heap剖析工具 25</li>
+</ul>
+<h3 id="避免使用终结方法和清除方法"><a href="#避免使用终结方法和清除方法" class="headerlink" title="避免使用终结方法和清除方法"></a>避免使用终结方法和清除方法</h3><ul>
+<li>注重时间的任务不应该由终结方法或者清除方法来完成 26</li>
+<li>终结方法和清除方法两种合法途径 27<ul>
+<li>充当安全网</li>
+<li>回收本地对等体</li>
+</ul>
+</li>
+</ul>
+<h3 id="try-with-resources优先于try-finally"><a href="#try-with-resources优先于try-finally" class="headerlink" title="try-with-resources优先于try-finally"></a>try-with-resources优先于try-finally</h3><h2 id="类和接口"><a href="#类和接口" class="headerlink" title="类和接口"></a>类和接口</h2><h3 id="使类和成员的可访问性最小化"><a href="#使类和成员的可访问性最小化" class="headerlink" title="使类和成员的可访问性最小化"></a>使类和成员的可访问性最小化</h3><ul>
+<li>尽可能使每个类或者成员不被外界访问 66</li>
+<li>如果一个包级私有的顶层类（或者接口）只是在某一个类内部被用到，就应该考虑将其作为唯一使用它的那个类的私有嵌套类 66</li>
+<li>如果方法覆盖了超类的一个方法，子类的访问级别就不允许低于超类的访问级别（里氏替换原则） 67</li>
+<li>公有类的实例域决不能是公有的（静态域除作为常量的情况同理，而且该常量不能是可变对象的引用） 67</li>
+</ul>
+<h3 id="要在公有类中使用访问方法而非公有域"><a href="#要在公有类中使用访问方法而非公有域" class="headerlink" title="要在公有类中使用访问方法而非公有域"></a>要在公有类中使用访问方法而非公有域</h3><ul>
+<li>如果类需要在所在包之外进行访问，应该提供访问方法，避免直接暴露数据域 69</li>
+<li>如果类是包级私有的，或者是私有的嵌套类，直接暴露它的数据域没有本质的错误 70</li>
+</ul>
+<h3 id="使可变性最小化"><a href="#使可变性最小化" class="headerlink" title="使可变性最小化"></a>使可变性最小化</h3><ul>
+<li>不可变类真正唯一的缺点是，对于每个不同的值需要一个单独的对象，但可以提供一个公有的可变配套类 74</li>
+<li>除非有很好的理由让类变成可变的类，否则它就应该是可变的 76</li>
+<li>除非有令人信服的理由让域变成非final的，否则要使每个域都是 private final 的 76</li>
+</ul>
+<h3 id="复合优先于继承"><a href="#复合优先于继承" class="headerlink" title="复合优先于继承"></a>复合优先于继承</h3><ul>
+<li>继承实现了代码复用，但违背了封装原则。只有当两者确实存在”is-a”关系的时候，才适合用继承 81</li>
+<li>复合 转发 装饰器模式 79<ul>
+<li>复合：即不扩展现有类，而是在新的类中增加一个私有域，用来引用现有类的一个实例</li>
+<li>转发：新类中的每个实例方法都可以调用被包含的现有类实例中的方法</li>
+<li>通过复合和转发来避免继承过程中父类版本更新或者子类错误覆写方法导致的问题</li>
+<li>装饰器（Decorator）模式就是使用复合和转发实现在运行期动态给某个对象的实例增加功能的方法</li>
+<li>Guava为所有的集合接口提供了转发类</li>
+</ul>
+</li>
+</ul>
+<h3 id="设计继承并提供文档说明"><a href="#设计继承并提供文档说明" class="headerlink" title="设计继承并提供文档说明"></a>设计继承并提供文档说明</h3><ul>
+<li>待继承类必须说明所有可覆盖方法的自用性</li>
+<li><code>#TODO</code></li>
+</ul>
+<h3 id="接口优于抽象类"><a href="#接口优于抽象类" class="headerlink" title="接口优于抽象类"></a>接口优于抽象类</h3><p>模板方法<a href="https://www.liaoxuefeng.com/wiki/1252599548343744/1281319636041762">https://www.liaoxuefeng.com/wiki/1252599548343744/1281319636041762</a></p>
+<ul>
+<li><code>#TODO</code></li>
+</ul>
+<h3 id="为后代设计接口"><a href="#为后代设计接口" class="headerlink" title="为后代设计接口"></a>为后代设计接口</h3><ul>
+<li>缺省方法的声明包括一个缺省实现，这是给实现了该接口但没有实现默认方法的所有类使用的 90</li>
+<li>缺省方法的使用存在较大风险，谨慎设计接口 91</li>
+</ul>
+<h3 id="接口只用于定义类型"><a href="#接口只用于定义类型" class="headerlink" title="接口只用于定义类型"></a>接口只用于定义类型</h3><ul>
+<li>常量接口模式是对接口的不良使用 92</li>
+</ul>
+<h3 id="类层次优先于标签类"><a href="#类层次优先于标签类" class="headerlink" title="类层次优先于标签类"></a>类层次优先于标签类</h3><h3 id="静态成员类优先于非静态成员类"><a href="#静态成员类优先于非静态成员类" class="headerlink" title="静态成员类优先于非静态成员类"></a>静态成员类优先于非静态成员类</h3><ul>
+<li>静态成员类是外围类的一个静态成员 96</li>
+<li>如果成员类的每个实例都需要一个指向其外围实例的引用，就把成员类做成非静态的，否则做成静态的 98</li>
+<li><code>#TODO</code></li>
+</ul>
+<h3 id="限制源文件为单个顶级类"><a href="#限制源文件为单个顶级类" class="headerlink" title="限制源文件为单个顶级类"></a>限制源文件为单个顶级类</h3><h3 id="结构型模式"><a href="#结构型模式" class="headerlink" title="结构型模式"></a>结构型模式</h3><p>结构型模式<a href="https://www.liaoxuefeng.com/wiki/1252599548343744/1281319233388578">https://www.liaoxuefeng.com/wiki/1252599548343744/1281319233388578</a></p>
+<p>结构型模式主要涉及如何组合各种对象以便获得更好、更灵活的结构。虽然面向对象的继承机制提供了最基本的子类扩展父类的功能，但结构型模式不仅仅简单地使用继承，而更多地通过组合与运行期的动态组合来实现更灵活的功能</p>
+<p>结构型模式有：</p>
+<ul>
+<li>适配器</li>
+<li>桥接</li>
+<li>组合</li>
+<li>装饰器</li>
+<li>外观</li>
+<li>享元</li>
+<li>代理</li>
+</ul>
+<h2 id="继承自Object的通用方法"><a href="#继承自Object的通用方法" class="headerlink" title="继承自Object的通用方法"></a>继承自Object的通用方法</h2><p><code>#TODO</code></p>
+<h3 id="equals方法"><a href="#equals方法" class="headerlink" title="equals方法"></a>equals方法</h3><ul>
+<li>在希望实现<code>equals</code>方法的类中，不应该增加新的值组件 38</li>
+<li>首先使用<code>istanceof</code>操作符检查参数类型是否正确 41</li>
+<li>对于对象引用域，可以递归调用<code>equals</code>方法，<code>float</code>域可以使用静态<code>Float.compare</code>方法 41</li>
+<li>应该最先比较最有可能不一致的域，或者开销最低的域 42</li>
+<li>编写完成后，检查是否满足对称性、传递性和一致性 42</li>
+<li>使用AutoValue等框架自动生成<code>equals</code> <code>hashCode</code>等方法 44</li>
+</ul>
+<h3 id="hashCode方法"><a href="#hashCode方法" class="headerlink" title="hashCode方法"></a>hashCode方法</h3><ul>
+<li>每个覆盖了<code>equals</code>方法的类中，都必须覆盖<code>hashCode</code>方法 44</li>
+<li>相同的对象必须具有相同的散列码 44</li>
+<li>一般方案是对每个域计算<code>result = 31 * result + Type.hashCode(field_name)</code> 46</li>
+<li><code>Object.hash</code>一行代码，运行速度慢 47</li>
+<li>对于不可变类，考虑将散列码缓存在对象内部 47</li>
+</ul>
+<h3 id="toString方法"><a href="#toString方法" class="headerlink" title="toString方法"></a>toString方法</h3><ul>
+<li>希望始终覆盖<code>toString</code> 48</li>
+<li>对象在<code>println</code> <code>printf</code> 字符串联操作符以及<code>assert</code>或者被调试器打印出来时，会自动调用<code>toString</code> 48</li>
+<li><code>toString</code>方法应该返回对象中所有值得关注的内容 49</li>
+</ul>
+<h3 id="clone方法"><a href="#clone方法" class="headerlink" title="clone方法"></a>clone方法</h3><p><code>#TODO</code></p>
+<h3 id="Comparable接口"><a href="#Comparable接口" class="headerlink" title="Comparable接口"></a>Comparable接口</h3><ul>
+<li><p>强烈建议<code>(x.compareTo(y) == 0) == (x.equals(y))</code>（例外情况如<code>BigDecimal</code>） 59</p>
+</li>
+<li><p>Java 7 中，所有装箱基本类型的类中增加了静态的<code>Compare</code>方法（不建议使用<code>&lt;</code> <code>&gt;</code>） 61</p>
+</li>
+<li><p>Java 8 中，<code>Comparator</code>接口配置了一组比较器构造方法（简洁，额外的性能开销） 61</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Comparator&lt;PhoneNumber&gt; COMPARATOR = </span><br><span class="line">    	comparingInt((PhoneNumber pn)) -&gt; pn.areaCode)</span><br><span class="line">    	.thenComparingInt(pn -&gt; pn.prefix)</span><br><span class="line">    	.thenComparingInt(pn -&gt; pn.lineNum);</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">compareTo</span><span class="params">(PhoneNumber pn)</span></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> COMPARATOR.compare(<span class="keyword">this</span>, pn);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>实现对排序敏感的类时，都应该实现<code>Comparable</code>接口，以便分类、搜索和用在基于比较的集合中 63</p>
+</li>
+</ul>
+<h2 id="通用编程"><a href="#通用编程" class="headerlink" title="通用编程"></a>通用编程</h2><h3 id="局部变量作用域最小化"><a href="#局部变量作用域最小化" class="headerlink" title="局部变量作用域最小化"></a>局部变量作用域最小化</h3><ul>
+<li>在变量第一次使用的地方进行声明 219</li>
+<li><code>for</code>循环优先于<code>while</code>循环 220</li>
+<li>使方法小而集中 221</li>
+</ul>
+<h3 id="for-each循环"><a href="#for-each循环" class="headerlink" title="for-each循环"></a>for-each循环</h3><ul>
+<li>当可以选择时，<code>for-each</code>循环应该优先于<code>for</code>循环 224</li>
+<li><code>for-each</code>循环不会有性能损失，且隐藏了迭代器和索引变量，避免混乱和出错的可能 222</li>
+<li>编写表示一组元素的类型，应该坚决考虑实现<code>Iterabel</code>接口 224</li>
+</ul>
+<h3 id="类库"><a href="#类库" class="headerlink" title="类库"></a>类库</h3><ul>
+<li>需要完成一个工作时，首先考虑是否有对应的类库，优先使用类库 226</li>
+</ul>
+]]></content>
+      <tags>
+        <tag>Java</tag>
+        <tag>EffectiveJava</tag>
+        <tag>学习笔记</tag>
       </tags>
   </entry>
   <entry>
@@ -445,6 +768,116 @@
       </categories>
       <tags>
         <tag>TimescaleDB</tag>
+        <tag>时序数据库</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>一些联邦学习方向的调研</title>
+    <url>/2021/01/29/%E4%B8%80%E4%BA%9B%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0%E6%96%B9%E5%90%91%E7%9A%84%E8%B0%83%E7%A0%94/</url>
+    <content><![CDATA[<p>对联邦学习领域的一些问题或者研究方向进行了一个简单的调研和整理</p>
+ <a id="more"></a>
+
+<h1 id="联邦学习通信加速问题"><a href="#联邦学习通信加速问题" class="headerlink" title="联邦学习通信加速问题"></a>联邦学习通信加速问题</h1><p>From: 胡水海-联邦学习海量加密数据高效传输的探索</p>
+<h2 id="数据中心内场景"><a href="#数据中心内场景" class="headerlink" title="数据中心内场景"></a>数据中心内场景</h2><p>高速网络时代如何加速联邦学习通信</p>
+<h3 id="RDMA技术优化两点间通信"><a href="#RDMA技术优化两点间通信" class="headerlink" title="RDMA技术优化两点间通信"></a>RDMA技术优化两点间通信</h3><ul>
+<li>使用TCP协议吞吐量受限、延迟较大</li>
+<li>RDMA内核旁路使用硬件加速传输层<ul>
+<li>GPU-Direct-RDMA实现GPU与RMA之间的数据零拷贝</li>
+</ul>
+</li>
+</ul>
+<h3 id="动态参数聚合模型优化多点间通信"><a href="#动态参数聚合模型优化多点间通信" class="headerlink" title="动态参数聚合模型优化多点间通信"></a>动态参数聚合模型优化多点间通信</h3><h4 id="传统参数聚合模型"><a href="#传统参数聚合模型" class="headerlink" title="传统参数聚合模型"></a>传统参数聚合模型</h4><ul>
+<li>Parameter Server<ul>
+<li>PS容易出现链路瓶颈</li>
+</ul>
+</li>
+<li>Ring Allreduce<ul>
+<li>某一跳阻塞会导致整个聚合任务的停滞</li>
+</ul>
+</li>
+</ul>
+<h4 id="动态参数模型"><a href="#动态参数模型" class="headerlink" title="动态参数模型"></a>动态参数模型</h4><blockquote>
+<p>根据网络状态（物理拓扑、动态状态等）生成参数汇聚方案</p>
+</blockquote>
+<ul>
+<li>根据网络情况将两种模型结合起来</li>
+</ul>
+<h2 id="跨区域场景"><a href="#跨区域场景" class="headerlink" title="跨区域场景"></a>跨区域场景</h2><p>高延迟、高丢包率网络环境下如何加速联邦学习通信</p>
+<h3 id="机器学习专用的网络传输协议"><a href="#机器学习专用的网络传输协议" class="headerlink" title="机器学习专用的网络传输协议"></a>机器学习专用的网络传输协议</h3><ul>
+<li>物理距离增加，跨区域通信时间在联邦学习中的时间占比越来越大</li>
+<li>跨区域主干网具有高延迟、高丢包率等特征,丢包侦测与丢包恢复代价很大</li>
+<li>机器学习模型训练可以容忍一定的丢包率<ul>
+<li>目前模型训练大多采用随机梯度下降（SGD）方式通过多轮迭代进行,丢失一部分数据不影响训练算法找到模型收敛点</li>
+</ul>
+</li>
+<li>机器学习专用的网络传输协议 MLT</li>
+</ul>
+<h2 id="使用-sketch-加速联邦学习"><a href="#使用-sketch-加速联邦学习" class="headerlink" title="使用 sketch 加速联邦学习"></a>使用 sketch 加速联邦学习</h2><ul>
+<li><p>使用 sketch 加速联邦学习的核心思想就是利用 sketch 能够对数据进行压缩，但对数据的某些特性在一定<br>程度上进行保留，例如 Count Sketch 可以在较小的空间内存储大量的模型更新信息，并在一定程度上不影响<br>模型的最终训练效果，通过这种方式减少需要传输的数据量来减少传输的时间开销 </p>
+</li>
+<li><p>Fetchsgd: Communication-efficient federated learning with sketching 和 Fedsketch: Communication-efficient and private federated learning via sketching 就是两种通过将 sketch 和联邦学习结合来加速联邦学习的实现</p>
+</li>
+</ul>
+<h1 id="联邦学习隐私保护问题"><a href="#联邦学习隐私保护问题" class="headerlink" title="联邦学习隐私保护问题"></a>联邦学习隐私保护问题</h1><blockquote>
+<p>目标：实现隐私性的同时保证模型训练的效率和准确率</p>
+</blockquote>
+<ul>
+<li>sketches如何应用与联邦学习场景</li>
+<li>当前哪些sketches有利于保证隐私性和准确度</li>
+<li>如何利用当前sketches进一步提升隐私性</li>
+</ul>
+<h2 id="隐私性的定义"><a href="#隐私性的定义" class="headerlink" title="隐私性的定义"></a>隐私性的定义</h2><p>From: Enhancing the Privacy of Federated Learning with Sketching</p>
+<ul>
+<li>Level-0：无隐私性</li>
+<li>Level-1：原始数据保护<ul>
+<li>传统联邦学习</li>
+<li>模型更新信息（梯度）共享</li>
+</ul>
+</li>
+<li>Level-2：全局隐私<ul>
+<li>模型更新信息仅对汇聚节点（参数服务器）可见</li>
+</ul>
+</li>
+<li>Level-3：本地隐私<ul>
+<li>模型更新信息对所有其他节点不可见</li>
+</ul>
+</li>
+<li>Level-4：终极目标<ul>
+<li>包括用户信息、模型更新信息以及训练得到的模型对第三方都不可见</li>
+<li>对于所有参与者，整个系统是一个黑盒，仅持有对预测功能的接口</li>
+</ul>
+</li>
+</ul>
+<h2 id="保护数据隐私的多方计算方法"><a href="#保护数据隐私的多方计算方法" class="headerlink" title="保护数据隐私的多方计算方法"></a>保护数据隐私的多方计算方法</h2><h3 id="基于噪音的安全计算方法"><a href="#基于噪音的安全计算方法" class="headerlink" title="基于噪音的安全计算方法"></a>基于噪音的安全计算方法</h3><p>差分隐私，保护的是数据源中一点微小的改动导致的隐私泄露问题</p>
+<p>使用基于噪声的差分隐私方法的主要思想是，对计算过程用噪音干扰，让原始数据淹没在噪音中，而无法从得到的结果反推原始数据的细节</p>
+<p>比较常用的是加拉普拉斯噪音（Laplace noise）。由于拉普拉斯分布的数学性质正好与差分隐私的定义相契合</p>
+<p>该方法通常也要求数据满足一定的分布，这一点在现实中通常很难满足</p>
+<h3 id="非噪音的安全计算方法"><a href="#非噪音的安全计算方法" class="headerlink" title="非噪音的安全计算方法"></a>非噪音的安全计算方法</h3><p>混淆电路（Garbled Circuit）、同态加密（Homomorphic Encryption）和密钥分享（Secret Sharing）</p>
+<ul>
+<li>基于密码学的方法</li>
+<li>能够以准确值进行传输，但计算量和通讯开销会比较大</li>
+<li>联邦学习保障数据隐私的另一种一种常用方法是采用同态加密技术</li>
+</ul>
+<h4 id="同态加密"><a href="#同态加密" class="headerlink" title="同态加密"></a>同态加密</h4><ul>
+<li>同态加密是一种依赖数学计算复杂性的的加密算法,能让密文能够进行某种代数运算得到的仍是加密的<br>结果而且结果与明文进行运算后再进行加密的结果一致。</li>
+<li>同态加密包括部分同态（只针对加法或乘法有同态性质，即加法同态、乘法同态等）、层次同态（只支持有限次运算）以及全同态等,相较于差分隐私的方法，同态加密的计算开销要大得多,目前大多解决方案仍是使用效率较高的部分同态</li>
+<li>一般使用的同态加密算法为 PHE（多见为加法同态加密算法)），例如在 FATE 项目中使用的 Paillier 即为加法<br>同态加密算法，在联邦学习中，大多也采用加法的梯度聚合方式，各个数据孤岛在本地计算各自的模型更新<br>信息使用同态加密的算法进行加密后发送给参数服务器,参数服务器通过对密文直接采用基于加法或乘法的<br>聚合方式计算得到全局模型更新信息的密文形式，由于同态加密的特性，保证了此时解密得到的结果是正确<br>的全局模型更新信息，对模型进行更新,至此完成一轮的联邦学习过程</li>
+</ul>
+<h2 id="差分隐私-联邦学习"><a href="#差分隐私-联邦学习" class="headerlink" title="差分隐私+联邦学习"></a>差分隐私+联邦学习</h2><p>$$<br>\forall{S} , Pr[M(D_1)\in S]\leq e^{\epsilon} * Pr[M(D_2)\in S]<br>$$</p>
+<p>上式表示对于相似的数据集D1和D2，两者通过随机化机制M处理后得到的结果属于同一个M的输出结果集合S的概率接近于1</p>
+<ul>
+<li>方案1： 直接在模型更新信息中加入噪声</li>
+<li>方案2： Laplace噪声+Count-Min和Count（From: Efficient private statistics with succinct sketches）</li>
+<li>方案3： Count-Min or Count（From: Enhancing the privacy of federated learning with sketching）<ul>
+<li>模型空间远大于sketch的大小，count sketch可以满足差分隐私的条件</li>
+<li>否则需要hash算法的不可逆性来在一定程度上保证数据隐私</li>
+</ul>
+</li>
+</ul>
+]]></content>
+      <tags>
+        <tag>联邦学习</tag>
+        <tag>sketch</tag>
       </tags>
   </entry>
   <entry>
@@ -497,7 +930,7 @@
 <h2 id="算法说明"><a href="#算法说明" class="headerlink" title="算法说明"></a>算法说明</h2><ul>
 <li>在具体实现上，参考了FATE secureBoost，XGBoost，LightGBM等工程实现项目，使用直方图算法来收集各个Worker的梯度信息，并据此找到决策树对应各个节点的分裂点</li>
 </ul>
-<img src="图片1.png" alt="图片1" style="zoom: 40%;" />
+<img src="1.png" alt="图片1" style="zoom: 40%;" />
 
 <ul>
 <li><p>如上图所示，由Worker计算当前节点的训练数据的一阶和二阶梯度直方图，汇总到Server建立全局的直方图，据此可以计算得到节点的最佳分裂点</p>
@@ -507,7 +940,7 @@
 <li><p>考虑到在模拟环境下使用全部数据集来进行建模时间消耗过大，不利于后续模型调整，我们权衡之下，基于secureBoost算法实现使用了如下的方案</p>
 </li>
 </ul>
-<img src="图片2.png" alt="图片2" style="zoom:50%;" />
+<img src="2.png" alt="图片2" style="zoom:50%;" />
 
 <ul>
 <li>仅使用部分数据集来进行建模，并使用对每个Worker的数据集进行进一步划分重组来集成投票的方式来提升性能</li>
@@ -536,8 +969,8 @@
       </categories>
       <tags>
         <tag>机器学习</tag>
-        <tag>协作学习</tag>
         <tag>联邦学习</tag>
+        <tag>协作学习</tag>
         <tag>比赛经历</tag>
       </tags>
   </entry>
@@ -652,7 +1085,7 @@
 <h2 id="梯度直方图-amp-分裂点计算"><a href="#梯度直方图-amp-分裂点计算" class="headerlink" title="梯度直方图 &amp; 分裂点计算"></a>梯度直方图 &amp; 分裂点计算</h2><blockquote>
 <p>梯度直方图：对于一个树结点，扫描树结点上的所有训练样本，根据其特征值，将样本梯度累加到对应的直方图桶中（候选节点将特征的值域分割成n个桶）</p>
 </blockquote>
-<p><img src="histogram.png" alt="histogram"></p>
+<p><img src="f3_histogram.png" alt="f3_histogram"></p>
 <blockquote>
 <p>Histogram-based split finding for one feature</p>
 </blockquote>
@@ -660,7 +1093,7 @@
 <li><p><strong>计算梯度直方图：</strong> 从待处理树节点的队列中取出待处理的树节点，在Worker上，根据本节点的训练数据计算局部一阶和二阶梯度直方图，对于每个节点的所有特征都有 g 和 h 对应的两个直方图，直方图以bin_id（根据候选分裂点划分）为横坐标，g h 值作为纵坐标</p>
 </li>
 <li><p><strong>同步&amp;合并直方图：</strong> Worker将局部梯度直方图推送到参数服务器，PS节点在接收到Worker发送的局部梯度直方图后，根据梯度直方图对应的树节点，将其按照特征值和 bin_id 加到全局梯度直方图上</p>
-<p><img src="f4-LSGBDT.png" alt="f4-LSGBDT"></p>
+<p><img src="f4_SGBDT.png" alt="f4_LSGBDT"></p>
 <blockquote>
 <p>Workers construct local histograms for all features and aggregate into global ones.</p>
 </blockquote>
@@ -737,8 +1170,8 @@
 ]]></content>
       <tags>
         <tag>机器学习</tag>
-        <tag>协作学习</tag>
         <tag>联邦学习</tag>
+        <tag>协作学习</tag>
         <tag>决策树算法</tag>
       </tags>
   </entry>
