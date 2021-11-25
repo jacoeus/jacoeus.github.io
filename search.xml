@@ -1616,9 +1616,9 @@
 <p>在安装 ElasticSearch数据节点时，storageClass需要绑定现有的storageclass name</p>
 <figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl get sc # 获取storageclass</span><br></pre></td></tr></table></figure>
 
-<p><img src="/2021-11-17_17-46.png" alt="2021-11-17_17-46"></p>
+<p><img src="2021-11-17_17-46.png" alt="2021-11-17_17-46"></p>
 <p>修改yaml文件，将storageClassName改为查询到的storageclass name</p>
-<p><img src="/2021-11-17_17-48.png" alt="2021-11-17_17-48"></p>
+<p><img src="2021-11-17_17-48.png" alt="2021-11-17_17-48"></p>
 <figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">Changed password for user apm_system</span><br><span class="line">PASSWORD apm_system = 59XpXGX1aL03KH0HM2mD</span><br><span class="line"></span><br><span class="line">Changed password for user kibana_system</span><br><span class="line">PASSWORD kibana_system = PK2fN2LJsaekVFH1TRwU</span><br><span class="line"></span><br><span class="line">Changed password for user kibana</span><br><span class="line">PASSWORD kibana = PK2fN2LJsaekVFH1TRwU</span><br><span class="line"></span><br><span class="line">Changed password for user logstash_system</span><br><span class="line">PASSWORD logstash_system = sWAVHqVTFyf7GH0LVfE3</span><br><span class="line"></span><br><span class="line">Changed password for user beats_system</span><br><span class="line">PASSWORD beats_system = GM03x8QaZjnnrcgT7Qxc</span><br><span class="line"></span><br><span class="line">Changed password for user remote_monitoring_user</span><br><span class="line">PASSWORD remote_monitoring_user = lNZ8x3zy7i4PP7nv7Lc2</span><br><span class="line"></span><br><span class="line">Changed password for user elastic</span><br><span class="line">PASSWORD elastic = ZSlcbjyXGVQX2Sb1zWRl</span><br></pre></td></tr></table></figure>
 
 <p>注意将elastic用户名和密码添加到Kubernetes的Secret 对象中一步需要将password改为之前生成的最后一个密码，即上面的ZSlcbjyXGVQX2Sb1zWRl</p>
