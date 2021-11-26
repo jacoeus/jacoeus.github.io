@@ -378,15 +378,17 @@
 <a id="more"></a>
 
 <h1 id="面向对象编程部分整理"><a href="#面向对象编程部分整理" class="headerlink" title="面向对象编程部分整理"></a>面向对象编程部分整理</h1><p>里氏替换原则：一个类型的任何重要属性也将适用于它的子类型</p>
-<h3 id="创建对象"><a href="#创建对象" class="headerlink" title="创建对象"></a>创建对象</h3><p>在对类进行创建和实例化过程中的一些技巧</p>
-<h5 id="静态工厂"><a href="#静态工厂" class="headerlink" title="静态工厂"></a>静态工厂</h5><blockquote>
+<h2 id="创建对象"><a href="#创建对象" class="headerlink" title="创建对象"></a>创建对象</h2><p>在对类进行创建和实例化过程中的一些技巧</p>
+<p><strong>静态工厂</strong></p>
+<blockquote>
 <p>用静态工厂方法代替构造器</p>
 </blockquote>
 <p>使用静态工厂<a href="https://www.jianshu.com/p/ceb5ec8f1174">https://www.jianshu.com/p/ceb5ec8f1174</a></p>
 <ul>
 <li>静态工厂相较于构造器更加灵活，但不适用于需要子类化的情况（鼓励使用复合） 8</li>
 </ul>
-<h5 id="包含多个构造器参数的类"><a href="#包含多个构造器参数的类" class="headerlink" title="包含多个构造器参数的类"></a>包含多个构造器参数的类</h5><blockquote>
+<p><strong>包含多个构造器参数的类</strong></p>
+<blockquote>
 <p>多个构造器参数时考虑使用构建器</p>
 </blockquote>
 <p>构建器（生成器）<a href="https://www.liaoxuefeng.com/wiki/1252599548343744/1281319155793953">https://www.liaoxuefeng.com/wiki/1252599548343744/1281319155793953</a></p>
@@ -394,21 +396,24 @@
 <li>重叠构造器模式在参数量较多的时候，代码会较难编写且难以阅读 10</li>
 <li>JavaBean模式在构造过程中可能处于不一致状态 11</li>
 </ul>
-<h5 id="仅可被实例化一次的类"><a href="#仅可被实例化一次的类" class="headerlink" title="仅可被实例化一次的类"></a>仅可被实例化一次的类</h5><blockquote>
+<p><strong>仅可被实例化一次的类</strong></p>
+<blockquote>
 <p>用私有构造器或者枚举类型强化Singleton属性</p>
 </blockquote>
 <p>单例<a href="https://www.jianshu.com/p/eb30a388c5fc">https://www.jianshu.com/p/eb30a388c5fc</a></p>
 <ul>
 <li>单元素的枚举类型经常成为实现Singleton的最佳方法，但不适用于需要继承的场景 16</li>
 </ul>
-<h5 id="不希望被实例化的类"><a href="#不希望被实例化的类" class="headerlink" title="不希望被实例化的类"></a>不希望被实例化的类</h5><blockquote>
+<p><strong>不希望被实例化的类</strong></p>
+<blockquote>
 <p>通过私有构造器强化不可实例化的能力</p>
 </blockquote>
 <ul>
 <li>编写只包含静态方法和静态域的工具类时，让该类包含一个私有的构造器来防止被实例化 17</li>
 <li>通过这种方法实现的工具类不可被子类化 18</li>
 </ul>
-<h5 id="需要引用底层资源的类"><a href="#需要引用底层资源的类" class="headerlink" title="需要引用底层资源的类"></a>需要引用底层资源的类</h5><blockquote>
+<p><strong>需要引用底层资源的类</strong></p>
+<blockquote>
 <p>优先考虑依赖注入来引用资源</p>
 </blockquote>
 <ul>
@@ -417,11 +422,13 @@
 <li>依赖注入的对象具有不可变性 19</li>
 <li>依赖注入框架：Dagger Guice Spring 19</li>
 </ul>
-<h5 id="建议：避免创建不必要的类"><a href="#建议：避免创建不必要的类" class="headerlink" title="建议：避免创建不必要的类"></a>建议：避免创建不必要的类</h5><ul>
+<p><strong>建议：避免创建不必要的类</strong></p>
+<ul>
 <li>如果对象是不可变的，它就始终可以被重用 20</li>
 <li>要优先使用基本类型，注意无意识的自动装箱 22</li>
 </ul>
-<h5 id="创建型模式"><a href="#创建型模式" class="headerlink" title="创建型模式"></a>创建型模式</h5><p>创建型模式<a href="https://www.liaoxuefeng.com/wiki/1252599548343744/1281319090782242">https://www.liaoxuefeng.com/wiki/1252599548343744/1281319090782242</a></p>
+<p><strong>创建型模式</strong></p>
+<p>创建型模式<a href="https://www.liaoxuefeng.com/wiki/1252599548343744/1281319090782242">https://www.liaoxuefeng.com/wiki/1252599548343744/1281319090782242</a></p>
 <p>创建型模式关注点是如何创建对象，其核心思想是要把对象的创建和使用相分离，这样使得两者能相对独立地变换</p>
 <p>创建型模式包括：</p>
 <ul>
@@ -431,16 +438,18 @@
 <li>原型：Prototype</li>
 <li>单例：Singleton</li>
 </ul>
-<h3 id="销毁对象"><a href="#销毁对象" class="headerlink" title="销毁对象"></a>销毁对象</h3><p>Java垃圾回收机制<a href="https://juejin.cn/post/6844904057602064391">https://juejin.cn/post/6844904057602064391</a></p>
+<h2 id="销毁对象"><a href="#销毁对象" class="headerlink" title="销毁对象"></a>销毁对象</h2><p>Java垃圾回收机制<a href="https://juejin.cn/post/6844904057602064391">https://juejin.cn/post/6844904057602064391</a></p>
 <p><a href="https://segmentfault.com/a/1190000023637649">https://segmentfault.com/a/1190000023637649</a></p>
 <p>垃圾回收机制保证在合适的时间清理不可到达的对象并整理相关联的存储空间，从而在一定程度降低了内存泄漏的风险</p>
-<h5 id="消除过期的对象引用"><a href="#消除过期的对象引用" class="headerlink" title="消除过期的对象引用"></a>消除过期的对象引用</h5><ul>
+<p><strong>消除过期的对象引用</strong></p>
+<ul>
 <li>注意无意识的对象保持（过期引用）而不会被垃圾回收机制处理导致的内存泄漏 24</li>
 <li>一旦元素被释放掉，则该元素包含的任何对象引用都应该被清空 24</li>
 <li>注意缓存以及监听器和其他回调导致的内存泄漏 24</li>
 <li>Heap剖析工具 25</li>
 </ul>
-<h5 id="避免使用终结方法和清除方法"><a href="#避免使用终结方法和清除方法" class="headerlink" title="避免使用终结方法和清除方法"></a>避免使用终结方法和清除方法</h5><ul>
+<p><strong>避免使用终结方法和清除方法</strong></p>
+<ul>
 <li>注重时间的任务不应该由终结方法或者清除方法来完成 26</li>
 <li>终结方法和清除方法两种合法途径 27<ul>
 <li>充当安全网</li>
@@ -448,22 +457,27 @@
 </ul>
 </li>
 </ul>
-<h5 id="try-with-resources优先于try-finally"><a href="#try-with-resources优先于try-finally" class="headerlink" title="try-with-resources优先于try-finally"></a>try-with-resources优先于try-finally</h5><h3 id="类和接口"><a href="#类和接口" class="headerlink" title="类和接口"></a>类和接口</h3><h5 id="使类和成员的可访问性最小化"><a href="#使类和成员的可访问性最小化" class="headerlink" title="使类和成员的可访问性最小化"></a>使类和成员的可访问性最小化</h5><ul>
+<p><strong>try-with-resources优先于try-finally</strong></p>
+<h2 id="类和接口"><a href="#类和接口" class="headerlink" title="类和接口"></a>类和接口</h2><p><strong>使类和成员的可访问性最小化</strong></p>
+<ul>
 <li>尽可能使每个类或者成员不被外界访问 66</li>
 <li>如果一个包级私有的顶层类（或者接口）只是在某一个类内部被用到，就应该考虑将其作为唯一使用它的那个类的私有嵌套类 66</li>
 <li>如果方法覆盖了超类的一个方法，子类的访问级别就不允许低于超类的访问级别（里氏替换原则） 67</li>
 <li>公有类的实例域决不能是公有的（静态域除作为常量的情况同理，而且该常量不能是可变对象的引用） 67</li>
 </ul>
-<h5 id="要在公有类中使用访问方法而非公有域"><a href="#要在公有类中使用访问方法而非公有域" class="headerlink" title="要在公有类中使用访问方法而非公有域"></a>要在公有类中使用访问方法而非公有域</h5><ul>
+<p><strong>要在公有类中使用访问方法而非公有域</strong></p>
+<ul>
 <li>如果类需要在所在包之外进行访问，应该提供访问方法，避免直接暴露数据域 69</li>
 <li>如果类是包级私有的，或者是私有的嵌套类，直接暴露它的数据域没有本质的错误 70</li>
 </ul>
-<h5 id="使可变性最小化"><a href="#使可变性最小化" class="headerlink" title="使可变性最小化"></a>使可变性最小化</h5><ul>
+<p><strong>使可变性最小化</strong></p>
+<ul>
 <li>不可变类真正唯一的缺点是，对于每个不同的值需要一个单独的对象，但可以提供一个公有的可变配套类 74</li>
 <li>除非有很好的理由让类变成可变的类，否则它就应该是可变的 76</li>
 <li>除非有令人信服的理由让域变成非final的，否则要使每个域都是 private final 的 76</li>
 </ul>
-<h5 id="复合优先于继承"><a href="#复合优先于继承" class="headerlink" title="复合优先于继承"></a>复合优先于继承</h5><ul>
+<p><strong>复合优先于继承</strong></p>
+<ul>
 <li>继承实现了代码复用，但违背了封装原则。只有当两者确实存在”is-a”关系的时候，才适合用继承 81</li>
 <li>复合 转发 装饰器模式 79<ul>
 <li>复合：即不扩展现有类，而是在新的类中增加一个私有域，用来引用现有类的一个实例</li>
@@ -474,27 +488,35 @@
 </ul>
 </li>
 </ul>
-<h5 id="设计继承并提供文档说明"><a href="#设计继承并提供文档说明" class="headerlink" title="设计继承并提供文档说明"></a>设计继承并提供文档说明</h5><ul>
+<p><strong>设计继承并提供文档说明</strong></p>
+<ul>
 <li>待继承类必须说明所有可覆盖方法的自用性</li>
 <li><code>#TODO</code></li>
 </ul>
-<h5 id="接口优于抽象类"><a href="#接口优于抽象类" class="headerlink" title="接口优于抽象类"></a>接口优于抽象类</h5><p>模板方法<a href="https://www.liaoxuefeng.com/wiki/1252599548343744/1281319636041762">https://www.liaoxuefeng.com/wiki/1252599548343744/1281319636041762</a></p>
+<p><strong>接口优于抽象类</strong></p>
+<p>模板方法<a href="https://www.liaoxuefeng.com/wiki/1252599548343744/1281319636041762">https://www.liaoxuefeng.com/wiki/1252599548343744/1281319636041762</a></p>
 <ul>
 <li><code>#TODO</code></li>
 </ul>
-<h5 id="为后代设计接口"><a href="#为后代设计接口" class="headerlink" title="为后代设计接口"></a>为后代设计接口</h5><ul>
+<p><strong>为后代设计接口</strong></p>
+<ul>
 <li>缺省方法的声明包括一个缺省实现，这是给实现了该接口但没有实现默认方法的所有类使用的 90</li>
 <li>缺省方法的使用存在较大风险，谨慎设计接口 91</li>
 </ul>
-<h5 id="接口只用于定义类型"><a href="#接口只用于定义类型" class="headerlink" title="接口只用于定义类型"></a>接口只用于定义类型</h5><ul>
+<p><strong>接口只用于定义类型</strong></p>
+<ul>
 <li>常量接口模式是对接口的不良使用 92</li>
 </ul>
-<h5 id="类层次优先于标签类"><a href="#类层次优先于标签类" class="headerlink" title="类层次优先于标签类"></a>类层次优先于标签类</h5><h5 id="静态成员类优先于非静态成员类"><a href="#静态成员类优先于非静态成员类" class="headerlink" title="静态成员类优先于非静态成员类"></a>静态成员类优先于非静态成员类</h5><ul>
+<p><strong>类层次优先于标签类</strong></p>
+<p><strong>静态成员类优先于非静态成员类</strong></p>
+<ul>
 <li>静态成员类是外围类的一个静态成员 96</li>
 <li>如果成员类的每个实例都需要一个指向其外围实例的引用，就把成员类做成非静态的，否则做成静态的 98</li>
 <li><code>#TODO</code></li>
 </ul>
-<h5 id="限制源文件为单个顶级类"><a href="#限制源文件为单个顶级类" class="headerlink" title="限制源文件为单个顶级类"></a>限制源文件为单个顶级类</h5><h5 id="结构型模式"><a href="#结构型模式" class="headerlink" title="结构型模式"></a>结构型模式</h5><p>结构型模式<a href="https://www.liaoxuefeng.com/wiki/1252599548343744/1281319233388578">https://www.liaoxuefeng.com/wiki/1252599548343744/1281319233388578</a></p>
+<p><strong>限制源文件为单个顶级类</strong></p>
+<p><strong>结构型模式</strong></p>
+<p>结构型模式<a href="https://www.liaoxuefeng.com/wiki/1252599548343744/1281319233388578">https://www.liaoxuefeng.com/wiki/1252599548343744/1281319233388578</a></p>
 <p>结构型模式主要涉及如何组合各种对象以便获得更好、更灵活的结构。虽然面向对象的继承机制提供了最基本的子类扩展父类的功能，但结构型模式不仅仅简单地使用继承，而更多地通过组合与运行期的动态组合来实现更灵活的功能</p>
 <p>结构型模式有：</p>
 <ul>
@@ -506,8 +528,9 @@
 <li>享元</li>
 <li>代理</li>
 </ul>
-<h3 id="继承自Object的通用方法"><a href="#继承自Object的通用方法" class="headerlink" title="继承自Object的通用方法"></a>继承自Object的通用方法</h3><p><code>#TODO</code></p>
-<h5 id="equals方法"><a href="#equals方法" class="headerlink" title="equals方法"></a>equals方法</h5><ul>
+<h2 id="继承自Object的通用方法"><a href="#继承自Object的通用方法" class="headerlink" title="继承自Object的通用方法"></a>继承自Object的通用方法</h2><p><code>#TODO</code></p>
+<p><strong>equals方法</strong></p>
+<ul>
 <li>在希望实现<code>equals</code>方法的类中，不应该增加新的值组件 38</li>
 <li>首先使用<code>istanceof</code>操作符检查参数类型是否正确 41</li>
 <li>对于对象引用域，可以递归调用<code>equals</code>方法，<code>float</code>域可以使用静态<code>Float.compare</code>方法 41</li>
@@ -515,20 +538,24 @@
 <li>编写完成后，检查是否满足对称性、传递性和一致性 42</li>
 <li>使用AutoValue等框架自动生成<code>equals</code> <code>hashCode</code>等方法 44</li>
 </ul>
-<h5 id="hashCode方法"><a href="#hashCode方法" class="headerlink" title="hashCode方法"></a>hashCode方法</h5><ul>
+<p><strong>hashCode方法</strong></p>
+<ul>
 <li>每个覆盖了<code>equals</code>方法的类中，都必须覆盖<code>hashCode</code>方法 44</li>
 <li>相同的对象必须具有相同的散列码 44</li>
 <li>一般方案是对每个域计算<code>result = 31 * result + Type.hashCode(field_name)</code> 46</li>
 <li><code>Object.hash</code>一行代码，运行速度慢 47</li>
 <li>对于不可变类，考虑将散列码缓存在对象内部 47</li>
 </ul>
-<h5 id="toString方法"><a href="#toString方法" class="headerlink" title="toString方法"></a>toString方法</h5><ul>
+<p><strong>toString方法</strong></p>
+<ul>
 <li>希望始终覆盖<code>toString</code> 48</li>
 <li>对象在<code>println</code> <code>printf</code> 字符串联操作符以及<code>assert</code>或者被调试器打印出来时，会自动调用<code>toString</code> 48</li>
 <li><code>toString</code>方法应该返回对象中所有值得关注的内容 49</li>
 </ul>
-<h5 id="clone方法"><a href="#clone方法" class="headerlink" title="clone方法"></a>clone方法</h5><p><code>#TODO</code></p>
-<h5 id="Comparable接口"><a href="#Comparable接口" class="headerlink" title="Comparable接口"></a>Comparable接口</h5><ul>
+<p><strong>clone方法</strong></p>
+<p><code>#TODO</code></p>
+<p><strong>Comparable接口</strong></p>
+<ul>
 <li><p>强烈建议<code>(x.compareTo(y) == 0) == (x.equals(y))</code>（例外情况如<code>BigDecimal</code>） 59</p>
 </li>
 <li><p>Java 7 中，所有装箱基本类型的类中增加了静态的<code>Compare</code>方法（不建议使用<code>&lt;</code> <code>&gt;</code>） 61</p>
@@ -539,17 +566,20 @@
 <li><p>实现对排序敏感的类时，都应该实现<code>Comparable</code>接口，以便分类、搜索和用在基于比较的集合中 63</p>
 </li>
 </ul>
-<h3 id="通用编程"><a href="#通用编程" class="headerlink" title="通用编程"></a>通用编程</h3><h5 id="局部变量作用域最小化"><a href="#局部变量作用域最小化" class="headerlink" title="局部变量作用域最小化"></a>局部变量作用域最小化</h5><ul>
+<h2 id="通用编程"><a href="#通用编程" class="headerlink" title="通用编程"></a>通用编程</h2><p><strong>局部变量作用域最小化</strong></p>
+<ul>
 <li>在变量第一次使用的地方进行声明 219</li>
 <li><code>for</code>循环优先于<code>while</code>循环 220</li>
 <li>使方法小而集中 221</li>
 </ul>
-<h5 id="for-each循环"><a href="#for-each循环" class="headerlink" title="for-each循环"></a>for-each循环</h5><ul>
+<p><strong>for-each循环</strong></p>
+<ul>
 <li>当可以选择时，<code>for-each</code>循环应该优先于<code>for</code>循环 224</li>
 <li><code>for-each</code>循环不会有性能损失，且隐藏了迭代器和索引变量，避免混乱和出错的可能 222</li>
 <li>编写表示一组元素的类型，应该坚决考虑实现<code>Iterabel</code>接口 224</li>
 </ul>
-<h5 id="类库"><a href="#类库" class="headerlink" title="类库"></a>类库</h5><ul>
+<p><strong>类库</strong></p>
+<ul>
 <li>需要完成一个工作时，首先考虑是否有对应的类库，优先使用类库 226</li>
 </ul>
 ]]></content>
@@ -1618,7 +1648,7 @@
 <h1 id="运维环境搭建"><a href="#运维环境搭建" class="headerlink" title="运维环境搭建"></a>运维环境搭建</h1><p>将指标、日志以及调用链数据集中到elasticsearch以便后续分析</p>
 <p><a href="https://kubernetes.io/zh/docs/tasks/configure-pod-container/pull-image-private-registry/">https://kubernetes.io/zh/docs/tasks/configure-pod-container/pull-image-private-registry/</a></p>
 <p>环境搭建速度较慢时考虑使用本地镜像</p>
-<h3 id="Prometheus配置"><a href="#Prometheus配置" class="headerlink" title="Prometheus配置"></a>Prometheus配置</h3><p><a href="https://www.servicemesher.com/istio-handbook/practice/prometheus.html">https://www.servicemesher.com/istio-handbook/practice/prometheus.html</a></p>
+<h2 id="Prometheus配置"><a href="#Prometheus配置" class="headerlink" title="Prometheus配置"></a>Prometheus配置</h2><p><a href="https://www.servicemesher.com/istio-handbook/practice/prometheus.html">https://www.servicemesher.com/istio-handbook/practice/prometheus.html</a></p>
 <p>istio的sample/addons目录提供了prometheus的yaml文件，之前通过<code>kubectl apply -f samples/addons</code>已安装，可以直接<code>istioctl dashboard prometheus</code>进行观察</p>
 <figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">//进入prometheus所在pod</span><br><span class="line">//pod名通过kubectl get po -A命令查找并替换</span><br><span class="line">kubectl exec -it prometheus-7cb88b5945-8jbkf -n istio-system sh</span><br></pre></td></tr></table></figure>
 
@@ -1636,7 +1666,7 @@
 
 <p><a href="https://www.elastic.co/cn/what-is/prometheus-monitoring">https://www.elastic.co/cn/what-is/prometheus-monitoring</a></p>
 <p>将prometheus数据导出到elasticsearch</p>
-<h3 id="EFK配置"><a href="#EFK配置" class="headerlink" title="EFK配置"></a>EFK配置</h3><p><a href="https://www.servicemesher.com/istio-handbook/practice/efk.html">https://www.servicemesher.com/istio-handbook/practice/efk.html</a></p>
+<h2 id="EFK配置"><a href="#EFK配置" class="headerlink" title="EFK配置"></a>EFK配置</h2><p><a href="https://www.servicemesher.com/istio-handbook/practice/efk.html">https://www.servicemesher.com/istio-handbook/practice/efk.html</a></p>
 <figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 参考efk.yaml</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="comment"># Logging Namespace. All below are a part of this namespace.</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Namespace</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">logging</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="comment"># Elasticsearch Service</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Service</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"> <span class="attr">name:</span> <span class="string">elasticsearch</span></span><br><span class="line"> <span class="attr">namespace:</span> <span class="string">logging</span></span><br><span class="line"> <span class="attr">labels:</span></span><br><span class="line">   <span class="attr">app:</span> <span class="string">elasticsearch</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line"> <span class="attr">ports:</span></span><br><span class="line"> <span class="bullet">-</span> <span class="attr">port:</span> <span class="number">9200</span></span><br><span class="line">   <span class="attr">protocol:</span> <span class="string">TCP</span></span><br><span class="line">   <span class="attr">targetPort:</span> <span class="string">db</span></span><br><span class="line"> <span class="attr">selector:</span></span><br><span class="line">   <span class="attr">app:</span> <span class="string">elasticsearch</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="comment"># Elasticsearch Deployment</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">apps/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Deployment</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"> <span class="attr">name:</span> <span class="string">elasticsearch</span></span><br><span class="line"> <span class="attr">namespace:</span> <span class="string">logging</span></span><br><span class="line"> <span class="attr">labels:</span></span><br><span class="line">   <span class="attr">app:</span> <span class="string">elasticsearch</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line"> <span class="attr">replicas:</span> <span class="number">1</span></span><br><span class="line"> <span class="attr">selector:</span></span><br><span class="line">   <span class="attr">matchLabels:</span></span><br><span class="line">     <span class="attr">app:</span> <span class="string">elasticsearch</span></span><br><span class="line"> <span class="attr">template:</span></span><br><span class="line">   <span class="attr">metadata:</span></span><br><span class="line">     <span class="attr">labels:</span></span><br><span class="line">       <span class="attr">app:</span> <span class="string">elasticsearch</span></span><br><span class="line">     <span class="attr">annotations:</span></span><br><span class="line">       <span class="attr">sidecar.istio.io/inject:</span> <span class="string">&quot;false&quot;</span></span><br><span class="line">   <span class="attr">spec:</span></span><br><span class="line">     <span class="attr">containers:</span></span><br><span class="line">     <span class="bullet">-</span> <span class="attr">image:</span> <span class="string">zhangguanzhang/docker.elastic.co.elasticsearch.elasticsearch-oss:6.1.1</span></span><br><span class="line">       <span class="attr">name:</span> <span class="string">elasticsearch</span></span><br><span class="line">       <span class="attr">resources:</span></span><br><span class="line">         <span class="comment"># need more cpu upon initialization, therefore burstable class</span></span><br><span class="line">         <span class="attr">limits:</span></span><br><span class="line">           <span class="attr">cpu:</span> <span class="string">1000m</span></span><br><span class="line">         <span class="attr">requests:</span></span><br><span class="line">           <span class="attr">cpu:</span> <span class="string">100m</span></span><br><span class="line">       <span class="attr">env:</span></span><br><span class="line">         <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">discovery.type</span></span><br><span class="line">           <span class="attr">value:</span> <span class="string">single-node</span></span><br><span class="line">       <span class="attr">ports:</span></span><br><span class="line">       <span class="bullet">-</span> <span class="attr">containerPort:</span> <span class="number">9200</span></span><br><span class="line">         <span class="attr">name:</span> <span class="string">db</span></span><br><span class="line">         <span class="attr">protocol:</span> <span class="string">TCP</span></span><br><span class="line">       <span class="bullet">-</span> <span class="attr">containerPort:</span> <span class="number">9300</span></span><br><span class="line">         <span class="attr">name:</span> <span class="string">transport</span></span><br><span class="line">         <span class="attr">protocol:</span> <span class="string">TCP</span></span><br><span class="line">       <span class="attr">volumeMounts:</span></span><br><span class="line">       <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">elasticsearch</span></span><br><span class="line">         <span class="attr">mountPath:</span> <span class="string">/data</span></span><br><span class="line">     <span class="attr">imagePullSecrets:</span></span><br><span class="line">     <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">regcred</span></span><br><span class="line">     <span class="attr">volumes:</span></span><br><span class="line">     <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">elasticsearch</span></span><br><span class="line">       <span class="attr">emptyDir:</span> &#123;&#125;</span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="comment"># Fluentd Service</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Service</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"> <span class="attr">name:</span> <span class="string">fluentd-es</span></span><br><span class="line"> <span class="attr">namespace:</span> <span class="string">logging</span></span><br><span class="line"> <span class="attr">labels:</span></span><br><span class="line">   <span class="attr">app:</span> <span class="string">fluentd-es</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line"> <span class="attr">ports:</span></span><br><span class="line"> <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">fluentd-tcp</span></span><br><span class="line">   <span class="attr">port:</span> <span class="number">24224</span></span><br><span class="line">   <span class="attr">protocol:</span> <span class="string">TCP</span></span><br><span class="line">   <span class="attr">targetPort:</span> <span class="number">24224</span></span><br><span class="line"> <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">fluentd-udp</span></span><br><span class="line">   <span class="attr">port:</span> <span class="number">24224</span></span><br><span class="line">   <span class="attr">protocol:</span> <span class="string">UDP</span></span><br><span class="line">   <span class="attr">targetPort:</span> <span class="number">24224</span></span><br><span class="line"> <span class="attr">selector:</span></span><br><span class="line">   <span class="attr">app:</span> <span class="string">fluentd-es</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="comment"># Fluentd ConfigMap, contains config files.</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">ConfigMap</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">data:</span></span><br><span class="line"> <span class="attr">forward.input.conf:</span> <span class="string">|-</span></span><br><span class="line">   <span class="comment"># Takes the messages sent over TCP</span></span><br><span class="line">   <span class="string">&lt;source&gt;</span></span><br><span class="line">     <span class="string">@id</span> <span class="string">fluentd-containers.log</span></span><br><span class="line">     <span class="string">@type</span> <span class="string">tail</span></span><br><span class="line">     <span class="string">path</span> <span class="string">/var/log/containers/*.log</span></span><br><span class="line">     <span class="string">pos_file</span> <span class="string">/var/log/es-containers.log.pos</span></span><br><span class="line">     <span class="string">time_format</span> <span class="string">%Y-%m-%dT%H:%M:%S.%NZ</span></span><br><span class="line">     <span class="string">tag</span> <span class="string">raw.kubernetes.*</span></span><br><span class="line">     <span class="string">format</span> <span class="string">json</span></span><br><span class="line">     <span class="string">read_from_head</span> <span class="literal">false</span></span><br><span class="line">   <span class="string">&lt;/source&gt;</span></span><br><span class="line">   <span class="string">&lt;filter</span> <span class="string">**&gt;</span></span><br><span class="line">     <span class="string">@id</span> <span class="string">filter_concat</span></span><br><span class="line">     <span class="string">@type</span> <span class="string">concat</span></span><br><span class="line">     <span class="string">key</span> <span class="string">message</span></span><br><span class="line">     <span class="string">multiline_end_regexp</span> <span class="string">/\n$/</span></span><br><span class="line">     <span class="string">separator</span> <span class="string">&quot;&quot;</span></span><br><span class="line">   <span class="string">&lt;/filter&gt;</span></span><br><span class="line">   <span class="string">&lt;filter</span> <span class="string">**&gt;</span></span><br><span class="line">     <span class="string">@type</span> <span class="string">parser</span></span><br><span class="line">     <span class="string">format</span> <span class="string">json</span> <span class="comment"># apache2, nginx, etc...</span></span><br><span class="line">     <span class="string">key_name</span> <span class="string">log</span></span><br><span class="line">     <span class="string">reserve_data</span> <span class="literal">false</span></span><br><span class="line">   <span class="string">&lt;/filter&gt;</span></span><br><span class="line"> <span class="attr">output.conf:</span> <span class="string">|-</span></span><br><span class="line">   <span class="string">&lt;match</span> <span class="string">**&gt;</span></span><br><span class="line">     <span class="string">type</span> <span class="string">elasticsearch</span></span><br><span class="line">     <span class="string">log_level</span> <span class="string">info</span></span><br><span class="line">     <span class="string">include_tag_key</span> <span class="literal">true</span></span><br><span class="line">     <span class="string">host</span> <span class="string">elasticsearch</span></span><br><span class="line">     <span class="string">port</span> <span class="number">9200</span></span><br><span class="line">     <span class="string">logstash_format</span> <span class="literal">true</span></span><br><span class="line">     <span class="comment"># Set the chunk limits.</span></span><br><span class="line">     <span class="string">buffer_chunk_limit</span> <span class="string">2M</span></span><br><span class="line">     <span class="string">buffer_queue_limit</span> <span class="number">8</span></span><br><span class="line">     <span class="string">flush_interval</span> <span class="string">5s</span></span><br><span class="line">     <span class="comment"># Never wait longer than 5 minutes between retries.</span></span><br><span class="line">     <span class="string">max_retry_wait</span> <span class="number">30</span></span><br><span class="line">     <span class="comment"># Disable the limit on the number of retries (retry forever).</span></span><br><span class="line">     <span class="string">disable_retry_limit</span></span><br><span class="line">     <span class="comment"># Use multiple threads for processing.</span></span><br><span class="line">     <span class="string">num_threads</span> <span class="number">2</span></span><br><span class="line">   <span class="string">&lt;/match&gt;</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"> <span class="attr">name:</span> <span class="string">fluentd-es-config</span></span><br><span class="line"> <span class="attr">namespace:</span> <span class="string">logging</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">apps/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">DaemonSet</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"> <span class="attr">name:</span> <span class="string">fluentd-es</span></span><br><span class="line"> <span class="attr">namespace:</span> <span class="string">logging</span></span><br><span class="line"> <span class="attr">labels:</span></span><br><span class="line">   <span class="attr">app:</span> <span class="string">fluentd-es</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line"> <span class="attr">selector:</span></span><br><span class="line">   <span class="attr">matchLabels:</span></span><br><span class="line">     <span class="attr">app:</span> <span class="string">fluentd-es</span></span><br><span class="line"> <span class="attr">template:</span></span><br><span class="line">   <span class="attr">metadata:</span></span><br><span class="line">     <span class="attr">labels:</span></span><br><span class="line">       <span class="attr">app:</span> <span class="string">fluentd-es</span></span><br><span class="line">     <span class="attr">annotations:</span></span><br><span class="line">       <span class="attr">sidecar.istio.io/inject:</span> <span class="string">&quot;false&quot;</span></span><br><span class="line">   <span class="attr">spec:</span></span><br><span class="line">     <span class="attr">containers:</span></span><br><span class="line">     <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">fluentd-es</span></span><br><span class="line">       <span class="attr">image:</span> <span class="string">quay.io/fluentd_elasticsearch/fluentd:v3.0.2</span></span><br><span class="line">       <span class="attr">env:</span></span><br><span class="line">       <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">FLUENTD_ARGS</span></span><br><span class="line">         <span class="attr">value:</span> <span class="string">--no-supervisor</span> <span class="string">-q</span></span><br><span class="line">       <span class="attr">resources:</span></span><br><span class="line">         <span class="attr">limits:</span></span><br><span class="line">           <span class="attr">memory:</span> <span class="string">500Mi</span></span><br><span class="line">         <span class="attr">requests:</span></span><br><span class="line">           <span class="attr">cpu:</span> <span class="string">100m</span></span><br><span class="line">           <span class="attr">memory:</span> <span class="string">200Mi</span></span><br><span class="line">       <span class="attr">volumeMounts:</span></span><br><span class="line">       <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">varlog</span></span><br><span class="line">         <span class="attr">mountPath:</span> <span class="string">/var/log</span></span><br><span class="line">       <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">varlibdockercontainers</span></span><br><span class="line">         <span class="attr">mountPath:</span> <span class="string">/var/lib/docker/containers</span></span><br><span class="line">         <span class="attr">readOnly:</span> <span class="literal">true</span></span><br><span class="line">       <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">config-volume</span></span><br><span class="line">         <span class="attr">mountPath:</span> <span class="string">/etc/fluent/config.d</span></span><br><span class="line">     <span class="attr">terminationGracePeriodSeconds:</span> <span class="number">30</span></span><br><span class="line">     <span class="attr">volumes:</span></span><br><span class="line">     <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">varlog</span></span><br><span class="line">       <span class="attr">hostPath:</span></span><br><span class="line">         <span class="attr">path:</span> <span class="string">/var/log</span></span><br><span class="line">     <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">varlibdockercontainers</span></span><br><span class="line">       <span class="attr">hostPath:</span></span><br><span class="line">         <span class="attr">path:</span> <span class="string">/var/lib/docker/containers</span></span><br><span class="line">     <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">config-volume</span></span><br><span class="line">       <span class="attr">configMap:</span></span><br><span class="line">         <span class="attr">name:</span> <span class="string">fluentd-es-config</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="comment"># Kibana Service</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Service</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"> <span class="attr">name:</span> <span class="string">kibana</span></span><br><span class="line"> <span class="attr">namespace:</span> <span class="string">logging</span></span><br><span class="line"> <span class="attr">labels:</span></span><br><span class="line">   <span class="attr">app:</span> <span class="string">kibana</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line"> <span class="attr">ports:</span></span><br><span class="line"> <span class="bullet">-</span> <span class="attr">port:</span> <span class="number">5601</span></span><br><span class="line">   <span class="attr">protocol:</span> <span class="string">TCP</span></span><br><span class="line">   <span class="attr">targetPort:</span> <span class="string">ui</span></span><br><span class="line"> <span class="attr">selector:</span></span><br><span class="line">   <span class="attr">app:</span> <span class="string">kibana</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="comment"># Kibana Deployment</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">apps/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Deployment</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"> <span class="attr">name:</span> <span class="string">kibana</span></span><br><span class="line"> <span class="attr">namespace:</span> <span class="string">logging</span></span><br><span class="line"> <span class="attr">labels:</span></span><br><span class="line">   <span class="attr">app:</span> <span class="string">kibana</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line"> <span class="attr">replicas:</span> <span class="number">1</span></span><br><span class="line"> <span class="attr">selector:</span></span><br><span class="line">   <span class="attr">matchLabels:</span></span><br><span class="line">     <span class="attr">app:</span> <span class="string">kibana</span></span><br><span class="line"> <span class="attr">template:</span></span><br><span class="line">   <span class="attr">metadata:</span></span><br><span class="line">     <span class="attr">labels:</span></span><br><span class="line">       <span class="attr">app:</span> <span class="string">kibana</span></span><br><span class="line">     <span class="attr">annotations:</span></span><br><span class="line">       <span class="attr">sidecar.istio.io/inject:</span> <span class="string">&quot;false&quot;</span></span><br><span class="line">   <span class="attr">spec:</span></span><br><span class="line">     <span class="attr">containers:</span></span><br><span class="line">     <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">kibana</span></span><br><span class="line">       <span class="attr">image:</span> <span class="string">zhangguanzhang/docker.elastic.co.kibana.kibana-oss:6.1.1</span></span><br><span class="line">       <span class="attr">resources:</span></span><br><span class="line">         <span class="comment"># need more cpu upon initialization, therefore burstable class</span></span><br><span class="line">         <span class="attr">limits:</span></span><br><span class="line">           <span class="attr">cpu:</span> <span class="string">1000m</span></span><br><span class="line">         <span class="attr">requests:</span></span><br><span class="line">           <span class="attr">cpu:</span> <span class="string">100m</span></span><br><span class="line">       <span class="attr">env:</span></span><br><span class="line">         <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">ELASTICSEARCH_URL</span></span><br><span class="line">           <span class="attr">value:</span> <span class="string">http://elasticsearch:9200</span></span><br><span class="line">       <span class="attr">ports:</span></span><br><span class="line">       <span class="bullet">-</span> <span class="attr">containerPort:</span> <span class="number">5601</span></span><br><span class="line">         <span class="attr">name:</span> <span class="string">ui</span></span><br><span class="line">         <span class="attr">protocol:</span> <span class="string">TCP</span></span><br><span class="line">     <span class="attr">imagePullSecrets:</span></span><br><span class="line">     <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">regcred</span></span><br></pre></td></tr></table></figure>
 
 <figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">//具体设置参数的位置需要参考demo.yaml，1.10版本默认使用meshConfig.accessLogFile为/dev/stdout</span><br><span class="line">istioctl manifest apply --set profile=demo --set values.global.proxy.accessLogFile=&quot;/dev/stdout&quot;</span><br></pre></td></tr></table></figure>
@@ -1668,7 +1698,7 @@
 </ol>
 <p>后续需要对 <code>Fluentd</code> 进行细致的配置。如果用于生产环境，可以前往 Kubernetes 官方 github 仓库找到完整的 <code>EFK</code> 配置来进行部署：</p>
 <p><a href="https://github.com/kubernetes/kubernetes/tree/master/cluster/addons/fluentd-elasticsearch">https://github.com/kubernetes/kubernetes/tree/master/cluster/addons/fluentd-elasticsearch</a></p>
-<h3 id="Jaeger配置"><a href="#Jaeger配置" class="headerlink" title="Jaeger配置"></a>Jaeger配置</h3><p><a href="https://www.servicemesher.com/istio-handbook/practice/jaeger.html">https://www.servicemesher.com/istio-handbook/practice/jaeger.html</a></p>
+<h2 id="Jaeger配置"><a href="#Jaeger配置" class="headerlink" title="Jaeger配置"></a>Jaeger配置</h2><p><a href="https://www.servicemesher.com/istio-handbook/practice/jaeger.html">https://www.servicemesher.com/istio-handbook/practice/jaeger.html</a></p>
 <figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl apply -f samples/addons/jaeger.yaml</span><br></pre></td></tr></table></figure>
 
 <figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">istioctl dashboard jaeger</span><br></pre></td></tr></table></figure>
@@ -1755,20 +1785,15 @@
 <p><img src="2021-11-17_17-46.png" alt="2021-11-17_17-46"></p>
 <p>修改yaml文件，将storageClassName改为查询到的storageclass name</p>
 <p><img src="2021-11-17_17-48.png" alt="2021-11-17_17-48"></p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">Changed password for user apm_system</span><br><span class="line">PASSWORD apm_system = 59XpXGX1aL03KH0HM2mD</span><br><span class="line"></span><br><span class="line">Changed password for user kibana_system</span><br><span class="line">PASSWORD kibana_system = PK2fN2LJsaekVFH1TRwU</span><br><span class="line"></span><br><span class="line">Changed password for user kibana</span><br><span class="line">PASSWORD kibana = PK2fN2LJsaekVFH1TRwU</span><br><span class="line"></span><br><span class="line">Changed password for user logstash_system</span><br><span class="line">PASSWORD logstash_system = sWAVHqVTFyf7GH0LVfE3</span><br><span class="line"></span><br><span class="line">Changed password for user beats_system</span><br><span class="line">PASSWORD beats_system = GM03x8QaZjnnrcgT7Qxc</span><br><span class="line"></span><br><span class="line">Changed password for user remote_monitoring_user</span><br><span class="line">PASSWORD remote_monitoring_user = lNZ8x3zy7i4PP7nv7Lc2</span><br><span class="line"></span><br><span class="line">Changed password for user elastic</span><br><span class="line">PASSWORD elastic = ZSlcbjyXGVQX2Sb1zWRl</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">Changed password for user apm_system</span><br><span class="line">PASSWORD apm_system = YYQLcrtsKSS13Pe4HMKe</span><br><span class="line"></span><br><span class="line">Changed password for user kibana_system</span><br><span class="line">PASSWORD kibana_system = qVWxu57Shzrwk2yXV2Zk</span><br><span class="line"></span><br><span class="line">Changed password for user kibana</span><br><span class="line">PASSWORD kibana = qVWxu57Shzrwk2yXV2Zk</span><br><span class="line"></span><br><span class="line">Changed password for user logstash_system</span><br><span class="line">PASSWORD logstash_system = m22sryO0Teyj9LuzKjAI</span><br><span class="line"></span><br><span class="line">Changed password for user beats_system</span><br><span class="line">PASSWORD beats_system = SJ9RM32fsITonFOhYiB0</span><br><span class="line"></span><br><span class="line">Changed password for user remote_monitoring_user</span><br><span class="line">PASSWORD remote_monitoring_user = vxYJTnQjAba9u7kyiiuA</span><br><span class="line"></span><br><span class="line">Changed password for user elastic</span><br><span class="line">PASSWORD elastic = nwT9nh83KTZw1RoMjxDo</span><br></pre></td></tr></table></figure>
 
-<p>注意将elastic用户名和密码添加到Kubernetes的Secret 对象中一步需要将password改为之前生成的最后一个密码，即上面的ZSlcbjyXGVQX2Sb1zWRl</p>
+<p>注意将elastic用户名和密码添加到Kubernetes的Secret 对象中一步需要将password改为之前生成的最后一个密码，即上面的nwT9nh83KTZw1RoMjxDo</p>
 <figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl logs -f -n elastic $(kubectl get pods -n elastic | grep kibana | sed -n 1p | awk &#x27;&#123;print $1&#125;&#x27;) | grep &quot;Status changed from yellow to green&quot;</span><br><span class="line"></span><br><span class="line">kubectl get svc kibana -n elastic</span><br></pre></td></tr></table></figure>
 
-<p>获取elastic service的CLUSTER-IP，通过CLUSTER-IP:5601访问Kibana可视化界面，登录使用elastic作为用户名和之前获取的ZSlcbjyXGVQX2Sb1zWRl作为密码</p>
+<p>获取elastic service的CLUSTER-IP，通过CLUSTER-IP:5601访问Kibana可视化界面，登录使用elastic作为用户名和之前获取的nwT9nh83KTZw1RoMjxDo作为密码</p>
 <ul>
 <li>tips：pod创建出现ImagePullBackOff时，很可能时镜像拉不下来，可以考虑在dockerhub搜索对于的镜像，拉下来后使用<code>docker tag</code>命令修改标签，或者直接在yaml里直接改image对于的地址</li>
 </ul>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">Changed password for user apm_system</span><br><span class="line">PASSWORD apm_system = YYQLcrtsKSS13Pe4HMKe</span><br><span class="line"></span><br><span class="line">Changed password for user kibana_system</span><br><span class="line">PASSWORD kibana_system = qVWxu57Shzrwk2yXV2Zk</span><br><span class="line"></span><br><span class="line">Changed password for user kibana</span><br><span class="line">PASSWORD kibana = qVWxu57Shzrwk2yXV2Zk</span><br><span class="line"></span><br><span class="line">Changed password for user logstash_system</span><br><span class="line">PASSWORD logstash_system = m22sryO0Teyj9LuzKjAI</span><br><span class="line"></span><br><span class="line">Changed password for user beats_system</span><br><span class="line">PASSWORD beats_system = SJ9RM32fsITonFOhYiB0</span><br><span class="line"></span><br><span class="line">Changed password for user remote_monitoring_user</span><br><span class="line">PASSWORD remote_monitoring_user = vxYJTnQjAba9u7kyiiuA</span><br><span class="line"></span><br><span class="line">Changed password for user elastic</span><br><span class="line">PASSWORD elastic = nwT9nh83KTZw1RoMjxDo</span><br></pre></td></tr></table></figure>
-
-<p>minikube tunnel</p>
-<p>./sbin/start-master.sh </p>
-<p>./bin/spark-class org.apache.spark.deploy.worker.Worker spark://tzy-ThinkPad-X390:7077</p>
 ]]></content>
       <tags>
         <tag>AIOps</tag>
