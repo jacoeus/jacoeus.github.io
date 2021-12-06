@@ -781,7 +781,7 @@
 </li>
 <li><p>多周期解耦，分离出不同层次的周期性，并进行排序，优先表现更显著的周期分量</p>
 </li>
-<li><p>单周期检测，</p>
+<li><p>单周期检测，根据周期分量生成周期候选并验证，计算周期长度</p>
 </li>
 </ol>
 <h1 id="预处理"><a href="#预处理" class="headerlink" title="预处理"></a>预处理</h1><ul>
@@ -813,13 +813,13 @@
 </ul>
 <p>文章使用的Daubechies MODWT即是基于<a href="https://zh.wikipedia.org/wiki/%E5%A4%9A%E8%B4%9D%E8%A5%BF%E5%B0%8F%E6%B3%A2">多贝西小波</a>的一种MODWT方案</p>
 <p><img src="fig2.png" alt="fig2"></p>
-<p>周期分解过程大致如图，对照<a href="https://zhuanlan.zhihu.com/p/69956002">Mallet算法</a>还是有很多相通之处的，通过 j=1 层小波过滤器wavelet filter $h_{1,l}$ 分离高频分量，将高频分量即周期在 [2,4] 的部分分离成 $w_{1,t}$ ；缩放过滤器scaling filter $g_{1,l}$ 分离出低频分量，用于第二层的小波分解<br>$$<br>w_{j,t} = \sum_{l=0}^{L_j-1}h_{j,l}y_{t-l mod N}^{‘}, L_j=(2^j-1)(L_1-1)+1 \qquad (1) \\<br>v_{j,t} = \sum_{l=0}^{L_j-1}gh_{j,l}y_{t-l mod N}^{‘}, L_j=(2^j-1)(L_1-1)+1 \qquad (2)<br>$$<br>其中 $L_1$ 是多贝西小波（系数）的长度，上式(1)表示某一时刻的第 j 层小波 t 时刻的值由 $(t-L_j,t]$ 的时间序列与小波过滤器乘积累加的结果，即小波系数wavelet coefficient，从而实现 $1/2^{j+1} \leq |f| \leq 1/2^j$ 的带宽过滤，从而分离在此频率范围的周期分量</p>
+<p>周期分解过程大致如图，对照<a href="https://zhuanlan.zhihu.com/p/69956002">Mallet算法</a>还是有很多相通之处的，通过 j=1 层小波过滤器wavelet filter $h_{1,l}$ 分离高频分量，将高频分量即周期在 [2,4] 的部分分离成 $w_{1,t}$ ；缩放过滤器scaling filter $g_{1,l}$ 分离出低频分量，用于第二层的小波分解<br>$$<br>\begin{align}<br>w_{j,t} = \sum_{l=0}^{L_j-1}h_{j,l}y_{t-l mod N}^{‘}, L_j=(2^j-1)(L_1-1)+1 \qquad (1)\\<br>v_{j,t} = \sum_{l=0}^{L_j-1}gh_{j,l}y_{t-l mod N}^{‘}, L_j=(2^j-1)(L_1-1)+1 \qquad (2)<br>\end{align}<br>$$<br>其中 $L_1$ 是多贝西小波（系数）的长度，上式(1)表示某一时刻的第 j 层小波 t 时刻的值由 $(t-L_j,t]$ 的时间序列与小波过滤器乘积累加的结果，即小波系数wavelet coefficient，从而实现 $1/2^{j+1} \leq |f| \leq 1/2^j$ 的带宽过滤，从而分离在此频率范围的周期分量</p>
 <blockquote>
 <p>A wavelet coefficient is the scalar product between a function (your observation) and a basis function, the wavelet. In other words, it is the “coordinate” of your function on this wavelet if you do an orthogonal projection.</p>
 </blockquote>
 <p><strong>Robust Unbiased Wavelet Variance</strong></p>
 <p>除了多周期解耦，MODWT的另外一个优势在于其对应的小波方差估计corresponding wavelet variance estimation能够辅助在频带中定位周期分量，其实际上也类似于一个<a href="https://zh.wikipedia.org/wiki/%E8%B0%B1%E5%AF%86%E5%BA%A6">功率谱密度</a>PSD估计器。</p>
-<p>根据小波方差，可以得到各个周期分量内包含单个周期的可能排序，从而优先输出最重要的周期分量。这里应该主要通过判断该周期分量是更稳态的则该周期分量更重要，因为当时间序列是稳态的时满足 $\hat{\sigma}<em>{y^{‘}}^2=\sum</em>{j=1}^{\infin}\hat{\sigma}_{w_j}^2$ ，所以这里进行排名时更期望更大的 $\hat{\sigma}_{w_j}^2$ 。</p>
+<p>根据小波方差，可以得到各个周期分量内包含单个周期的可能排序，从而优先输出最重要的周期分量。这里应该主要通过判断该周期分量是更稳态的则该周期分量更重要，因为当时间序列是稳态的时满足 $\hat{\sigma}_{y^{‘}}^2=\sum_{j=1}^{\infty}\hat{\sigma}_{w_j}^2$ ，所以这里进行排名时更期望更大的 $\hat{\sigma}_{w_j}^2$ 。</p>
 <p>这里RobustPeriod进一步使用更鲁棒高效的双权中位方差biweight midvariance来计算小波方差，因为结果近似于the integral of PSD at corresponding nominal octave passband，为了加速计算过程进行了替代。</p>
 <h1 id="鲁棒的单周期检测"><a href="#鲁棒的单周期检测" class="headerlink" title="鲁棒的单周期检测"></a>鲁棒的单周期检测</h1><p><strong>Robust Single Periodicity Detection</strong></p>
 <p>对周期分量使用鲁棒的基于Huber-Periodogram的Fisher’s Test来生成周期候选</p>
@@ -839,7 +839,7 @@
 </ul>
 <p><strong>Robust Huber-Periodogram based ACF for Validating Periodicity Candidates</strong></p>
 <p>在这里对上一步从小波系数中获取到周期候选进行ACF峰值检测来验证以保证结果准确性（Fisher’s test的结果会受频谱泄露等的影响），ACF常规方案 $ACF(t)=\frac{1}{(N-t)\delta_w^2}\sum_{n=0}^{N-t-1}w_nw_{n+t},t=0,1,…,N-1$ ，其中$\delta_w$ 是 $w_t$ 的样本方差，但该方案对离群点不够鲁棒且复杂度是 $O(N^2)$。</p>
-<p>RobustPeriod使用Huber-periodogram的输出来建立了一个 $O(NlogN)$的鲁棒的ACF方案，具体参见论文<br>$$<br>HuberACF(t)=\frac{p_t}{(N-t)p_0},t=0,1,…,N-1<br>\p_t=\frac{1}{\sqrt{N^{‘}}}\sum_{k=0}^{N^{‘}-1}\bar{P_k}e^{i2\pi kt/N^{‘}}<br>$$<br>对HuberACF结果的峰值进行检测，计算峰值超过阈值的峰之间距离的中位数作为周期长度，只有周期长度处于 $R_k=[\frac{1}{2}(\frac{N}{k+1}+\frac{N}{k})-1,…,\frac{1}{2}(\frac{N}{k}+\frac{N}{k-1})+1]$ 的范围才会被认为时最终的周期长度</p>
+<p>RobustPeriod使用Huber-periodogram的输出来建立了一个 $O(NlogN)$的鲁棒的ACF方案，具体参见论文<br>$$<br>\begin{align}<br>HuberACF(t)=\frac{p_t}{(N-t)p_0},t=0,1,…,N-1\\<br>p_t=\frac{1}{\sqrt{N^{‘}}}\sum_{k=0}^{N^{‘}-1}\bar{P_k}e^{i2\pi kt/N^{‘}}<br>\end{align}<br>$$<br>对HuberACF结果的峰值进行检测，计算峰值超过阈值的峰之间距离的中位数作为周期长度，只有周期长度处于 $R_k=[\frac{1}{2}(\frac{N}{k+1}+\frac{N}{k})-1,…,\frac{1}{2}(\frac{N}{k}+\frac{N}{k-1})+1]$ 的范围才会被认为时最终的周期长度</p>
 <h1 id="算法实践"><a href="#算法实践" class="headerlink" title="算法实践"></a>算法实践</h1><p><code>#TODO</code></p>
 ]]></content>
       <tags>
