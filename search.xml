@@ -813,7 +813,7 @@
 </ul>
 <p>文章使用的Daubechies MODWT即是基于<a href="https://zh.wikipedia.org/wiki/%E5%A4%9A%E8%B4%9D%E8%A5%BF%E5%B0%8F%E6%B3%A2">多贝西小波</a>的一种MODWT方案</p>
 <p><img src="fig2.png" alt="fig2"></p>
-<p>周期分解过程大致如图，对照<a href="https://zhuanlan.zhihu.com/p/69956002">Mallet算法</a>还是有很多相通之处的，通过 j=1 层小波过滤器wavelet filter $h_{1,l}$ 分离高频分量，将高频分量即周期在 [2,4] 的部分分离成 $w_{1,t}$ ；缩放过滤器scaling filter $g_{1,l}$ 分离出低频分量，用于第二层的小波分解<br>$$<br>w_{j,t} = \sum_{l=0}^{L_j-1}h_{j,l}y_{t-l mod N}^{‘}, L_j=(2^j-1)(L_1-1)+1 \qquad (1)<br>\v_{j,t} = \sum_{l=0}^{L_j-1}gh_{j,l}y_{t-l mod N}^{‘}, L_j=(2^j-1)(L_1-1)+1 \qquad (2)<br>$$<br>其中 $L_1$ 是多贝西小波（系数）的长度，上式(1)表示某一时刻的第 j 层小波 t 时刻的值由 $(t-L_j,t]$ 的时间序列与小波过滤器乘积累加的结果，即小波系数wavelet coefficient，从而实现 $1/2^{j+1} \leq |f| \leq 1/2^j$ 的带宽过滤，从而分离在此频率范围的周期分量</p>
+<p>周期分解过程大致如图，对照<a href="https://zhuanlan.zhihu.com/p/69956002">Mallet算法</a>还是有很多相通之处的，通过 j=1 层小波过滤器wavelet filter $h_{1,l}$ 分离高频分量，将高频分量即周期在 [2,4] 的部分分离成 $w_{1,t}$ ；缩放过滤器scaling filter $g_{1,l}$ 分离出低频分量，用于第二层的小波分解<br>$$<br>w_{j,t} = \sum_{l=0}^{L_j-1}h_{j,l}y_{t-l mod N}^{‘}, L_j=(2^j-1)(L_1-1)+1 \qquad (1) \<br>v_{j,t} = \sum_{l=0}^{L_j-1}gh_{j,l}y_{t-l mod N}^{‘}, L_j=(2^j-1)(L_1-1)+1 \qquad (2)<br>$$<br>其中 $L_1$ 是多贝西小波（系数）的长度，上式(1)表示某一时刻的第 j 层小波 t 时刻的值由 $(t-L_j,t]$ 的时间序列与小波过滤器乘积累加的结果，即小波系数wavelet coefficient，从而实现 $1/2^{j+1} \leq |f| \leq 1/2^j$ 的带宽过滤，从而分离在此频率范围的周期分量</p>
 <blockquote>
 <p>A wavelet coefficient is the scalar product between a function (your observation) and a basis function, the wavelet. In other words, it is the “coordinate” of your function on this wavelet if you do an orthogonal projection.</p>
 </blockquote>
