@@ -768,26 +768,6 @@
       </tags>
   </entry>
   <entry>
-    <title>spark连接elasticsearch进行数据处理</title>
-    <url>/2021/11/22/spark%E8%BF%9E%E6%8E%A5elasticsearch%E8%BF%9B%E8%A1%8C%E6%95%B0%E6%8D%AE%E5%A4%84%E7%90%86/</url>
-    <content><![CDATA[<p>在数据处理时希望结合Spark和Elasticsearch这两大流行的工具，设想了将大量运维数据存储在Elasticsearch中通过Spark访问处理后再返回Elasticsearch，结合Kibana进行展示，或者使用Spark Streaming在入库Elasticsearch前进行预处理两种场景</p>
-<p>本文总结了Spark与Elasticsearch进行交互的几种模式及一些demo</p>
-<p><code>#TODO</code></p>
-<a id="more"></a>
-
-<p>方案1：elasticsearch部署在kubernetes环境下，本机使用local[*]方案访问用于简单测试</p>
-<figure class="highlight xml"><table><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.apache.spark<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spark-core_2.12<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">version</span>&gt;</span>3.2.0<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.elasticsearch<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>elasticsearch-spark-30_2.12<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">version</span>&gt;</span>7.15.2<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
-
-<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">WordCount</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">        SparkConf conf = <span class="keyword">new</span> SparkConf().setAppName(<span class="string">&quot;Elastic App&quot;</span>).setMaster(<span class="string">&quot;local[*]&quot;</span>);</span><br><span class="line">        conf.set(<span class="string">&quot;es.nodes&quot;</span>, <span class="string">&quot;10.108.23.161&quot;</span>);  <span class="comment">// CLUSTER_IP</span></span><br><span class="line">        conf.set(<span class="string">&quot;es.port&quot;</span>, <span class="string">&quot;9200&quot;</span>);</span><br><span class="line">        conf.set(<span class="string">&quot;es.net.http.auth.user&quot;</span>, <span class="string">&quot;elastic&quot;</span>);</span><br><span class="line">        conf.set(<span class="string">&quot;es.net.http.auth.pass&quot;</span>, <span class="string">&quot;nwT9nh83KTZw1RoMjxDo&quot;</span>);</span><br><span class="line">        conf.set(<span class="string">&quot;es.nodes.wan.only&quot;</span>, <span class="string">&quot;true&quot;</span>);</span><br><span class="line"></span><br><span class="line">        JavaSparkContext jsc = <span class="keyword">new</span> JavaSparkContext(conf);</span><br><span class="line">        jsc.setLogLevel(<span class="string">&quot;ERROR&quot;</span>);</span><br><span class="line"></span><br><span class="line">        JavaPairRDD&lt;String, Map&lt;String, Object&gt;&gt; esRDD = JavaEsSpark.esRDD(jsc, <span class="string">&quot;metricbeat-7.8.0-2021.11.22-000001&quot;</span>);  <span class="comment">// index</span></span><br><span class="line">        System.out.println(esRDD.first().toString());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p><code>#TODO</code></p>
-]]></content>
-      <tags>
-        <tag>Spark</tag>
-        <tag>Elasticsearch</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>TimescaleDB学习</title>
     <url>/2020/09/16/TimescaleDB%E5%AD%A6%E4%B9%A0/</url>
     <content><![CDATA[<p><a href="https://docs.timescale.com/latest/main">TimescaleDB</a>是基于关系数据库PostgreSQL的一个开源时序数据库</p>
@@ -1000,6 +980,106 @@
       </tags>
   </entry>
   <entry>
+    <title>RobustPeriod算法框架学习</title>
+    <url>/2021/11/22/RobustPeriod%E7%AE%97%E6%B3%95%E6%A1%86%E6%9E%B6%E5%AD%A6%E4%B9%A0/</url>
+    <content><![CDATA[<p>在AIOps了解到RobustPeriod这一算法框架来对时序数据进行处理论文</p>
+<p><a href="https://developer.aliyun.com/article/782285">https://developer.aliyun.com/article/782285</a></p>
+<p>囿于本人相关数学知识的积累不足，本文主要是将整体思路和公式说明进行尽可能准确的简单描述，之后也是计划与<a href="https://github.com/ariaghora/robust-period">https://github.com/ariaghora/robust-period</a> 的实现进行对应，尝试在自己的AIOps场景中进行实现</p>
+<p>PS：本文只进行了要对算法进行理解复现的最低限度的学习，有兴趣相关研究的还是需要把论文的数学证明和主要的几篇相关文献也看一下了</p>
+<a id="more"></a>
+<p>$$<br>y_t = \tau_t + \sum_{i=1}^ms_{i,t} + r_t,  t=0,1,…,N-1<br>$$<br>文中将时序数据进行如上的数学表示，实际时序数据的函数由趋势函数$\tau_t$、m个周期分量函数$s_{i,t}$以及$r_t=a_t+n_t$分别表示噪声和离群点组成。于是，RobustPeriod为了能够发现时序数据中潜在的周期分量，并且保证结果robust，即很大程度上不受趋势函数、噪声和离群点的影响，将对时序数据进行多周期检测的过程分为三个部分</p>
+<ol>
+<li><p>预处理，将时序数据存在的趋势和离群点进行移除</p>
+</li>
+<li><p>多周期解耦，分离出不同层次的周期性，并进行排序，优先表现更显著的周期分量</p>
+</li>
+<li><p>单周期检测，根据周期分量生成周期候选并验证，计算周期长度</p>
+</li>
+</ol>
+<h1 id="预处理"><a href="#预处理" class="headerlink" title="预处理"></a>预处理</h1><ul>
+<li><p>使用Hodrick-Prescott算法计算时序数据的大致趋势并移除</p>
+<blockquote>
+<p>$$<br>\hat{y_t}=y_t-\hat\tau_t, \hat\tau_t=\underset{\tau_t}{argmin}\frac{1}{2}\sum_{t=0}^{N-1}+\lambda\sum_{t=1}^{N-2}(\tau_{t-1}-2\tau_t+\tau_{t+1})^2<br>$$</p>
+</blockquote>
+<p>Robert J Hodrick and Edward C Prescott. 1997. Postwar US business cycles: an empirical investigation. Journal of Money, Credit, and Banking (1997), 1–16.</p>
+</li>
+<li><p>移除显著的离群点</p>
+<blockquote>
+<p>$$<br>y_t^{‘}=\Psi(\frac{\hat{y_t}-\mu}{s}),\Psi(x)=sign(x)min(|x|,c)<br>\hat{y_t}=y_t-\hat\tau_t<br>$$</p>
+</blockquote>
+<p>Alexander Dürre, Roland Fried, and Tobias Liboschik. 2015. Robust estimation of (partial) autocorrelation. Wiley Interdisciplinary Reviews: Computational Statistics 7, 3 (may 2015), 205–222.</p>
+</li>
+</ul>
+<h1 id="多周期解耦"><a href="#多周期解耦" class="headerlink" title="多周期解耦"></a>多周期解耦</h1><ul>
+<li>这部分使用最大重复离散小波转换(Maximal overlap discrete wavelet transform, MODWT)将经过预处理的时间序列分解成不同层次的多个时间序列然后交给下一步进行周期分析</li>
+</ul>
+<p><strong>Daubechies MODWT</strong></p>
+<p>小波变换<a href="https://zhuanlan.zhihu.com/p/22450818">https://zhuanlan.zhihu.com/p/22450818</a> ，将傅里叶变换的基函数改为小波母函数，通过两个参数控制函数位移和伸缩（时间和频率），建立能将信号在时间和频率两种层面上进行体现的时频谱</p>
+<p>在连续小波变换的基础上，考虑到现实场景下数据采集是不连续的且有限的，包括计算机也不擅长进行连续问题的计算，提出了离散小波变换discrete wavelet transform<a href="https://zhuanlan.zhihu.com/p/69956002">https://zhuanlan.zhihu.com/p/69956002</a> ，这里介绍了离散小波变换的Mallet算法，通过一次半子带滤波分离出高频信号然后将低频信号进行两倍下采样后重复该过程，最后得到在时间线上频率在$(\frac{F_s}{2},F_s),(\frac{F_s}{4},\frac{F_s}{2}),(\frac{F_s}{8},\frac{F_s}{4}),…$的小波信号，这些小波信号也是对于当前频率范围兼顾时域分辨率和频域分辨率的结果</p>
+<p>MODWT作为一种DWT的方案，应该是在滤波和重采样方面采用了不同的方法，带来如下优势</p>
+<ul>
+<li>能处理任意长度的时间序列</li>
+<li>在粗粒度上有更高的分辨率</li>
+<li>具有更渐进有效的小波方差估计器</li>
+<li>能更有效的处理非稳态时间序列（频率随时间变化）和非高斯噪声（噪声概率密度函数不满足正态分布）</li>
+</ul>
+<p>文章使用的Daubechies MODWT即是基于<a href="https://zh.wikipedia.org/wiki/%E5%A4%9A%E8%B4%9D%E8%A5%BF%E5%B0%8F%E6%B3%A2">多贝西小波</a>的一种MODWT方案</p>
+<p><img src="fig2.png" alt="fig2"></p>
+<p>周期分解过程大致如图，对照<a href="https://zhuanlan.zhihu.com/p/69956002">Mallet算法</a>还是有很多相通之处的，通过 j=1 层小波过滤器wavelet filter $h_{1,l}$ 分离高频分量，将高频分量即周期在 [2,4] 的部分分离成 $w_{1,t}$ ；缩放过滤器scaling filter $g_{1,l}$ 分离出低频分量，用于第二层的小波分解<br>$$<br>\begin{align}<br>w_{j,t} = \sum_{l=0}^{L_j-1}h_{j,l}y_{t-l mod N}^{‘}, L_j=(2^j-1)(L_1-1)+1 \qquad (1)\\<br>v_{j,t} = \sum_{l=0}^{L_j-1}gh_{j,l}y_{t-l mod N}^{‘}, L_j=(2^j-1)(L_1-1)+1 \qquad (2)<br>\end{align}<br>$$<br>其中 $L_1$ 是多贝西小波（系数）的长度，上式(1)表示某一时刻的第 j 层小波 t 时刻的值由 $(t-L_j,t]$ 的时间序列与小波过滤器乘积累加的结果，即小波系数wavelet coefficient，从而实现 $1/2^{j+1} \leq |f| \leq 1/2^j$ 的带宽过滤，从而分离在此频率范围的周期分量</p>
+<blockquote>
+<p>A wavelet coefficient is the scalar product between a function (your observation) and a basis function, the wavelet. In other words, it is the “coordinate” of your function on this wavelet if you do an orthogonal projection.</p>
+</blockquote>
+<p><strong>Robust Unbiased Wavelet Variance</strong></p>
+<p>除了多周期解耦，MODWT的另外一个优势在于其对应的小波方差估计corresponding wavelet variance estimation能够辅助在频带中定位周期分量，其实际上也类似于一个<a href="https://zh.wikipedia.org/wiki/%E8%B0%B1%E5%AF%86%E5%BA%A6">功率谱密度</a>PSD估计器。</p>
+<p>根据小波方差，可以得到各个周期分量内包含单个周期的可能排序，从而优先输出最重要的周期分量。这里应该主要通过判断该周期分量是更稳态的则该周期分量更重要，因为当时间序列是稳态的时满足 $\hat{\sigma}_{y^{‘}}^2=\sum_{j=1}^{\infty}\hat{\sigma}_{w_j}^2$ ，所以这里进行排名时更期望更大的 $\hat{\sigma}_{w_j}^2$ 。</p>
+<p>这里RobustPeriod进一步使用更鲁棒高效的双权中位方差biweight midvariance来计算小波方差，因为结果近似于the integral of PSD at corresponding nominal octave passband，为了加速计算过程进行了替代。</p>
+<h1 id="鲁棒的单周期检测"><a href="#鲁棒的单周期检测" class="headerlink" title="鲁棒的单周期检测"></a>鲁棒的单周期检测</h1><p><strong>Robust Single Periodicity Detection</strong></p>
+<p>对周期分量使用鲁棒的基于Huber-Periodogram的Fisher’s Test来生成周期候选</p>
+<ul>
+<li>通过补零来将小波系数的长度变成原先的两倍以适用于后面Huber-periodogram以及ACF。</li>
+<li>Fisher’s test假设具有周期性的时间序列是<ol>
+<li>方差为 $\sigma^2$ 的高斯白噪声</li>
+<li>$P_k$ 的分布为二度卡方分布 $P_k \sim (1/2)\sigma^2\chi^2(2)$</li>
+</ol>
+</li>
+<li>根据假设计算 g 统计量的分布，通过一个阈值来判断时间序列满足上述假设是否可信</li>
+</ul>
+<p>$$<br>P(g\geq g_0)=1-\sum_{k=1}^{\lfloor1/g_0\rfloor}\frac{(-1)^{k-1}N!}{k!(N-k)!}(1-kg_0)^{N-1}<br>$$</p>
+<ul>
+<li>其中 g 统计量被定义为 $g=max_kP_k/(\sum_{t=0}^{N^{‘}-1}||x_te^{-i2\pi kt/N^{‘}}||^2),i=\sqrt{-1}$，$P_k$ 值的计算比较复杂，参考论文，这里结合了 M-periodogram 以及 Huber loss等概念。</li>
+<li>证明过程参见论文</li>
+</ul>
+<p><strong>Robust Huber-Periodogram based ACF for Validating Periodicity Candidates</strong></p>
+<p>在这里对上一步从小波系数中获取到周期候选进行ACF峰值检测来验证以保证结果准确性（Fisher’s test的结果会受频谱泄露等的影响），ACF常规方案 $ACF(t)=\frac{1}{(N-t)\delta_w^2}\sum_{n=0}^{N-t-1}w_nw_{n+t},t=0,1,…,N-1$ ，其中$\delta_w$ 是 $w_t$ 的样本方差，但该方案对离群点不够鲁棒且复杂度是 $O(N^2)$。</p>
+<p>RobustPeriod使用Huber-periodogram的输出来建立了一个 $O(NlogN)$的鲁棒的ACF方案，具体参见论文<br>$$<br>\begin{align}<br>HuberACF(t)=\frac{p_t}{(N-t)p_0},t=0,1,…,N-1\\<br>p_t=\frac{1}{\sqrt{N^{‘}}}\sum_{k=0}^{N^{‘}-1}\bar{P_k}e^{i2\pi kt/N^{‘}}<br>\end{align}<br>$$<br>对HuberACF结果的峰值进行检测，计算峰值超过阈值的峰之间距离的中位数作为周期长度，只有周期长度处于 $R_k=[\frac{1}{2}(\frac{N}{k+1}+\frac{N}{k})-1,…,\frac{1}{2}(\frac{N}{k}+\frac{N}{k-1})+1]$ 的范围才会被认为时最终的周期长度</p>
+<h1 id="算法实践"><a href="#算法实践" class="headerlink" title="算法实践"></a>算法实践</h1><p><code>#TODO</code></p>
+]]></content>
+      <tags>
+        <tag>异常检测</tag>
+        <tag>论文阅读</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>spark连接elasticsearch进行数据处理</title>
+    <url>/2021/11/22/spark%E8%BF%9E%E6%8E%A5elasticsearch%E8%BF%9B%E8%A1%8C%E6%95%B0%E6%8D%AE%E5%A4%84%E7%90%86/</url>
+    <content><![CDATA[<p>在数据处理时希望结合Spark和Elasticsearch这两大流行的工具，设想了将大量运维数据存储在Elasticsearch中通过Spark访问处理后再返回Elasticsearch，结合Kibana进行展示，或者使用Spark Streaming在入库Elasticsearch前进行预处理两种场景</p>
+<p>本文总结了Spark与Elasticsearch进行交互的几种模式及一些demo</p>
+<p><code>#TODO</code></p>
+<a id="more"></a>
+
+<p>方案1：elasticsearch部署在kubernetes环境下，本机使用local[*]方案访问用于简单测试</p>
+<figure class="highlight xml"><table><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.apache.spark<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spark-core_2.12<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">version</span>&gt;</span>3.2.0<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.elasticsearch<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>elasticsearch-spark-30_2.12<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">version</span>&gt;</span>7.15.2<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">WordCount</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">        SparkConf conf = <span class="keyword">new</span> SparkConf().setAppName(<span class="string">&quot;Elastic App&quot;</span>).setMaster(<span class="string">&quot;local[*]&quot;</span>);</span><br><span class="line">        conf.set(<span class="string">&quot;es.nodes&quot;</span>, <span class="string">&quot;10.108.23.161&quot;</span>);  <span class="comment">// CLUSTER_IP</span></span><br><span class="line">        conf.set(<span class="string">&quot;es.port&quot;</span>, <span class="string">&quot;9200&quot;</span>);</span><br><span class="line">        conf.set(<span class="string">&quot;es.net.http.auth.user&quot;</span>, <span class="string">&quot;elastic&quot;</span>);</span><br><span class="line">        conf.set(<span class="string">&quot;es.net.http.auth.pass&quot;</span>, <span class="string">&quot;nwT9nh83KTZw1RoMjxDo&quot;</span>);</span><br><span class="line">        conf.set(<span class="string">&quot;es.nodes.wan.only&quot;</span>, <span class="string">&quot;true&quot;</span>);</span><br><span class="line"></span><br><span class="line">        JavaSparkContext jsc = <span class="keyword">new</span> JavaSparkContext(conf);</span><br><span class="line">        jsc.setLogLevel(<span class="string">&quot;ERROR&quot;</span>);</span><br><span class="line"></span><br><span class="line">        JavaPairRDD&lt;String, Map&lt;String, Object&gt;&gt; esRDD = JavaEsSpark.esRDD(jsc, <span class="string">&quot;metricbeat-7.8.0-2021.11.22-000001&quot;</span>);  <span class="comment">// index</span></span><br><span class="line">        System.out.println(esRDD.first().toString());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>#TODO</code></p>
+]]></content>
+      <tags>
+        <tag>Spark</tag>
+        <tag>Elasticsearch</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>一些联邦学习方向的调研</title>
     <url>/2021/01/29/%E4%B8%80%E4%BA%9B%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0%E6%96%B9%E5%90%91%E7%9A%84%E8%B0%83%E7%A0%94/</url>
     <content><![CDATA[<p>试图探索联邦学习方向进行研究的方向，搜索了一些资料对联邦学习领域的一些问题或者研究方向进行了一个简单的调研和整理，主要分为联邦学习的通信加速和隐私保护问题</p>
@@ -1197,90 +1277,10 @@
         <category>联邦学习</category>
       </categories>
       <tags>
-        <tag>联邦学习</tag>
         <tag>机器学习</tag>
+        <tag>联邦学习</tag>
         <tag>协作学习</tag>
         <tag>比赛经历</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>RobustPeriod算法框架学习</title>
-    <url>/2021/11/22/RobustPeriod%E7%AE%97%E6%B3%95%E6%A1%86%E6%9E%B6%E5%AD%A6%E4%B9%A0/</url>
-    <content><![CDATA[<p>在AIOps了解到RobustPeriod这一算法框架来对时序数据进行处理论文</p>
-<p><a href="https://developer.aliyun.com/article/782285">https://developer.aliyun.com/article/782285</a></p>
-<p>囿于本人相关数学知识的积累不足，本文主要是将整体思路和公式说明进行尽可能准确的简单描述，之后也是计划与<a href="https://github.com/ariaghora/robust-period">https://github.com/ariaghora/robust-period</a> 的实现进行对应，尝试在自己的AIOps场景中进行实现</p>
-<p>PS：本文只进行了要对算法进行理解复现的最低限度的学习，有兴趣相关研究的还是需要把论文的数学证明和主要的几篇相关文献也看一下了</p>
-<a id="more"></a>
-<p>$$<br>y_t = \tau_t + \sum_{i=1}^ms_{i,t} + r_t,  t=0,1,…,N-1<br>$$<br>文中将时序数据进行如上的数学表示，实际时序数据的函数由趋势函数$\tau_t$、m个周期分量函数$s_{i,t}$以及$r_t=a_t+n_t$分别表示噪声和离群点组成。于是，RobustPeriod为了能够发现时序数据中潜在的周期分量，并且保证结果robust，即很大程度上不受趋势函数、噪声和离群点的影响，将对时序数据进行多周期检测的过程分为三个部分</p>
-<ol>
-<li><p>预处理，将时序数据存在的趋势和离群点进行移除</p>
-</li>
-<li><p>多周期解耦，分离出不同层次的周期性，并进行排序，优先表现更显著的周期分量</p>
-</li>
-<li><p>单周期检测，根据周期分量生成周期候选并验证，计算周期长度</p>
-</li>
-</ol>
-<h1 id="预处理"><a href="#预处理" class="headerlink" title="预处理"></a>预处理</h1><ul>
-<li><p>使用Hodrick-Prescott算法计算时序数据的大致趋势并移除</p>
-<blockquote>
-<p>$$<br>\hat{y_t}=y_t-\hat\tau_t, \hat\tau_t=\underset{\tau_t}{argmin}\frac{1}{2}\sum_{t=0}^{N-1}+\lambda\sum_{t=1}^{N-2}(\tau_{t-1}-2\tau_t+\tau_{t+1})^2<br>$$</p>
-</blockquote>
-<p>Robert J Hodrick and Edward C Prescott. 1997. Postwar US business cycles: an empirical investigation. Journal of Money, Credit, and Banking (1997), 1–16.</p>
-</li>
-<li><p>移除显著的离群点</p>
-<blockquote>
-<p>$$<br>y_t^{‘}=\Psi(\frac{\hat{y_t}-\mu}{s}),\Psi(x)=sign(x)min(|x|,c)<br>\hat{y_t}=y_t-\hat\tau_t<br>$$</p>
-</blockquote>
-<p>Alexander Dürre, Roland Fried, and Tobias Liboschik. 2015. Robust estimation of (partial) autocorrelation. Wiley Interdisciplinary Reviews: Computational Statistics 7, 3 (may 2015), 205–222.</p>
-</li>
-</ul>
-<h1 id="多周期解耦"><a href="#多周期解耦" class="headerlink" title="多周期解耦"></a>多周期解耦</h1><ul>
-<li>这部分使用最大重复离散小波转换(Maximal overlap discrete wavelet transform, MODWT)将经过预处理的时间序列分解成不同层次的多个时间序列然后交给下一步进行周期分析</li>
-</ul>
-<p><strong>Daubechies MODWT</strong></p>
-<p>小波变换<a href="https://zhuanlan.zhihu.com/p/22450818">https://zhuanlan.zhihu.com/p/22450818</a> ，将傅里叶变换的基函数改为小波母函数，通过两个参数控制函数位移和伸缩（时间和频率），建立能将信号在时间和频率两种层面上进行体现的时频谱</p>
-<p>在连续小波变换的基础上，考虑到现实场景下数据采集是不连续的且有限的，包括计算机也不擅长进行连续问题的计算，提出了离散小波变换discrete wavelet transform<a href="https://zhuanlan.zhihu.com/p/69956002">https://zhuanlan.zhihu.com/p/69956002</a> ，这里介绍了离散小波变换的Mallet算法，通过一次半子带滤波分离出高频信号然后将低频信号进行两倍下采样后重复该过程，最后得到在时间线上频率在$(\frac{F_s}{2},F_s),(\frac{F_s}{4},\frac{F_s}{2}),(\frac{F_s}{8},\frac{F_s}{4}),…$的小波信号，这些小波信号也是对于当前频率范围兼顾时域分辨率和频域分辨率的结果</p>
-<p>MODWT作为一种DWT的方案，应该是在滤波和重采样方面采用了不同的方法，带来如下优势</p>
-<ul>
-<li>能处理任意长度的时间序列</li>
-<li>在粗粒度上有更高的分辨率</li>
-<li>具有更渐进有效的小波方差估计器</li>
-<li>能更有效的处理非稳态时间序列（频率随时间变化）和非高斯噪声（噪声概率密度函数不满足正态分布）</li>
-</ul>
-<p>文章使用的Daubechies MODWT即是基于<a href="https://zh.wikipedia.org/wiki/%E5%A4%9A%E8%B4%9D%E8%A5%BF%E5%B0%8F%E6%B3%A2">多贝西小波</a>的一种MODWT方案</p>
-<p><img src="fig2.png" alt="fig2"></p>
-<p>周期分解过程大致如图，对照<a href="https://zhuanlan.zhihu.com/p/69956002">Mallet算法</a>还是有很多相通之处的，通过 j=1 层小波过滤器wavelet filter $h_{1,l}$ 分离高频分量，将高频分量即周期在 [2,4] 的部分分离成 $w_{1,t}$ ；缩放过滤器scaling filter $g_{1,l}$ 分离出低频分量，用于第二层的小波分解<br>$$<br>\begin{align}<br>w_{j,t} = \sum_{l=0}^{L_j-1}h_{j,l}y_{t-l mod N}^{‘}, L_j=(2^j-1)(L_1-1)+1 \qquad (1)\\<br>v_{j,t} = \sum_{l=0}^{L_j-1}gh_{j,l}y_{t-l mod N}^{‘}, L_j=(2^j-1)(L_1-1)+1 \qquad (2)<br>\end{align}<br>$$<br>其中 $L_1$ 是多贝西小波（系数）的长度，上式(1)表示某一时刻的第 j 层小波 t 时刻的值由 $(t-L_j,t]$ 的时间序列与小波过滤器乘积累加的结果，即小波系数wavelet coefficient，从而实现 $1/2^{j+1} \leq |f| \leq 1/2^j$ 的带宽过滤，从而分离在此频率范围的周期分量</p>
-<blockquote>
-<p>A wavelet coefficient is the scalar product between a function (your observation) and a basis function, the wavelet. In other words, it is the “coordinate” of your function on this wavelet if you do an orthogonal projection.</p>
-</blockquote>
-<p><strong>Robust Unbiased Wavelet Variance</strong></p>
-<p>除了多周期解耦，MODWT的另外一个优势在于其对应的小波方差估计corresponding wavelet variance estimation能够辅助在频带中定位周期分量，其实际上也类似于一个<a href="https://zh.wikipedia.org/wiki/%E8%B0%B1%E5%AF%86%E5%BA%A6">功率谱密度</a>PSD估计器。</p>
-<p>根据小波方差，可以得到各个周期分量内包含单个周期的可能排序，从而优先输出最重要的周期分量。这里应该主要通过判断该周期分量是更稳态的则该周期分量更重要，因为当时间序列是稳态的时满足 $\hat{\sigma}_{y^{‘}}^2=\sum_{j=1}^{\infty}\hat{\sigma}_{w_j}^2$ ，所以这里进行排名时更期望更大的 $\hat{\sigma}_{w_j}^2$ 。</p>
-<p>这里RobustPeriod进一步使用更鲁棒高效的双权中位方差biweight midvariance来计算小波方差，因为结果近似于the integral of PSD at corresponding nominal octave passband，为了加速计算过程进行了替代。</p>
-<h1 id="鲁棒的单周期检测"><a href="#鲁棒的单周期检测" class="headerlink" title="鲁棒的单周期检测"></a>鲁棒的单周期检测</h1><p><strong>Robust Single Periodicity Detection</strong></p>
-<p>对周期分量使用鲁棒的基于Huber-Periodogram的Fisher’s Test来生成周期候选</p>
-<ul>
-<li>通过补零来将小波系数的长度变成原先的两倍以适用于后面Huber-periodogram以及ACF。</li>
-<li>Fisher’s test假设具有周期性的时间序列是<ol>
-<li>方差为 $\sigma^2$ 的高斯白噪声</li>
-<li>$P_k$ 的分布为二度卡方分布 $P_k \sim (1/2)\sigma^2\chi^2(2)$</li>
-</ol>
-</li>
-<li>根据假设计算 g 统计量的分布，通过一个阈值来判断时间序列满足上述假设是否可信</li>
-</ul>
-<p>$$<br>P(g\geq g_0)=1-\sum_{k=1}^{\lfloor1/g_0\rfloor}\frac{(-1)^{k-1}N!}{k!(N-k)!}(1-kg_0)^{N-1}<br>$$</p>
-<ul>
-<li>其中 g 统计量被定义为 $g=max_kP_k/(\sum_{t=0}^{N^{‘}-1}||x_te^{-i2\pi kt/N^{‘}}||^2),i=\sqrt{-1}$，$P_k$ 值的计算比较复杂，参考论文，这里结合了 M-periodogram 以及 Huber loss等概念。</li>
-<li>证明过程参见论文</li>
-</ul>
-<p><strong>Robust Huber-Periodogram based ACF for Validating Periodicity Candidates</strong></p>
-<p>在这里对上一步从小波系数中获取到周期候选进行ACF峰值检测来验证以保证结果准确性（Fisher’s test的结果会受频谱泄露等的影响），ACF常规方案 $ACF(t)=\frac{1}{(N-t)\delta_w^2}\sum_{n=0}^{N-t-1}w_nw_{n+t},t=0,1,…,N-1$ ，其中$\delta_w$ 是 $w_t$ 的样本方差，但该方案对离群点不够鲁棒且复杂度是 $O(N^2)$。</p>
-<p>RobustPeriod使用Huber-periodogram的输出来建立了一个 $O(NlogN)$的鲁棒的ACF方案，具体参见论文<br>$$<br>\begin{align}<br>HuberACF(t)=\frac{p_t}{(N-t)p_0},t=0,1,…,N-1\\<br>p_t=\frac{1}{\sqrt{N^{‘}}}\sum_{k=0}^{N^{‘}-1}\bar{P_k}e^{i2\pi kt/N^{‘}}<br>\end{align}<br>$$<br>对HuberACF结果的峰值进行检测，计算峰值超过阈值的峰之间距离的中位数作为周期长度，只有周期长度处于 $R_k=[\frac{1}{2}(\frac{N}{k+1}+\frac{N}{k})-1,…,\frac{1}{2}(\frac{N}{k}+\frac{N}{k-1})+1]$ 的范围才会被认为时最终的周期长度</p>
-<h1 id="算法实践"><a href="#算法实践" class="headerlink" title="算法实践"></a>算法实践</h1><p><code>#TODO</code></p>
-]]></content>
-      <tags>
-        <tag>异常检测</tag>
-        <tag>论文阅读</tag>
       </tags>
   </entry>
   <entry>
@@ -1414,10 +1414,140 @@
 </ul>
 ]]></content>
       <tags>
+        <tag>AIOps</tag>
         <tag>机器学习</tag>
         <tag>比赛经历</tag>
-        <tag>AIOps</tag>
         <tag>天池大赛</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>日志分析算法学习</title>
+    <url>/2021/12/13/%E6%97%A5%E5%BF%97%E5%88%86%E6%9E%90%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0/</url>
+    <content><![CDATA[<p>希望对日志分析有个大致的了解，尝试学习了《Smart Log Data Analytics: Techniques for Advanced Security Analysis》一书，并就其中一些算法和思路进行整理，学习其中提到的 AECID 轻量级日志分析方案</p>
+<p>书中按复杂程度依次介绍的几种日志处理工具包括：增量聚类、模板生成、时序分析以及基于树的日志解析器等，通过组合这些工具能够实现实时的日志异常检测，并且在此基础之上也能更好的进行日志分析的学习</p>
+<p><code>#TODO</code>学习之前了解到的日志处理方案 DeepLog</p>
+ <a id="more"></a>
+
+<ul>
+<li>日志文件通常由一组以时序列出的单行或多行字符串（日志消息）组成，其中时序通常通过附加的时间戳来体现</li>
+<li>日志消息可以是高度结构化的（逗号分隔的值列表）、部分结构化的（键值对）、非结构化的（任意长度的自然文本）或者三者的组合</li>
+<li>日志消息有时包括与其生成相关任务的进程id</li>
+<li>日志消息有时包含行号、消息级别、严重性指示符以及静态标识符等信息</li>
+</ul>
+<h1 id="增量聚类"><a href="#增量聚类" class="headerlink" title="增量聚类"></a>增量聚类</h1><p><strong>关于日志聚类</strong></p>
+<p>静态聚类：聚类单个日志行（会忽略行之间的顺序和依赖关系）</p>
+<p>动态聚类：对日志序列进行模式提取（书中没有过多涉及，但是目前研究的主要方向，DeepLog、LogSed等方法都属于动态聚类）</p>
+<p>期望通过聚类解决的异常类型：</p>
+<ul>
+<li>离群值：单个日志行，不匹配现有模板或者不像已知的表示正常系统行为的类（静态聚类）</li>
+<li>频率异常：意外频繁或罕见的日志事件</li>
+<li>相关性异常：预期成对或成组发生但未发生的日志事件</li>
+<li>时间间隔异常：关联事件相继发生的时间间隔出现偏差</li>
+<li>序列异常：模式中发生的日志事件序列偏离顺序</li>
+</ul>
+<p>其中，书中介绍的两种增量聚类方案（基于字符串度量的增量聚类和基于数值距离度量增量聚类）属于静态聚类，将类似的日志行归于同一个类簇</p>
+<p><strong>基于字符串度量的增量聚类</strong></p>
+<p>增量聚类能够实现在线的日志聚类，在实际场景中，日志往往是一条一条生成的，需要我们以日志流的形式进行快速处理</p>
+<p>日志的增量聚类方案会选择某一条日志作为类簇的中心，并将与该日志相似度在阈值之上的日志行加入该类簇</p>
+<p>那么，假设当前日志为一条日志，或者称为日志线，每一条日志便以如下流程进行聚类</p>
+<ul>
+<li><p>日志清洗（去除非常规符号和一些占位符）</p>
+</li>
+<li><p>判断是否为当前的聚类中心（正好与作为聚类中心的日志行则直接归入该类簇）</p>
+</li>
+<li><p>否则需要筛选合适的聚类中心并加入</p>
+<ul>
+<li><p>长度过滤：聚类中心日志的长度要接近当前日志长度，过滤长度过短过长的聚类中心</p>
+</li>
+<li><p>短词过滤：聚类中心日志和当前日志长度为k的相同子串的数量需要大于M，过滤明显不相似的聚类中，其中M = L - k + 1 - (1 - p)kL，k由聚类的相似度参数确定，L = max(|l|,|c|)，其中|l|表示当前日志的长度，|c|表示聚类中心日志长度，每次过滤复杂度 O(|l|-k)</p>
+</li>
+<li><p>计算字符串相似度指标：Levenshtein为例，通过动态规划计算两个字符串增删改完成相互转化的最少步骤，作为字符串之间的距离d，1 - d/max(|a|,|b|)作为字符串之间的相似度，复杂度O(|a||b|)</p>
+</li>
+</ul>
+</li>
+<li><p>训练阶段：找到满足条件的类簇，有则选择相似度最高的加入，否则建立新的类簇，自己作为聚类中心</p>
+</li>
+<li><p>检测阶段（白名单）：如果未能找到足够相似的聚类中心，则认为是异常日志</p>
+</li>
+</ul>
+<p><strong>基于数值距离度量的增量聚类</strong></p>
+<p>将日志文本转换成一系列数值来实现基于欧式空间的聚类，简单的转换例子即对每个字符在日志线上出现的次数进行统计，将整个日志出现不同字符的数量作为空间的维数</p>
+<p><a href="https://zhuanlan.zhihu.com/p/77151308">PCA主成分分析</a>进行降维，具体PC维度取决于数据和原始维数</p>
+<p>与上一种方案不同，这里需要预先取一部分（多行）日志计算转移矩阵来保证PCA降维的效果</p>
+<p><strong>时序分析</strong></p>
+<p>根据在固定时间窗口内各个类簇的增长情况作为异常判断的一个方向（针对小簇问题，将离群点添加到一个新的类中进行异常检测），具体参见下面的时序异常检测部分</p>
+<h1 id="日志模板生成"><a href="#日志模板生成" class="headerlink" title="日志模板生成"></a>日志模板生成</h1><p>目标：生成一个模板，能对相似日志的静态部分进行标记，其他部分使用通配符替换</p>
+<p>主要挑战：序列对齐</p>
+<p><strong>基于<a href="https://www.zhihu.com/question/39279003">词元</a>的模板生成器</strong></p>
+<ul>
+<li>词元可能是一个单词，通过对日志中的单词进行分隔，找到对所有日志行都存在且出现顺序一致的单词组合作为模板</li>
+<li>当前主流的模板生成方案，更高性能，但依赖当前的日志数据，能够防止高度相似的子字符串对应的词元成为模板的一部分</li>
+</ul>
+<p><strong>基于字符的模板生成器</strong></p>
+<ul>
+<li>主要挑战：需要计算多行序列比对</li>
+<li>主要方案：先对两行生成模板，再逐行增量的调整模板</li>
+<li>基于字符的算法：merge、length、equalmerge</li>
+<li>融合词元和字符的算法：token_char</li>
+</ul>
+<p>大致思路：类似之前的Levenshtein算法，递归计算两个字符串增删改完成相互转化的最少步骤，称为LV距离，并记录在递归矩阵中的转化路径，这些转化过程便代表两个字符串不同的位置，而通过递归计算最少步骤则最大程度保证保留两个字符串的相同部分</p>
+<p>在拿到递归矩阵和转化路径后通过重新走一遍该路径来确定模板，其中</p>
+<ul>
+<li>矩阵走对角，对应改操作或者当前位置字符相同，仅当当前字符相同时将该字符加入模板，否则以空格（占位符）表示</li>
+<li>矩阵向下或向右走，对应增删操作，当前位置以空格表示（注意如果模板前一位已经是空格，则没必要再加一个，一个空格在模板中匹配任意长度的子串）</li>
+</ul>
+<p>Merge算法：直接在之后每一行日志完成一次上述过程，并保证新模板没有丢失前一个模板的空格</p>
+<p>Length算法：只计算模板块和对应日志子串的LV距离</p>
+<p>EqualMerge算法：相较Length算法，只是在出现多个相邻的未标记字符串时会进行聚合再计算距离，一定程度上提升了模板质量</p>
+<p>Token_char算法：对日志根据词元进行分隔后对词元间的子串建立字符结构提取模板</p>
+<h1 id="时序异常检测"><a href="#时序异常检测" class="headerlink" title="时序异常检测"></a>时序异常检测</h1><p>这边的时序异常检测主要是考虑到日志间的动态关系和集群映射会随时间进行改变，来建立跨集群映射的动态特征，从而实现涉及集群演化和时序分析的动态日志分析，大致流程如下图所示</p>
+<ol>
+<li>流式读取每一行日志</li>
+<li>日志清洗</li>
+<li>在每个时间窗口内根据相似度进行聚类</li>
+<li>通过将日志行分配到相邻时间窗口的集群，来建立跨时间窗口的连接</li>
+<li>当一个时间窗口结束后，对集群进行再处理来避免集群演化过程中出现分裂和合并的情况</li>
+<li>计算时间窗口下集群的演化指标</li>
+<li>建立时序预测模型并进行一步预测</li>
+<li>通过将预测与真实值比较来进行异常检测</li>
+</ol>
+<p><img src="DC&AD.png" alt="DC&amp;AD"></p>
+<p>为了体现集群演化，并且对不正常的演化进行异常检测，这里提出了下面的概念</p>
+<ul>
+<li><p>Tracking跟踪：在将当前时间窗口的日志分配给邻近时间窗口的集群时，会出现有的日志找不到合适的集群，基于此，建立指标 $overlap(C,C^{‘})=\frac{|(R_{curr} \cap R_{prev}^{‘}) \cup (R_{next} \cap R_{curr}^{‘})|}{|R_{curr}^{‘} \cup R_{prev}^{‘} \cup R_{next} \cup R_{curr}|}$ ，表示邻近时间窗口间的集群的可转化性</p>
+<p><img src="CR.png" alt="CR"></p>
+</li>
+<li><p>Transitions转化：包括只影响单个时间窗口单个集群的内部转化和影响其他时间窗口集群的外部转化，这里通过对集群进行再分割和再合并（直到overlap达到阈值）来解决集群演化过程中出现的分裂和合并过程对计算演化指标等产生的负面影响</p>
+</li>
+<li><p>演化指标：建立能够描述连续窗口间的相互依赖和演化关系的指标，例如 $s=\frac{|R_{prev}^{‘}|+|R_{curr}|-2 |R_{prev}^{‘} \cap R_{curr}|}{|R_{prev}^{‘}|+|R_{curr}|}$ 来反映集群的稳定性</p>
+</li>
+</ul>
+<p>书中推荐了ARIMA 作为时序预测的算法</p>
+<h1 id="AECID"><a href="#AECID" class="headerlink" title="AECID"></a>AECID</h1><p><a href="https://github.com/ait-aecid/logdata-anomaly-miner">AECID:A Light-Weight Log Analysis Approach for Online Anomaly Detection</a></p>
+<p><img src="AECID.png" alt="AECID"></p>
+<p>AECID的系统架构如上图所示，主要包括两个组件AMiner和AECID CENTRAL，其中AMiner负责进行在线的异常检测，使用基于树的解释器进行日志行的高效解析，而AECID Central负责根据正常的日志训练解析器模型并分发给AMiner实例</p>
+<ul>
+<li><p>AECID主要使用基于树的日志解析器生成算法，算法使用类似决策树的生成模式，将静态部分作为树的节点，可变部分作为树的分支生成与日志对应的树进行后续异常，这样大大降低解析的复杂度，在O(logn)的复杂度内处理一条日志</p>
+</li>
+<li><p>生成的树如下图所示，基于此，我们可以简单的将树的路径转化为正则表达式进行数据处理，也可以对日志进行快速解析，提取可变部分（重要信息）来进行进一步的分析（<strong>关联分析</strong>等）</p>
+</li>
+<li><p>AECID实际使用的日志解析器生成算法时AECID-PG:Tree-Based Log Parser Generator，使用了基于密度的解析器生成算法，使用词元频率（而不是距离度量）来确定当前部分时静态的还是可变的，对可变部分进行树的分叉</p>
+</li>
+</ul>
+<p><img src="LogTree.png" alt="LogTree"></p>
+<p>于是，有赖于使用的基于树的解析器生成算法，AECID支持如下功能</p>
+<ul>
+<li>解析器模型通过学习正常系统行为的知识，能够检测当前日志事件和正常系统行为的偏差从而进行异常检测</li>
+<li>基于签名的异常检测，提供基于统计数据（频率）的异常检测</li>
+<li>支持基于统计特征的时序检测</li>
+<li>支持规则生成器</li>
+<li>支持关联引擎，能够检测分布式网络节点事件的复杂异常</li>
+</ul>
+]]></content>
+      <tags>
+        <tag>AIOps</tag>
+        <tag>日志分析</tag>
+        <tag>算法学习</tag>
       </tags>
   </entry>
   <entry>
@@ -1615,8 +1745,8 @@
 <p>$$<br>\begin{aligned}<br>&amp;Softmax(\boldsymbol{x}) = \frac{e^{\boldsymbol{x}-\Vert\boldsymbol{x}\Vert_{\infty}}}{\Vert e^{\boldsymbol{x}-\Vert\boldsymbol{x}\Vert_{\infty}}\Vert_1}<br>\\&amp;g_i = Softmax(\hat{y_i}^{(t-1)}) - y_i<br>\\&amp;h_i = Softmax(\hat{y_i}^{(t-1)}) * (1-Softmax(\hat{y_i}^{(t-1)}))<br>\\&amp;\hat{y_i}^{(t)} = Softmax(w_j^*) = Softmax(-\frac{G_j}{H_j+\lambda}) = Softmax(-\frac{\sum_{i \in I_j}g_i}{\sum_{i \in I_j}h_i + \lambda})<br>\end{aligned}<br>$$</p>
 ]]></content>
       <tags>
-        <tag>联邦学习</tag>
         <tag>机器学习</tag>
+        <tag>联邦学习</tag>
         <tag>协作学习</tag>
         <tag>决策树算法</tag>
       </tags>
@@ -1805,9 +1935,9 @@
 </ul>
 ]]></content>
       <tags>
+        <tag>AIOps</tag>
         <tag>ELK</tag>
         <tag>环境搭建</tag>
-        <tag>AIOps</tag>
         <tag>istio</tag>
         <tag>云原生</tag>
       </tags>
