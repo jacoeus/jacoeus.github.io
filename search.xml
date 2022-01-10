@@ -1449,17 +1449,28 @@
 </ul>
 <h2 id="AECID-PG"><a href="#AECID-PG" class="headerlink" title="AECID-PG"></a>AECID-PG</h2><p>基于密度的解析器生成算法大致流程</p>
 <ul>
-<li>根据预定义的分隔符将日志分隔成一系列词元</li>
-<li>将多条日志作为行，每条日志的一系列词元作为列建立Table，基于这个Table建立解析树</li>
-<li>根据下面的四条规则来判断当前节点树的生长方式（生成的节点类型以及是否建立多个分支）<ul>
-<li>使用 $PF_{ij}^k=\frac{|n_j^{k+1}|}{|n_i^k|}$ 来表示路径频率 path-frequency，反映了流入 $n_i^k$ 的日志中又流入 $n_j^{k+1}$ 的比例，其中 $n$ 的上下标分别对应Table的列号和行号</li>
-<li>规则1：${n_j^{k+1}:\exist e_{ij}^k \and PF_{ij}^k \geq \theta _1}=\empty \Rightarrow VAR$ 各条边的路径频率都低于阈值，即下一个节点的值很分散，则认为树的下一个节点是个变量</li>
-<li>规则2：如果 $|n_j^{k+1}:\exist e_{ij}^k \and PF_{ij}^k \geq \theta <em>1|=1$ 存在一条边的路径频率较大，对于该边，如果满足 $PF</em>{ij}^k \geq \theta _2$ 则对其建立静态节点，否则建立可变节点</li>
-<li>规则3： 如果 $|n_j^{k+1}:\exist e_{ij}^k \and PF_{ij}^k \geq \theta <em>1| &gt; 1$ 存在多条边路径频率较大，如果这些边 $\sum</em>{j \in J}PF_{ij}^k \geq \theta _3$ 合计路径频率大于阈值则为每条边建立静态节点，否则建立可变节点</li>
-<li>规则4：在一些日志已经结束的情况下，如果大于 $\theta _4$ 比例的日志结束了，则将之后的节点设为可选，如果没有小于 $\theta _5$ 比例的日志结束</li>
+<li><p>根据预定义的分隔符将日志分隔成一系列词元</p>
+</li>
+<li><p>将多条日志作为行，每条日志的一系列词元作为列建立Table，基于这个Table建立解析树</p>
+</li>
+<li><p>根据下面的四条规则来判断当前节点树的生长方式（生成的节点类型以及是否建立多个分支）</p>
+<ul>
+<li><p>使用 $PF_{ij}^k=\frac{|n_j^{k+1}|}{|n_i^k|}$ 来表示路径频率 path-frequency，反映了流入 $n_i^k$ 的日志中又流入 $n_j^{k+1}$ 的比例，其中 $n$ 的上下标分别对应Table的列号和行号</p>
+</li>
+<li><p>规则1：$\lbrace n_j^{k+1}:\exists e_{ij}^k \wedge PF_{ij}^k \geq \theta _1 \rbrace=\varnothing \Rightarrow VAR$ 各条边的路径频率都低于阈值，即下一个节点的值很分散，则认为树的下一个节点是个变量</p>
+</li>
+<li><p>规则2：如果 $| n_j^{k+1}:\exists e_{ij}^k \wedge PF_{ij}^k \geq \theta _1 |=1$ 存在一条边的路径频率较大，</p>
+<p>对于该边，如果满足 $PF_{ij}^k \geq \theta _2$ 则对其建立静态节点，否则建立可变节点</p>
+</li>
+<li><p>规则3： 如果 $|n_j^{k+1}:\exists e_{ij}^k \wedge PF_{ij}^k \geq \theta _1| &gt; 1$ 存在多条边路径频率较大，</p>
+<p>如果这些边 $\sum_{j \in J}PF_{ij}^k \geq \theta _3$ 合计路径频率大于阈值则为每条边建立静态节点，否则建立可变节点</p>
+</li>
+<li><p>规则4：在一些日志已经结束的情况下，如果大于 $\theta _4$ 比例的日志结束了，则将之后的节点设为可选，如果没有小于 $\theta _5$ 比例的日志结束</p>
+</li>
 </ul>
 </li>
-<li>阻尼机制</li>
+<li><p>阻尼机制</p>
+</li>
 </ul>
 ]]></content>
       <tags>
