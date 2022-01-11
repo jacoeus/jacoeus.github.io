@@ -591,7 +591,7 @@
 </ul>
 ]]></content>
       <categories>
-        <category>Java</category>
+        <category>学习笔记</category>
       </categories>
       <tags>
         <tag>Java</tag>
@@ -600,181 +600,192 @@
       </tags>
   </entry>
   <entry>
-    <title>JustEnoughScalaforSpark笔记</title>
-    <url>/2021/11/25/JustEnoughScalaforSpark%E7%AC%94%E8%AE%B0/</url>
-    <content><![CDATA[<p>作为学习Spark的过程，感觉即便考虑使用Java进行编程，对Scala有个一定的理解还是有必要的，也能方便阅读其他人的代码，然后发现一个名字挺有诱惑力的项目<a href="https://github.com/deanwampler/JustEnoughScalaForSpark">https://github.com/deanwampler/JustEnoughScalaForSpark</a> ，遂上手看了一下，记些笔记供以后查阅</p>
+    <title>Istio &amp; AIOps环境搭建</title>
+    <url>/2021/06/30/Istio-AIOps%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/</url>
+    <content><![CDATA[<p>在AIOps挑战赛学习了智能运维相关的内容，尝试在Service Mesh环境下模拟配置挑战赛环境</p>
+<p>使用minikube搭建微服务网络，通过Istio进行监控，分别通过Prometheus、Fluented以及Jaeger获取服务的指标、日志和调用链信息，并汇总到Elasticsearch用作后续分析</p>
+<p>后续发现使用全栈的Elastic解决方案能够不依赖istio实现轻松可靠的在Elasticseach中汇总指标、日志和性能追踪，于是又尝试了如下的解决方案<a href="https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-1/">https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-1/</a></p>
+<p>除此之外，<a href="https://juejin.cn/post/6847902217979052045">KubeSphere</a>汇总了包括运维数据获取等的一系列解决方案，可以非常方便地安装与管理用户最常用的云原生工具</p>
 <a id="more"></a>
 
-<h1 id="基本语法"><a href="#基本语法" class="headerlink" title="基本语法"></a>基本语法</h1><p><strong>注释</strong></p>
-<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 单行注释</span></span><br><span class="line"><span class="comment">/*多行注释*/</span></span><br></pre></td></tr></table></figure>
+<h1 id="Istio-环境配置"><a href="#Istio-环境配置" class="headerlink" title="Istio 环境配置"></a>Istio 环境配置</h1><p>参考教程配置环境<a href="https://istio.io/latest/docs/setup/getting-started/">https://istio.io/latest/docs/setup/getting-started/</a></p>
+<h2 id="配置流程"><a href="#配置流程" class="headerlink" title="配置流程"></a>配置流程</h2><p>参见官网demo <a href="https://istio.io/latest/docs/setup/getting-started/">https://istio.io/latest/docs/setup/getting-started/</a></p>
+<p>安装minikube <a href="https://minikube.sigs.k8s.io/docs/start/#install-a-hypervisor">https://minikube.sigs.k8s.io/docs/start/#install-a-hypervisor</a></p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">minikube start</span><br><span class="line">kubectl get po -A</span><br></pre></td></tr></table></figure>
 
-<p><strong>常量&amp;变量</strong></p>
-<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line"><span class="keyword">val</span> immutableValue = <span class="string">&quot;常量&quot;</span></span><br><span class="line"><span class="keyword">var</span> mutableVariable = <span class="string">&quot;变量&quot;</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">istioctl install --set profile=demo -y</span><br><span class="line">kubectl label namespace default istio-injection=enabled</span><br><span class="line">kubectl apply -f samples/bookinfo/platform/kube/bookinfo.yaml</span><br><span class="line">kubectl get services</span><br><span class="line">kubectl get pods //等待直到所有pods处于Running状态</span><br></pre></td></tr></table></figure>
 
-<p><strong>函数</strong></p>
-<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">function_name</span> </span>= &#123;&#125;</span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">function_name</span></span>(parameter:<span class="type">Type</span>):<span class="type">Type</span> = &#123;</span><br><span class="line">    return_value <span class="comment">//最后一行默认表示返回值，return关键字可选，;可选</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl exec &quot;$(kubectl get pod -l app=ratings -o jsonpath=&#x27;&#123;.items[0].metadata.name&#125;&#x27;)&quot; -c ratings -- curl -sS productpage:9080/productpage | grep -o &quot;&lt;title&gt;.*&lt;/title&gt;&quot;</span><br><span class="line">//命令行返回&lt;title&gt;Simple Bookstore App&lt;/title&gt;则当前配置过程正常</span><br></pre></td></tr></table></figure>
 
-<p><strong>字符串</strong></p>
-<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line"><span class="string">s&quot;&quot;</span><span class="string">&quot;这是一个跨行的字符串</span></span><br><span class="line"><span class="string">|  字符串前添加s表示可以内嵌变量和表达式$sc.version$  &quot;</span><span class="string">&quot;&quot;</span>.stripMargin <span class="comment">//stripMargin可以移除空格，结合|可以控制缩进</span></span><br><span class="line"><span class="string">&quot;/&quot;</span> <span class="comment">//String</span></span><br><span class="line">&#x27;/&#x27; <span class="comment">//Char</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">//创建一个Istio Ingress Gateway，该网关将路径映射到网格边缘处的路线</span><br><span class="line">kubectl apply -f samples/bookinfo/networking/bookinfo-gateway.yaml</span><br><span class="line">istioctl analyze</span><br></pre></td></tr></table></figure>
 
-<p><strong>判断</strong></p>
-<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line"><span class="keyword">val</span> success = <span class="keyword">if</span> (shakespeare.exists == <span class="literal">false</span>) &#123; <span class="comment">//if 结构在Scala是表达式</span></span><br><span class="line">    <span class="literal">false</span></span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="literal">true</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">export INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath=&#x27;&#123;.spec.ports[?(@.name==&quot;http2&quot;)].nodePort&#125;&#x27;)</span><br><span class="line">export SECURE_INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath=&#x27;&#123;.spec.ports[?(@.name==&quot;https&quot;)].nodePort&#125;&#x27;)</span><br><span class="line">export INGRESS_HOST=$(minikube ip)</span><br></pre></td></tr></table></figure>
 
-<p><strong>循环</strong></p>
-<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span> &#123;</span><br><span class="line">  play &lt;- plays</span><br><span class="line">  ...</span><br><span class="line">&#125; <span class="keyword">yield</span> &#123; block_of_final_expressions &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">val</span> failures = <span class="keyword">for</span> &#123;</span><br><span class="line">    play &lt;- plays</span><br><span class="line">    playFileName = targetDirName + pathSeparator + play</span><br><span class="line">    playFile = <span class="keyword">new</span> <span class="type">File</span>(playFileName)</span><br><span class="line">    <span class="keyword">if</span> (playFile.exists == <span class="literal">false</span>)</span><br><span class="line">&#125; <span class="keyword">yield</span> &#123;</span><br><span class="line">    <span class="string">s&quot;<span class="subst">$playFileName</span>:\tNOT FOUND!&quot;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">minikube tunnel &#x2F;&#x2F;在新的终端窗口中运行以下命令，以启动将流量发送到Istio Ingress网关的Minikube隧道</span><br></pre></td></tr></table></figure>
 
-<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line">plays.foreach(println) <span class="comment">//直接传入函数</span></span><br><span class="line"></span><br><span class="line">plays.foreach(str =&gt; println(str)) <span class="comment">//匿名函数</span></span><br><span class="line"></span><br><span class="line">plays.foreach((str: <span class="type">String</span>) =&gt; println(str)) <span class="comment">//明确参数类型</span></span><br><span class="line"></span><br><span class="line">plays.foreach(println(_)) <span class="comment">//省去对参数命名</span></span><br><span class="line"></span><br><span class="line">plays.foreach &#123;</span><br><span class="line">  (str: <span class="type">String</span>) =&gt; println(str)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">val</span> integers = <span class="number">0</span> to <span class="number">10</span>   <span class="comment">// Return a &quot;range&quot; from 0 to 10, inclusive</span></span><br><span class="line">integers.reduceLeft((i,j) =&gt; i+j)</span><br><span class="line">integers.reduceLeft(_+_)</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">export GATEWAY_URL=$INGRESS_HOST:$INGRESS_PORT</span><br><span class="line">echo &quot;http://$GATEWAY_URL/productpage&quot;</span><br></pre></td></tr></table></figure>
 
-<p><strong>tips</strong></p>
-<ul>
-<li>Scala 可以使用所有 Java 库</li>
-<li><code>(String,String)</code> 等价于<code>Tuple2[String,String]</code></li>
-</ul>
-<h1 id="Scala面向对象"><a href="#Scala面向对象" class="headerlink" title="Scala面向对象"></a>Scala面向对象</h1><figure class="highlight scala"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">IIRecord1</span>(<span class="params"></span></span></span><br><span class="line"><span class="class"><span class="params">    word: <span class="type">String</span>, </span></span></span><br><span class="line"><span class="class"><span class="params">    total_count: <span class="type">Int</span>, </span></span></span><br><span class="line"><span class="class"><span class="params">    locations: <span class="type">Array</span>[<span class="type">String</span>], </span></span></span><br><span class="line"><span class="class"><span class="params">    counts: <span class="type">Array</span>[<span class="type">Int</span>]</span>) </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/** CSV formatted string, but use [a,b,c] for the arrays */</span></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">def</span> <span class="title">toString</span></span>: <span class="type">String</span> = &#123;</span><br><span class="line">        <span class="keyword">val</span> locStr = locations.mkString(<span class="string">&quot;[&quot;</span>, <span class="string">&quot;,&quot;</span>, <span class="string">&quot;]&quot;</span>)  <span class="comment">// i.e., &quot;[a,b,c]&quot;</span></span><br><span class="line">        <span class="keyword">val</span> cntStr = counts.mkString(<span class="string">&quot;[&quot;</span>, <span class="string">&quot;,&quot;</span>, <span class="string">&quot;]&quot;</span>)  <span class="comment">// i.e., &quot;[1,2,3]&quot;</span></span><br><span class="line">        <span class="string">s&quot;<span class="subst">$word</span>,<span class="subst">$total_count</span>,<span class="subst">$locStr</span>,<span class="subst">$cntStr</span>&quot;</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">new</span> <span class="type">IIRecord1</span>(<span class="string">&quot;hello&quot;</span>, <span class="number">3</span>, <span class="type">Array</span>(<span class="string">&quot;one&quot;</span>, <span class="string">&quot;two&quot;</span>), <span class="type">Array</span>(<span class="number">1</span>, <span class="number">2</span>))</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl apply -f samples/addons</span><br><span class="line">kubectl rollout status deployment/kiali -n istio-system</span><br><span class="line">istioctl dashboard kiali</span><br></pre></td></tr></table></figure>
 
-<p><strong>Object</strong></p>
-<ul>
-<li><strong>Object</strong>是Scala内置的用来定义单例（只能被实例一次的类）的关键字</li>
-<li>Scala没有static关键字，使用static的场景可以用object进行代替</li>
-</ul>
-<p><strong>Case Class</strong></p>
-<ul>
-<li><p>Scala使用为参数设置默认值来避免使用多个构造器的情况</p>
-</li>
-<li><p>case关键字为使用其定义的类提供如下特性</p>
-<ul>
-<li>所有构造器参数被认为是实例的私有常量</li>
-<li>生成公有的与类名相同的reader方法</li>
-<li>生成正确的<code>equals</code>、<code>hashCode</code>和<code>toString</code>方法实现</li>
-<li>生成一个同名的object，称为<em>companion object</em></li>
-<li>在<em>companion object</em>中生成一个工厂方法，接受相同的参数并进行实例化</li>
-<li>在<em>companion object</em>中生成一个helper方法并支持特征匹配</li>
-</ul>
-<p>上述特性省去了使用Java时需要花精力去注意的很多工作，包括<a href="https://tangziyin.com/2021/04/06/EffectiveJava%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">EffectiveJava</a>中提到的只提供访问方法和通用方法的复写等，<em>companion object</em>提供的工厂方法和helper方法也保证了Scala中类的使用更加灵活</p>
-</li>
-</ul>
-<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line"><span class="keyword">case</span> <span class="class"><span class="keyword">class</span> <span class="title">IIRecord</span>(<span class="params"></span></span></span><br><span class="line"><span class="class"><span class="params">    word: <span class="type">String</span>, </span></span></span><br><span class="line"><span class="class"><span class="params">    total_count: <span class="type">Int</span> = 0, </span></span></span><br><span class="line"><span class="class"><span class="params">    locations: <span class="type">Array</span>[<span class="type">String</span>] = <span class="type">Array</span>.empty, </span></span></span><br><span class="line"><span class="class"><span class="params">    counts: <span class="type">Array</span>[<span class="type">Int</span>] = <span class="type">Array</span>.empty</span>) </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/** </span></span><br><span class="line"><span class="comment">     * Different than our CSV output above, but see toCSV.</span></span><br><span class="line"><span class="comment">     * Array.toString is useless, so format these ourselves. </span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">def</span> <span class="title">toString</span></span>: <span class="type">String</span> = </span><br><span class="line">        <span class="string">s&quot;&quot;</span><span class="string">&quot;IIRecord($word, $total_count, $locStr, $cntStr)&quot;</span><span class="string">&quot;&quot;</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">/** CSV-formatted string, but use [a,b,c] for the arrays */</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">toCSV</span></span>: <span class="type">String</span> = </span><br><span class="line">        <span class="string">s&quot;<span class="subst">$word</span>,<span class="subst">$total_count</span>,<span class="subst">$locStr</span>,<span class="subst">$cntStr</span>&quot;</span></span><br><span class="line">        </span><br><span class="line">    <span class="comment">/** Return a JSON-formatted string for the instance. */</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">toJSONString</span></span>: <span class="type">String</span> = </span><br><span class="line">        <span class="string">s&quot;&quot;</span><span class="string">&quot;&#123;</span></span><br><span class="line"><span class="string">        |  &quot;</span><span class="string">word&quot;:        &quot;</span>$<span class="string">word&quot;, </span></span><br><span class="line"><span class="string">        |  &quot;</span>total_<span class="string">count&quot;: <span class="subst">$total_count</span>, </span></span><br><span class="line"><span class="string">        |  &quot;</span><span class="string">locations&quot;:   <span class="subst">$&#123;toJSONArrayString(locations)&#125;</span>,</span></span><br><span class="line"><span class="string">        |  &quot;</span><span class="string">counts&quot;       <span class="subst">$&#123;toArrayString(counts, &quot;, &quot;)&#125;</span></span></span><br><span class="line"><span class="string">        |&#125;</span></span><br><span class="line"><span class="string">        |&quot;</span><span class="string">&quot;&quot;</span>.stripMargin</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="function"><span class="keyword">def</span> <span class="title">locStr</span> </span>= toArrayString(locations)</span><br><span class="line">    <span class="keyword">private</span> <span class="function"><span class="keyword">def</span> <span class="title">cntStr</span> </span>= toArrayString(counts)</span><br><span class="line"></span><br><span class="line">    <span class="comment">// &quot;[_]&quot; means we don&#x27;t care what type of elements; we&#x27;re just</span></span><br><span class="line">    <span class="comment">// calling toString on them!</span></span><br><span class="line">    <span class="keyword">private</span> <span class="function"><span class="keyword">def</span> <span class="title">toArrayString</span></span>(array: <span class="type">Array</span>[_], delim: <span class="type">String</span> = <span class="string">&quot;,&quot;</span>): <span class="type">String</span> = </span><br><span class="line">        array.mkString(<span class="string">&quot;[&quot;</span>, delim, <span class="string">&quot;]&quot;</span>)  <span class="comment">// i.e., &quot;[a,b,c]&quot;</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="function"><span class="keyword">def</span> <span class="title">toJSONArrayString</span></span>(array: <span class="type">Array</span>[<span class="type">String</span>]): <span class="type">String</span> =</span><br><span class="line">        toArrayString(array.map(quote), <span class="string">&quot;, &quot;</span>)</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">private</span> <span class="function"><span class="keyword">def</span> <span class="title">quote</span></span>(word: <span class="type">String</span>): <span class="type">String</span> = <span class="string">&quot;\&quot;&quot;</span> + word + <span class="string">&quot;\&quot;&quot;</span>  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="kubernets相关命令"><a href="#kubernets相关命令" class="headerlink" title="kubernets相关命令"></a>kubernets相关命令</h2><p>minikube是本地的Kubernetes，致力于使Kubernetes易于学习和开发</p>
+<p><a href="https://minikube.sigs.k8s.io/docs/start/#install-a-hypervisor">https://minikube.sigs.k8s.io/docs/start/#install-a-hypervisor</a></p>
+<p><a href="https://istio.io/latest/docs/setup/platform-setup/minikube/">https://istio.io/latest/docs/setup/platform-setup/minikube/</a></p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">minikube start --driver=docker</span><br><span class="line">minikube start --memory=16384 --cpus=4 --kubernetes-version=v1.20.2</span><br></pre></td></tr></table></figure>
 
-<ul>
-<li>下面两种表达等价</li>
-</ul>
-<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line"><span class="keyword">val</span> hello1 = <span class="keyword">new</span> <span class="type">IIRecord</span>(<span class="string">&quot;hello1&quot;</span>)</span><br><span class="line"><span class="keyword">val</span> hello2 = <span class="type">IIRecord</span>(<span class="string">&quot;hello2&quot;</span>)</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl get po -A</span><br><span class="line">minikube kubectl -- get po -A </span><br></pre></td></tr></table></figure>
 
-<ul>
-<li>Scala允许object和class名以小写字母开始，并向函数或方法的形式进行调用</li>
-</ul>
-<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">object</span> <span class="title">stem</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">apply</span></span>(word: <span class="type">String</span>): <span class="type">String</span> = word.replaceFirst(<span class="string">&quot;s$&quot;</span>, <span class="string">&quot;&quot;</span>) <span class="comment">// insert real implementation!</span></span><br><span class="line">&#125;</span><br><span class="line">println(stem(<span class="string">&quot;dog&quot;</span>))</span><br><span class="line">println(stem(<span class="string">&quot;dogs&quot;</span>))</span><br><span class="line"></span><br><span class="line"><span class="comment">//dog</span></span><br><span class="line"><span class="comment">//dog</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">minikube pause</span><br></pre></td></tr></table></figure>
 
-<ul>
-<li><em>companion object</em>支持模式匹配</li>
-</ul>
-<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line"><span class="type">Seq</span>(hello, world).map &#123;</span><br><span class="line">    <span class="keyword">case</span> <span class="type">IIRecord</span>(word, <span class="number">0</span>, _, _) =&gt; <span class="string">s&quot;<span class="subst">$word</span> with no occurrences.&quot;</span></span><br><span class="line">    <span class="keyword">case</span> <span class="type">IIRecord</span>(word, cnt, locs, cnts) =&gt; </span><br><span class="line">        <span class="string">s&quot;<span class="subst">$word</span> occurs <span class="subst">$cnt</span> times: <span class="subst">$&#123;locs.zip(cnts).mkString(&quot;, &quot;)&#125;</span>&quot;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">minikube stop</span><br></pre></td></tr></table></figure>
 
-<h1 id="Scala-for-Spark"><a href="#Scala-for-Spark" class="headerlink" title="Scala for Spark"></a>Scala for Spark</h1><ul>
-<li>demo1是一个经典的WordCount实现</li>
-<li>demo2在demo1的基础上使用了case关键字来优化代码</li>
-<li>demo3对demo1的输出结果的格式进行修改以进行SQL查询</li>
-</ul>
-<h2 id="demo1"><a href="#demo1" class="headerlink" title="demo1"></a>demo1</h2><p>这边我先列出了一些demo中用到的tips，可以和demo代码相互印证</p>
-<ul>
-<li><p><strong>flatMap</strong>能够遍历集合的每个元素，并对应这些元素建立集合，最终将这些集合平铺到一个大集合中</p>
-</li>
-<li><p>匿名函数有超过一个参数时需要使用圆括号包裹这些参数</p>
-<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line">(some_tuple3: (<span class="type">String</span>,<span class="type">Int</span>,<span class="type">Double</span>)) =&gt; ...</span><br><span class="line">(arg1, arg2, arg3) =&gt; ...</span><br><span class="line">(arg1: <span class="type">String</span>, arg2: <span class="type">Int</span>, arg3: <span class="type">Double</span>) =&gt; ...</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>Scala在表示多行匿名函数时使用大括号后包裹匿名函数，不同于单行匿名函数的圆括号</p>
-<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line">flatMap &#123; location_contents_tuple2 =&gt; </span><br><span class="line">        <span class="keyword">val</span> words = location_contents_tuple2._2.split(<span class="string">&quot;&quot;</span><span class="string">&quot;\W+&quot;</span><span class="string">&quot;&quot;</span>)</span><br><span class="line">        <span class="keyword">val</span> fileName = location_contents_tuple2._1.split(pathSeparator).last</span><br><span class="line">        words.map(word =&gt; ((word, fileName), <span class="number">1</span>))</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">minikube delete --all</span><br></pre></td></tr></table></figure>
 
-<p>PS：Python使用圆括号包裹匿名函数的函数体</p>
-</li>
-<li><p>Tuple2可以使用<code>_1</code> 和<code>_2</code>方法访问第一和第二个元素（注意不是<code>_0</code>和<code>_1</code>）</p>
-</li>
-<li><p>对于使用”””表示的字符串，在使用正则表达式时，不需要额外进行转义<code>&quot;\\W+&quot; =&gt; &quot;&quot;&quot;\W+&quot;&quot;&quot;</code></p>
-</li>
-<li><p><strong>reduceByKey</strong>对所有相同Key（第一个元素）的Tuple进行groupBy操作，Value按照传入的匿名函数进行聚合</p>
-<p>Spark的所有<strong>*ByKey</strong>都针对两个元素的Tuple，其中第一个元素作为Key，第二个元素作为Value</p>
-</li>
-<li><p><strong>groupByKey</strong>不需要传入匿名函数，按Key聚合后Value会全部放入一个CompactBuffer对象中作为一个Group</p>
-</li>
-<li><p><strong>mapValues</strong>相较于<strong>map</strong>只针对元素为二元组且只操作Value的情况</p>
-</li>
-<li><p>Vector的sortBy方法传入的匿名函数参数表示Vector的每个元素，返回用于排序的部分</p>
-<p><code>file_count_tup2 =&gt; (-file_count_tup2._2, file_count_tup2._1)</code>表示首先按二元组的第二个元素降序排序，再按第一个元素升序排序</p>
-</li>
-</ul>
-<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> java.io.<span class="type">File</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">val</span> shakespeare = <span class="keyword">new</span> <span class="type">File</span>(<span class="string">&quot;/home/jovyan/work/data/shakespeare&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">val</span> iiFirstPass1 = sc.wholeTextFiles(shakespeare.toString).</span><br><span class="line">    flatMap &#123; location_contents_tuple2 =&gt; </span><br><span class="line">        <span class="keyword">val</span> words = location_contents_tuple2._2.split(<span class="string">&quot;&quot;</span><span class="string">&quot;\W+&quot;</span><span class="string">&quot;&quot;</span>)</span><br><span class="line">        <span class="keyword">val</span> fileName = location_contents_tuple2._1.split(pathSeparator).last</span><br><span class="line">        words.map(word =&gt; ((word, fileName), <span class="number">1</span>))</span><br><span class="line">    &#125;.</span><br><span class="line">    reduceByKey((count1, count2) =&gt; count1 + count2).</span><br><span class="line">    map &#123; word_file_count_tup3 =&gt; </span><br><span class="line">        (word_file_count_tup3._1._1, (word_file_count_tup3._1._2, word_file_count_tup3._2)) </span><br><span class="line">    &#125;.</span><br><span class="line">    groupByKey.</span><br><span class="line">    sortByKey(ascending = <span class="literal">true</span>).</span><br><span class="line">    mapValues &#123; iterable =&gt; </span><br><span class="line">        <span class="keyword">val</span> vect = iterable.toVector.sortBy &#123; file_count_tup2 =&gt; </span><br><span class="line">            (-file_count_tup2._2, file_count_tup2._1)</span><br><span class="line">        &#125;</span><br><span class="line">        vect.mkString(<span class="string">&quot;,&quot;</span>)</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl get po -A //查看所有pods，第一列为命名空間</span><br><span class="line">kubectl get pod -n istio-system //查看命名空间istio-system下的pods</span><br></pre></td></tr></table></figure>
 
-<ol>
-<li><p>sc.wholeTextFiles获取shakespeare路径下每个文档（文档路径，文档内容）的二元组组成的集合RDD</p>
-</li>
-<li><p>flatMap对RDD每个二元组遍历，将文档内容按照单词分割建立一个数组，文档路径只保留文件名，最终原RDD的每个二元组被处理成一个包含多个（（单词，文件名），1）结构的数组，flatMap自动将最后得到的所有数组平铺成一个新的RDD</p>
-<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line">((<span class="type">AS</span>,asyoulikeit),<span class="number">1</span>)</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>reduceByKey按照新RDD的Key值，如上面的(AS,asyoulikeit)对所有Key相同的元素进行整合，对Value进行相加操作，于是便得到所有相同文件相同单词的数量</p>
-<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line">((<span class="type">All</span>,twelfthnight),<span class="number">3</span>)</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>map通过遍历RDD的每个元素对所有元素的格式进行修改</p>
-<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line">(<span class="type">All</span>,(twelfthnight,<span class="number">3</span>))</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>groupByKey和sortByKey将RDD按照Key值进行聚合和排序，相同Key的Value通过CompactBuffer对象进行存储</p>
-<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line">(<span class="type">A</span>,<span class="type">CompactBuffer</span>((loveslabourslost,<span class="number">78</span>), (midsummersnightsdream,<span class="number">39</span>), (muchadoaboutnothing,<span class="number">31</span>), (merrywivesofwindsor,<span class="number">38</span>), (comedyoferrors,<span class="number">42</span>), (asyoulikeit,<span class="number">34</span>), (twelfthnight,<span class="number">47</span>), (tamingoftheshrew,<span class="number">59</span>)))</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>mapValues对Value遍历，即上面的CompactBuffer对象，通过将其转化为Vector来使用Vector的sortBy方法和mkString方法进行排序和字符串化，最终得到如下结构的一系列元素</p>
-<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line">(<span class="type">A</span>,(loveslabourslost,<span class="number">78</span>),(tamingoftheshrew,<span class="number">59</span>),(twelfthnight,<span class="number">47</span>),(comedyoferrors,<span class="number">42</span>),(midsummersnightsdream,<span class="number">39</span>),(merrywivesofwindsor,<span class="number">38</span>),(asyoulikeit,<span class="number">34</span>),(muchadoaboutnothing,<span class="number">31</span>))</span><br><span class="line">(<span class="type">ABOUT</span>,(muchadoaboutnothing,<span class="number">18</span>))</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl get deployment -n istio-system</span><br><span class="line">kubectl delete deployment prometheus -n istio-system</span><br><span class="line">kubectl delete pod prometheus -n istio-system</span><br></pre></td></tr></table></figure>
 
-</li>
-</ol>
-<h2 id="demo2"><a href="#demo2" class="headerlink" title="demo2"></a>demo2</h2><ul>
-<li>使用case关键词可以在传入参数时将元组分解</li>
-</ul>
-<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line"><span class="keyword">val</span> ii1 = sc.wholeTextFiles(shakespeare.toString).</span><br><span class="line">    flatMap &#123;</span><br><span class="line">        <span class="keyword">case</span> (location, contents) =&gt; </span><br><span class="line">            <span class="keyword">val</span> words = contents.split(<span class="string">&quot;&quot;</span><span class="string">&quot;\W+&quot;</span><span class="string">&quot;&quot;</span>).</span><br><span class="line">                filter(word =&gt; word.size &gt; <span class="number">0</span>)                      <span class="comment">// #1</span></span><br><span class="line">            <span class="keyword">val</span> fileName = location.split(pathSeparator).last</span><br><span class="line">            words.map(word =&gt; ((word.toLowerCase, fileName), <span class="number">1</span>))   <span class="comment">// #2</span></span><br><span class="line">    &#125;.</span><br><span class="line">    reduceByKey((count1, count2) =&gt; count1 + count2).</span><br><span class="line">    map &#123; </span><br><span class="line">        <span class="keyword">case</span> ((word, fileName), count) =&gt; (word, (fileName, count)) </span><br><span class="line">    &#125;.</span><br><span class="line">    groupByKey.</span><br><span class="line">    sortByKey(ascending = <span class="literal">true</span>).</span><br><span class="line">    mapValues &#123; iterable =&gt; </span><br><span class="line">        <span class="keyword">val</span> vect = iterable.toVector.sortBy &#123; </span><br><span class="line">            <span class="keyword">case</span> (fileName, count) =&gt; (-count, fileName) </span><br><span class="line">        &#125;</span><br><span class="line">        vect.mkString(<span class="string">&quot;,&quot;</span>)</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl delete pod prometheus -n istio-system //从命名空间istio-system删除prometheus</span><br><span class="line">kubectl rollout status deployment/prometheus -n istio-system //重新安装prometheus</span><br></pre></td></tr></table></figure>
+
+<h2 id="Istio相关命令"><a href="#Istio相关命令" class="headerlink" title="Istio相关命令"></a>Istio相关命令</h2><p><a href="https://www.servicemesher.com/istio-handbook/practice/setup-istio.html">https://www.servicemesher.com/istio-handbook/practice/setup-istio.html</a></p>
+<p><a href="https://istio.io/latest/docs/setup/install/istioctl/">https://istio.io/latest/docs/setup/install/istioctl/</a></p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">istioctl install</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">istioctl install --set profile=demo</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">istioctl x uninstall --purge</span><br></pre></td></tr></table></figure>
+
+<p>可选<code>--purge</code>标志将删除所有Istio资源，包括可能与其他Istio控制平面共享的群集范围的资源。</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">istioctl dashboard //查看可用的仪表盘</span><br></pre></td></tr></table></figure>
+
+<h1 id="运维环境搭建"><a href="#运维环境搭建" class="headerlink" title="运维环境搭建"></a>运维环境搭建</h1><p>将指标、日志以及调用链数据集中到elasticsearch以便后续分析</p>
+<p><a href="https://kubernetes.io/zh/docs/tasks/configure-pod-container/pull-image-private-registry/">https://kubernetes.io/zh/docs/tasks/configure-pod-container/pull-image-private-registry/</a></p>
+<p>环境搭建速度较慢时考虑使用本地镜像</p>
+<h2 id="Prometheus配置"><a href="#Prometheus配置" class="headerlink" title="Prometheus配置"></a>Prometheus配置</h2><p><a href="https://www.servicemesher.com/istio-handbook/practice/prometheus.html">https://www.servicemesher.com/istio-handbook/practice/prometheus.html</a></p>
+<p>istio的sample/addons目录提供了prometheus的yaml文件，之前通过<code>kubectl apply -f samples/addons</code>已安装，可以直接<code>istioctl dashboard prometheus</code>进行观察</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">//进入prometheus所在pod</span><br><span class="line">//pod名通过kubectl get po -A命令查找并替换</span><br><span class="line">kubectl exec -it prometheus-7cb88b5945-8jbkf -n istio-system sh</span><br></pre></td></tr></table></figure>
+
+<p>找到配置文件prometheus.yml并打开，我的在/etc/config/prometheus.yml并修改</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">//也可以通过修改 Prometheus 的 ConfigMap 对其配置进行如下修改</span><br><span class="line">kubectl edit configmap prometheus -n istio-system </span><br></pre></td></tr></table></figure>
+
+<p>修改完成后保存，需要给 Prometheus 加上 –web.enable-lifecycle 启动参数来支持热更新（可能默认支持）</p>
+<p>这些配置参数在prometheus.yaml中已经定义</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl edit deployment prometheus -n istio-system</span><br><span class="line"> ...</span><br><span class="line"> containers:</span><br><span class="line">      - args:</span><br><span class="line">        - --storage.tsdb.retention=6h</span><br><span class="line"></span><br><span class="line">        - --config.file=/etc/prometheus/prometheus.yml</span><br><span class="line"></span><br><span class="line">        - --web.enable-lifecycle</span><br><span class="line">          image: docker.io/prom/prometheus:v2.15.1</span><br><span class="line">          imagePullPolicy: IfNotPresent</span><br><span class="line"> ...</span><br></pre></td></tr></table></figure>
+
+<p>然后再调用 Prometheus 的 HTTP API 即可更新配置：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">curl -X POST http://&lt;Prometheus URL&gt;:9090/-/reload</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">istioctl dashboard prometheus</span><br></pre></td></tr></table></figure>
+
+<p><a href="https://www.elastic.co/cn/what-is/prometheus-monitoring">https://www.elastic.co/cn/what-is/prometheus-monitoring</a></p>
+<p>将prometheus数据导出到elasticsearch</p>
+<h2 id="EFK配置"><a href="#EFK配置" class="headerlink" title="EFK配置"></a>EFK配置</h2><p><a href="https://www.servicemesher.com/istio-handbook/practice/efk.html">https://www.servicemesher.com/istio-handbook/practice/efk.html</a></p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">//具体设置参数的位置需要参考demo.yaml，1.10版本默认使用meshConfig.accessLogFile为/dev/stdout</span><br><span class="line">istioctl manifest apply --set profile=demo --set values.global.proxy.accessLogFile=&quot;/dev/stdout&quot;</span><br></pre></td></tr></table></figure>
+
+<p>以下通过部署 <code>sleep</code> 示例应用程序来测试日志采集过程</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl apply -f samples/sleep/sleep.yaml</span><br><span class="line">kubectl apply -f &lt;(istioctl kube-inject -f samples/sleep/sleep.yaml) //手动注入sidecar</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl logs -l app=sleep -c istio-proxy //查看应用日志</span><br></pre></td></tr></table></figure>
+
+<p><a href="https://www.servicemesher.com/istio-handbook/practice/efk.html">https://www.servicemesher.com/istio-handbook/practice/efk.html</a></p>
+<p>参考上文构建EFK的YAML文件</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl apply -f samples/efk.yaml</span><br></pre></td></tr></table></figure>
+
+<p>执行命令产生访问日志：</p>
+<blockquote>
+<p>如果你已经按照本书部署了 <code>Bookinfo</code> 示例，你也可以直接通过浏览器访问 /productpage 页面也可以产生访问日志。</p>
+</blockquote>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl exec -it $(kubectl get pod -l app=sleep -o jsonpath=&#x27;&#123;.items[0].metadata.name&#125;&#x27;) -c sleep -- curl -v httpbin:8000/status/418</span><br></pre></td></tr></table></figure>
+
+<p>设置 Kibana 的端口转发：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl -n logging port-forward $(kubectl -n logging get pod -l app=kibana -o jsonpath=&#x27;&#123;.items[0].metadata.name&#125;&#x27;) 5601:5601 &amp;</span><br></pre></td></tr></table></figure>
 
 <ul>
-<li>使用多个case语句来进行参数匹配，这种模式的匿名函数被称为<em>partial function</em></li>
+<li>此命令将 Kibaba <a href="https://www.servicemesher.com/istio-handbook/GLOSSARY.html#pod">Pod</a> 的 <code>5601</code> 端口转发到 <code>localhost:5601</code> ，<code>&amp;</code> 代表后台运行</li>
 </ul>
-<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="keyword">case</span> (location, <span class="string">&quot;&quot;</span>) =&gt; </span><br><span class="line">        <span class="type">Array</span>.empty[((<span class="type">String</span>, <span class="type">String</span>), <span class="type">Int</span>)]  <span class="comment">// Return an empty array</span></span><br><span class="line">    <span class="keyword">case</span> (location, contents) =&gt; </span><br><span class="line">        <span class="keyword">val</span> words = contents.split(<span class="string">&quot;&quot;</span><span class="string">&quot;\W+&quot;</span><span class="string">&quot;&quot;</span>)</span><br><span class="line">        <span class="keyword">val</span> fileName = location.split(pathSep).last</span><br><span class="line">        words.map(word =&gt; ((word, fileName), <span class="number">1</span>))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>后续需要对 <code>Fluentd</code> 进行细致的配置。如果用于生产环境，可以前往 Kubernetes 官方 github 仓库找到完整的 <code>EFK</code> 配置来进行部署：</p>
+<p><a href="https://github.com/kubernetes/kubernetes/tree/master/cluster/addons/fluentd-elasticsearch">https://github.com/kubernetes/kubernetes/tree/master/cluster/addons/fluentd-elasticsearch</a></p>
+<h2 id="Jaeger配置"><a href="#Jaeger配置" class="headerlink" title="Jaeger配置"></a>Jaeger配置</h2><p><a href="https://www.servicemesher.com/istio-handbook/practice/jaeger.html">https://www.servicemesher.com/istio-handbook/practice/jaeger.html</a></p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl apply -f samples/addons/jaeger.yaml</span><br></pre></td></tr></table></figure>
 
-<h2 id="demo3"><a href="#demo3" class="headerlink" title="demo3"></a>demo3</h2><ul>
-<li>本例目的是将最终结果转换成便于进行SQL查询的格式并进行简单的查询，例如下面的格式</li>
-</ul>
-<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line">(a,<span class="number">3350</span>,<span class="type">Vector</span>(loveslabourslost, merrywivesofwindsor, muchadoaboutnothing, asyoulikeit, tamingoftheshrew, twelfthnight, midsummersnightsdream, comedyoferrors),<span class="type">Vector</span>(<span class="number">507</span>, <span class="number">494</span>, <span class="number">492</span>, <span class="number">461</span>, <span class="number">445</span>, <span class="number">416</span>, <span class="number">281</span>, <span class="number">254</span>))</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">istioctl dashboard jaeger</span><br></pre></td></tr></table></figure>
 
+<p>可以在jaeger.yaml配置文件中修改参数</p>
+<p>将调用链数据持久化存储 <a href="https://www.jaegertracing.io/docs/1.23/operator/#production-strategy">https://www.jaegertracing.io/docs/1.23/operator/#production-strategy</a></p>
+<p><code>#TODO</code> </p>
 <ul>
-<li>zip和unzip方法正如现实中拉链拉开拉上的过程，可以将长度一样的两个集合合并成一个每个元素是一个二元组的集合，或者将一个二元组集合分开成两个集合，其中二元组集合中二元组的第一个元素与分开后第一个集合的元素能一一对应</li>
+<li><code>Jaeger Collector</code> 默认采用直接写入存储服务的方式，大规模的使用场景下建议使用 Kafka 作为中间缓存区。</li>
 </ul>
-<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line">[(<span class="number">1</span>,<span class="number">2</span>),(<span class="number">3</span>,<span class="number">4</span>),(<span class="number">5</span>,<span class="number">6</span>)] =&gt; ([<span class="number">1</span>,<span class="number">3</span>,<span class="number">5</span>],[<span class="number">2</span>,<span class="number">4</span>,<span class="number">6</span>]) <span class="comment">//unzip</span></span><br><span class="line">([<span class="number">1</span>,<span class="number">3</span>,<span class="number">5</span>],[<span class="number">2</span>,<span class="number">4</span>,<span class="number">6</span>]) =&gt; [(<span class="number">1</span>,<span class="number">2</span>),(<span class="number">3</span>,<span class="number">4</span>),(<span class="number">5</span>,<span class="number">6</span>)] <span class="comment">//zip</span></span><br></pre></td></tr></table></figure>
-
-<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line"><span class="keyword">val</span> ii = sc.wholeTextFiles(shakespeare.toString).</span><br><span class="line">    flatMap &#123;</span><br><span class="line">        <span class="keyword">case</span> (location, contents) =&gt; </span><br><span class="line">            <span class="keyword">val</span> words = contents.split(<span class="string">&quot;&quot;</span><span class="string">&quot;\W+&quot;</span><span class="string">&quot;&quot;</span>).</span><br><span class="line">                filter(word =&gt; word.size &gt; <span class="number">0</span>)                      <span class="comment">// #1</span></span><br><span class="line">            <span class="keyword">val</span> fileName = location.split(pathSeparator).last</span><br><span class="line">            words.map(word =&gt; ((word.toLowerCase, fileName), <span class="number">1</span>))   <span class="comment">// #2</span></span><br><span class="line">    &#125;.</span><br><span class="line">    reduceByKey((count1, count2) =&gt; count1 + count2).</span><br><span class="line">    map &#123; </span><br><span class="line">        <span class="keyword">case</span> ((word, fileName), count) =&gt; (word, (fileName, count)) </span><br><span class="line">    &#125;.</span><br><span class="line">    groupByKey.</span><br><span class="line">    sortByKey(ascending = <span class="literal">true</span>).</span><br><span class="line">    map &#123;</span><br><span class="line">      <span class="keyword">case</span> (word, iterable) =&gt;</span><br><span class="line">        <span class="keyword">val</span> vect = iterable.toVector.sortBy &#123; </span><br><span class="line">            <span class="keyword">case</span> (fileName, count) =&gt; (-count, fileName) </span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">val</span> (locations, counts) = vect.unzip  </span><br><span class="line">        <span class="keyword">val</span> totalCount = counts.reduceLeft((n1,n2) =&gt; n1+n2)</span><br><span class="line">        (word, totalCount, locations, counts)</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
-
+<h1 id="Istio构架"><a href="#Istio构架" class="headerlink" title="Istio构架"></a>Istio构架</h1><p><a href="https://www.servicemesher.com/istio-handbook/concepts/basic.html">https://www.servicemesher.com/istio-handbook/concepts/basic.html</a></p>
+<p><a href="https://zhuanlan.zhihu.com/p/145544378">https://zhuanlan.zhihu.com/p/145544378</a></p>
+<blockquote>
+<p>服务网格是一个<strong>基础设施层</strong>，用于处理服务间通信。云原生应用有着复杂的服务拓扑，服务网格保证<strong>请求在这些拓扑中可靠地穿梭</strong>。在实际应用当中，服务网格通常是由一系列轻量级的<strong>网络代理</strong>组成的，它们与应用程序部署在一起，但<strong>对应用程序透明</strong>。</p>
+</blockquote>
+<p>Istio 服务网格在逻辑上分为控制平面和数据平面两部分。其中，控制平面 <strong>Pilot</strong> 负责管理和配置代理来路由流量，并配置 <strong>Mixer</strong> 以实施策略和收集遥测数据；数据平面由一组以 Sidecar 方式部署的智能代理（<strong>Envoy</strong>）组成，这些代理可以调节和控制微服务及 <strong>Mixer</strong> 之间所有的网络通信。</p>
+<p>控制平面的特点：</p>
 <ul>
-<li>使用SQL语句进行查询</li>
+<li>不直接解析数据包</li>
+<li>与控制平面中的代理通信，下发策略和配置</li>
+<li>负责网络行为的可视化</li>
+<li>通常提供 API 或者命令行工具可用于配置版本化管理，便于持续集成和部署</li>
 </ul>
-<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> org.apache.spark.sql.<span class="type">SQLContext</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">val</span> sqlContext = <span class="keyword">new</span> <span class="type">SQLContext</span>(sc)</span><br><span class="line"><span class="keyword">val</span> iiDF = sqlContext.createDataFrame(ii).toDF(<span class="string">&quot;word&quot;</span>, <span class="string">&quot;locations_counts&quot;</span>)</span><br><span class="line">iiDF.cache</span><br><span class="line">iiDF.registerTempTable(<span class="string">&quot;inverted_index&quot;</span>)</span><br><span class="line"><span class="keyword">val</span> topLocations = sqlContext.sql(<span class="string">&quot;&quot;</span><span class="string">&quot;</span></span><br><span class="line"><span class="string">    SELECT word, total_count, locations[0] AS top_location, counts[0] AS top_count</span></span><br><span class="line"><span class="string">    FROM inverted_index </span></span><br><span class="line"><span class="string">&quot;</span><span class="string">&quot;&quot;</span>)</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line">+-----------+-----------+---------------------+---------+</span><br><span class="line">|word       |total_count|top_location         |top_count|</span><br><span class="line">+-----------+-----------+---------------------+---------+</span><br><span class="line">|a          |<span class="number">3350</span>       |loveslabourslost     |<span class="number">507</span>      |</span><br><span class="line">|abandon    |<span class="number">6</span>          |asyoulikeit          |<span class="number">4</span>        |</span><br><span class="line">|abate      |<span class="number">3</span>          |loveslabourslost     |<span class="number">1</span>        |</span><br><span class="line">|abatement  |<span class="number">1</span>          |twelfthnight         |<span class="number">1</span>        |</span><br><span class="line">|abbess     |<span class="number">8</span>          |comedyoferrors       |<span class="number">8</span>        |</span><br><span class="line">|abbey      |<span class="number">9</span>          |comedyoferrors       |<span class="number">9</span>        |</span><br><span class="line">+-----------+-----------+---------------------+---------+</span><br></pre></td></tr></table></figure>
-
+<p>数据平面的特点：</p>
 <ul>
-<li>在DataFrame之外Spark提供了Dataset，相较提供了类型保障，类似于RTT[T]，T表示记录的类型</li>
+<li>通常是按照无状态目标设计的，但实际上为了提高流量转发性能，需要缓存一些数据</li>
+<li>直接处理入站和出站数据包，转发、路由、健康检查、负载均衡、认证、鉴权、产生监控数据等</li>
+<li>对应用来说透明，即可以做到无感知部署</li>
 </ul>
-<h1 id="Tips"><a href="#Tips" class="headerlink" title="Tips"></a>Tips</h1><ul>
-<li><p>Scala支持将*****作为方法名，在实例之间进行乘法操作时进行调用</p>
-<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line"><span class="keyword">case</span> <span class="class"><span class="keyword">class</span> <span class="title">Matrix</span>(<span class="params">rows: <span class="type">Array</span>[<span class="type">Array</span>[<span class="type">Double</span>]]</span>) </span>&#123;  <span class="comment">// Each row is an Array[Double]</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">/** Multiple this matrix by another. */</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">*</span></span>(other: <span class="type">Matrix</span>): <span class="type">Matrix</span> = ...</span><br><span class="line"></span><br><span class="line">    <span class="comment">/** Add this matrix by another. */</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">+</span></span>(other: <span class="type">Matrix</span>): <span class="type">Matrix</span> = ...</span><br><span class="line"></span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">val</span> m1_times_m2 = m1.*(m2) <span class="comment">//两者等同</span></span><br><span class="line"><span class="keyword">val</span> m1_times_m2 = m1 * m2</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>Scala提供<strong>Traits</strong>作为关键字提供类似Java接口的功能<a href="https://scala.cool/2018/11/java-2-scala-4/">https://scala.cool/2018/11/java-2-scala-4/</a></p>
-</li>
-<li><p>Scala提供<strong>until</strong>和<strong>to</strong>两种关键词生成一个Range，其中until左闭右开，to左闭右闭，另外使用<strong>by</strong>关键字控制步长</p>
-</li>
-<li><p><strong>Option</strong>功能类似于Try，可以用来表示一个值是可选的（有值或无值）</p>
-<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line">options.foreach &#123;</span><br><span class="line">    <span class="keyword">case</span> <span class="type">None</span>    =&gt; println(<span class="type">None</span>)</span><br><span class="line">    <span class="keyword">case</span> <span class="type">Some</span>(i) =&gt; println(i)  <span class="comment">// Note how we extract the enclosed value.</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-</li>
-<li><p><strong>Implicits</strong><a href="https://www.jianshu.com/p/1d119c937015">https://www.jianshu.com/p/1d119c937015</a></p>
-</li>
+<p><strong>优点</strong></p>
+<ul>
+<li>屏蔽分布式系统通信的复杂性(负载均衡、服务发现、认证授权、监控追踪、流量控制等等)，服务只用关注业务逻辑；</li>
+<li>真正的语言无关，服务可以用任何语言编写，只需和Service Mesh通信即可；</li>
+<li>对应用透明，Service Mesh组件可以单独升级；</li>
+</ul>
+<p><strong>挑战</strong></p>
+<ul>
+<li>Service Mesh组件以代理模式计算并转发请求，一定程度上会降低通信系统性能，并增加系统资源开销；</li>
+<li>Service Mesh组件接管了网络流量，因此服务的整体稳定性依赖于Service Mesh，同时额外引入的大量Service Mesh服务实例的运维和管理也是一个挑战；</li>
+</ul>
+<h2 id="Kubernetes"><a href="#Kubernetes" class="headerlink" title="Kubernetes"></a>Kubernetes</h2><p><a href="https://jimmysong.io/kubernetes-handbook/concepts/">https://jimmysong.io/kubernetes-handbook/concepts/</a></p>
+<h1 id="微服务"><a href="#微服务" class="headerlink" title="微服务"></a>微服务</h1><p><a href="https://zhuanlan.zhihu.com/p/61901608">https://zhuanlan.zhihu.com/p/61901608</a></p>
+<ul>
+<li>不同服务间直接进行通信</li>
+<li>加入对<strong>网络传输问题</strong>的处理逻辑</li>
+<li>使用<strong>TCP协议</strong>处理网络传输问题</li>
+<li>第一代微服务：<strong>分布式系统</strong>发展带来的新需求（分布式系统的通用语义），如熔断策略、负载均衡、服务发现、认证和授权、quota限制、trace和监控等</li>
+<li>第二代微服务：<strong>面向微服务架构的开发框架</strong>出现</li>
+<li>第一代 Service Mesh：Linkerd，Envoy，NginxMesh为代表的<strong>代理模式（边车模式）</strong>将分布式服务的通信抽象为单独一层，在这一层中实现负载均衡、服务发现、认证授权、监控追踪、流量控制等分布式系统所需要的功能，作为一个和服务对等的代理服务，和服务部署在一起，接管服务的流量，通过代理之间的通信间接完成服务之间的通信请求，从而保证微服务语言无关的特性，解决版本兼容问题，同时避免开发者掌握管理复杂框架本身花费的时间精力</li>
+<li>第二代 Service Mesh：以 Istio 为代表，提供统一的上层运维入口，演化出了集中式的控制面板，所有的单机代理组件通过和控制面板交互进行<strong>网络拓扑策略的更新</strong>和<strong>单机数据的汇报</strong></li>
+</ul>
+<h1 id="使用-Elastic-技术栈构建-K8S-全栈监控"><a href="#使用-Elastic-技术栈构建-K8S-全栈监控" class="headerlink" title="使用 Elastic 技术栈构建 K8S 全栈监控"></a>使用 Elastic 技术栈构建 K8S 全栈监控</h1><p><a href="https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-1/">https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-1/</a></p>
+<p><a href="https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-2/">https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-2/</a></p>
+<p><a href="https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-3/">https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-3/</a></p>
+<p><a href="https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-4/">https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-4/</a></p>
+<p>在安装 ElasticSearch数据节点时，storageClass需要绑定现有的storageclass name</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl get sc # 获取storageclass</span><br></pre></td></tr></table></figure>
+
+<p><img src="2021-11-17_17-46.png" alt="2021-11-17_17-46"></p>
+<p>修改yaml文件，将storageClassName改为查询到的storageclass name</p>
+<p><img src="2021-11-17_17-48.png" alt="2021-11-17_17-48"></p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">Changed password for user apm_system</span><br><span class="line">PASSWORD apm_system = KDDHU4TJi9EuD87x1DBT</span><br><span class="line"></span><br><span class="line">Changed password for user kibana_system</span><br><span class="line">PASSWORD kibana_system = LsyKNl7OqhBCc9ChCXMm</span><br><span class="line"></span><br><span class="line">Changed password for user kibana</span><br><span class="line">PASSWORD kibana = LsyKNl7OqhBCc9ChCXMm</span><br><span class="line"></span><br><span class="line">Changed password for user logstash_system</span><br><span class="line">PASSWORD logstash_system = MTUGYEFhbtSN4wU2OvjR</span><br><span class="line"></span><br><span class="line">Changed password for user beats_system</span><br><span class="line">PASSWORD beats_system = wob24NOj3J0apT8Rc62T</span><br><span class="line"></span><br><span class="line">Changed password for user remote_monitoring_user</span><br><span class="line">PASSWORD remote_monitoring_user = 0geQaxGmygn90wjVMEfe</span><br><span class="line"></span><br><span class="line">Changed password for user elastic</span><br><span class="line">PASSWORD elastic = zjA9fYQfUgwgmJn4shv5</span><br></pre></td></tr></table></figure>
+
+<p>注意将elastic用户名和密码添加到Kubernetes的Secret 对象中一步需要将password改为之前生成的最后一个密码，即上面的zjA9fYQfUgwgmJn4shv5</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl logs -f -n elastic $(kubectl get pods -n elastic | grep kibana | sed -n 1p | awk &#x27;&#123;print $1&#125;&#x27;) | grep &quot;Status changed from yellow to green&quot;</span><br><span class="line"></span><br><span class="line">kubectl get svc kibana -n elastic</span><br></pre></td></tr></table></figure>
+
+<p>获取elastic service的CLUSTER-IP，通过CLUSTER-IP:5601访问Kibana可视化界面，登录使用elastic作为用户名和之前获取的zjA9fYQfUgwgmJn4shv5作为密码</p>
+<ul>
+<li>tips：pod创建出现ImagePullBackOff时，很可能时镜像拉不下来，可以考虑在dockerhub搜索对于的镜像，拉下来后使用<code>docker tag</code>命令修改标签，或者直接在yaml里直接改image对于的地址</li>
 </ul>
 ]]></content>
+      <categories>
+        <category>AIOps</category>
+        <category>环境搭建</category>
+      </categories>
       <tags>
-        <tag>学习笔记</tag>
-        <tag>Spark</tag>
-        <tag>Scala</tag>
+        <tag>AIOps</tag>
+        <tag>ELK</tag>
+        <tag>环境搭建</tag>
+        <tag>istio</tag>
+        <tag>云原生</tag>
       </tags>
   </entry>
   <entry>
@@ -853,8 +864,8 @@
         <category>时序分析</category>
       </categories>
       <tags>
-        <tag>论文阅读</tag>
         <tag>异常检测</tag>
+        <tag>论文阅读</tag>
       </tags>
   </entry>
   <entry>
@@ -897,7 +908,7 @@
 ]]></content>
       <categories>
         <category>AIOps</category>
-        <category>日志分析</category>
+        <category>Bigdata</category>
       </categories>
       <tags>
         <tag>Spark</tag>
@@ -1118,6 +1129,211 @@
       </tags>
   </entry>
   <entry>
+    <title>JustEnoughScalaforSpark笔记</title>
+    <url>/2021/11/25/JustEnoughScalaforSpark%E7%AC%94%E8%AE%B0/</url>
+    <content><![CDATA[<p>作为学习Spark的过程，感觉即便考虑使用Java进行编程，对Scala有个一定的理解还是有必要的，也能方便阅读其他人的代码，然后发现一个名字挺有诱惑力的项目<a href="https://github.com/deanwampler/JustEnoughScalaForSpark">https://github.com/deanwampler/JustEnoughScalaForSpark</a> ，遂上手看了一下，记些笔记供以后查阅</p>
+<a id="more"></a>
+
+<h1 id="基本语法"><a href="#基本语法" class="headerlink" title="基本语法"></a>基本语法</h1><p><strong>注释</strong></p>
+<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 单行注释</span></span><br><span class="line"><span class="comment">/*多行注释*/</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>常量&amp;变量</strong></p>
+<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line"><span class="keyword">val</span> immutableValue = <span class="string">&quot;常量&quot;</span></span><br><span class="line"><span class="keyword">var</span> mutableVariable = <span class="string">&quot;变量&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>函数</strong></p>
+<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">function_name</span> </span>= &#123;&#125;</span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">function_name</span></span>(parameter:<span class="type">Type</span>):<span class="type">Type</span> = &#123;</span><br><span class="line">    return_value <span class="comment">//最后一行默认表示返回值，return关键字可选，;可选</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>字符串</strong></p>
+<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line"><span class="string">s&quot;&quot;</span><span class="string">&quot;这是一个跨行的字符串</span></span><br><span class="line"><span class="string">|  字符串前添加s表示可以内嵌变量和表达式$sc.version$  &quot;</span><span class="string">&quot;&quot;</span>.stripMargin <span class="comment">//stripMargin可以移除空格，结合|可以控制缩进</span></span><br><span class="line"><span class="string">&quot;/&quot;</span> <span class="comment">//String</span></span><br><span class="line">&#x27;/&#x27; <span class="comment">//Char</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>判断</strong></p>
+<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line"><span class="keyword">val</span> success = <span class="keyword">if</span> (shakespeare.exists == <span class="literal">false</span>) &#123; <span class="comment">//if 结构在Scala是表达式</span></span><br><span class="line">    <span class="literal">false</span></span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="literal">true</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>循环</strong></p>
+<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span> &#123;</span><br><span class="line">  play &lt;- plays</span><br><span class="line">  ...</span><br><span class="line">&#125; <span class="keyword">yield</span> &#123; block_of_final_expressions &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">val</span> failures = <span class="keyword">for</span> &#123;</span><br><span class="line">    play &lt;- plays</span><br><span class="line">    playFileName = targetDirName + pathSeparator + play</span><br><span class="line">    playFile = <span class="keyword">new</span> <span class="type">File</span>(playFileName)</span><br><span class="line">    <span class="keyword">if</span> (playFile.exists == <span class="literal">false</span>)</span><br><span class="line">&#125; <span class="keyword">yield</span> &#123;</span><br><span class="line">    <span class="string">s&quot;<span class="subst">$playFileName</span>:\tNOT FOUND!&quot;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line">plays.foreach(println) <span class="comment">//直接传入函数</span></span><br><span class="line"></span><br><span class="line">plays.foreach(str =&gt; println(str)) <span class="comment">//匿名函数</span></span><br><span class="line"></span><br><span class="line">plays.foreach((str: <span class="type">String</span>) =&gt; println(str)) <span class="comment">//明确参数类型</span></span><br><span class="line"></span><br><span class="line">plays.foreach(println(_)) <span class="comment">//省去对参数命名</span></span><br><span class="line"></span><br><span class="line">plays.foreach &#123;</span><br><span class="line">  (str: <span class="type">String</span>) =&gt; println(str)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">val</span> integers = <span class="number">0</span> to <span class="number">10</span>   <span class="comment">// Return a &quot;range&quot; from 0 to 10, inclusive</span></span><br><span class="line">integers.reduceLeft((i,j) =&gt; i+j)</span><br><span class="line">integers.reduceLeft(_+_)</span><br></pre></td></tr></table></figure>
+
+<p><strong>tips</strong></p>
+<ul>
+<li>Scala 可以使用所有 Java 库</li>
+<li><code>(String,String)</code> 等价于<code>Tuple2[String,String]</code></li>
+</ul>
+<h1 id="Scala面向对象"><a href="#Scala面向对象" class="headerlink" title="Scala面向对象"></a>Scala面向对象</h1><figure class="highlight scala"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">IIRecord1</span>(<span class="params"></span></span></span><br><span class="line"><span class="class"><span class="params">    word: <span class="type">String</span>, </span></span></span><br><span class="line"><span class="class"><span class="params">    total_count: <span class="type">Int</span>, </span></span></span><br><span class="line"><span class="class"><span class="params">    locations: <span class="type">Array</span>[<span class="type">String</span>], </span></span></span><br><span class="line"><span class="class"><span class="params">    counts: <span class="type">Array</span>[<span class="type">Int</span>]</span>) </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/** CSV formatted string, but use [a,b,c] for the arrays */</span></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">def</span> <span class="title">toString</span></span>: <span class="type">String</span> = &#123;</span><br><span class="line">        <span class="keyword">val</span> locStr = locations.mkString(<span class="string">&quot;[&quot;</span>, <span class="string">&quot;,&quot;</span>, <span class="string">&quot;]&quot;</span>)  <span class="comment">// i.e., &quot;[a,b,c]&quot;</span></span><br><span class="line">        <span class="keyword">val</span> cntStr = counts.mkString(<span class="string">&quot;[&quot;</span>, <span class="string">&quot;,&quot;</span>, <span class="string">&quot;]&quot;</span>)  <span class="comment">// i.e., &quot;[1,2,3]&quot;</span></span><br><span class="line">        <span class="string">s&quot;<span class="subst">$word</span>,<span class="subst">$total_count</span>,<span class="subst">$locStr</span>,<span class="subst">$cntStr</span>&quot;</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">new</span> <span class="type">IIRecord1</span>(<span class="string">&quot;hello&quot;</span>, <span class="number">3</span>, <span class="type">Array</span>(<span class="string">&quot;one&quot;</span>, <span class="string">&quot;two&quot;</span>), <span class="type">Array</span>(<span class="number">1</span>, <span class="number">2</span>))</span><br></pre></td></tr></table></figure>
+
+<p><strong>Object</strong></p>
+<ul>
+<li><strong>Object</strong>是Scala内置的用来定义单例（只能被实例一次的类）的关键字</li>
+<li>Scala没有static关键字，使用static的场景可以用object进行代替</li>
+</ul>
+<p><strong>Case Class</strong></p>
+<ul>
+<li><p>Scala使用为参数设置默认值来避免使用多个构造器的情况</p>
+</li>
+<li><p>case关键字为使用其定义的类提供如下特性</p>
+<ul>
+<li>所有构造器参数被认为是实例的私有常量</li>
+<li>生成公有的与类名相同的reader方法</li>
+<li>生成正确的<code>equals</code>、<code>hashCode</code>和<code>toString</code>方法实现</li>
+<li>生成一个同名的object，称为<em>companion object</em></li>
+<li>在<em>companion object</em>中生成一个工厂方法，接受相同的参数并进行实例化</li>
+<li>在<em>companion object</em>中生成一个helper方法并支持特征匹配</li>
+</ul>
+<p>上述特性省去了使用Java时需要花精力去注意的很多工作，包括<a href="https://tangziyin.com/2021/04/06/EffectiveJava%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">EffectiveJava</a>中提到的只提供访问方法和通用方法的复写等，<em>companion object</em>提供的工厂方法和helper方法也保证了Scala中类的使用更加灵活</p>
+</li>
+</ul>
+<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line"><span class="keyword">case</span> <span class="class"><span class="keyword">class</span> <span class="title">IIRecord</span>(<span class="params"></span></span></span><br><span class="line"><span class="class"><span class="params">    word: <span class="type">String</span>, </span></span></span><br><span class="line"><span class="class"><span class="params">    total_count: <span class="type">Int</span> = 0, </span></span></span><br><span class="line"><span class="class"><span class="params">    locations: <span class="type">Array</span>[<span class="type">String</span>] = <span class="type">Array</span>.empty, </span></span></span><br><span class="line"><span class="class"><span class="params">    counts: <span class="type">Array</span>[<span class="type">Int</span>] = <span class="type">Array</span>.empty</span>) </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/** </span></span><br><span class="line"><span class="comment">     * Different than our CSV output above, but see toCSV.</span></span><br><span class="line"><span class="comment">     * Array.toString is useless, so format these ourselves. </span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">def</span> <span class="title">toString</span></span>: <span class="type">String</span> = </span><br><span class="line">        <span class="string">s&quot;&quot;</span><span class="string">&quot;IIRecord($word, $total_count, $locStr, $cntStr)&quot;</span><span class="string">&quot;&quot;</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">/** CSV-formatted string, but use [a,b,c] for the arrays */</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">toCSV</span></span>: <span class="type">String</span> = </span><br><span class="line">        <span class="string">s&quot;<span class="subst">$word</span>,<span class="subst">$total_count</span>,<span class="subst">$locStr</span>,<span class="subst">$cntStr</span>&quot;</span></span><br><span class="line">        </span><br><span class="line">    <span class="comment">/** Return a JSON-formatted string for the instance. */</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">toJSONString</span></span>: <span class="type">String</span> = </span><br><span class="line">        <span class="string">s&quot;&quot;</span><span class="string">&quot;&#123;</span></span><br><span class="line"><span class="string">        |  &quot;</span><span class="string">word&quot;:        &quot;</span>$<span class="string">word&quot;, </span></span><br><span class="line"><span class="string">        |  &quot;</span>total_<span class="string">count&quot;: <span class="subst">$total_count</span>, </span></span><br><span class="line"><span class="string">        |  &quot;</span><span class="string">locations&quot;:   <span class="subst">$&#123;toJSONArrayString(locations)&#125;</span>,</span></span><br><span class="line"><span class="string">        |  &quot;</span><span class="string">counts&quot;       <span class="subst">$&#123;toArrayString(counts, &quot;, &quot;)&#125;</span></span></span><br><span class="line"><span class="string">        |&#125;</span></span><br><span class="line"><span class="string">        |&quot;</span><span class="string">&quot;&quot;</span>.stripMargin</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="function"><span class="keyword">def</span> <span class="title">locStr</span> </span>= toArrayString(locations)</span><br><span class="line">    <span class="keyword">private</span> <span class="function"><span class="keyword">def</span> <span class="title">cntStr</span> </span>= toArrayString(counts)</span><br><span class="line"></span><br><span class="line">    <span class="comment">// &quot;[_]&quot; means we don&#x27;t care what type of elements; we&#x27;re just</span></span><br><span class="line">    <span class="comment">// calling toString on them!</span></span><br><span class="line">    <span class="keyword">private</span> <span class="function"><span class="keyword">def</span> <span class="title">toArrayString</span></span>(array: <span class="type">Array</span>[_], delim: <span class="type">String</span> = <span class="string">&quot;,&quot;</span>): <span class="type">String</span> = </span><br><span class="line">        array.mkString(<span class="string">&quot;[&quot;</span>, delim, <span class="string">&quot;]&quot;</span>)  <span class="comment">// i.e., &quot;[a,b,c]&quot;</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="function"><span class="keyword">def</span> <span class="title">toJSONArrayString</span></span>(array: <span class="type">Array</span>[<span class="type">String</span>]): <span class="type">String</span> =</span><br><span class="line">        toArrayString(array.map(quote), <span class="string">&quot;, &quot;</span>)</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">private</span> <span class="function"><span class="keyword">def</span> <span class="title">quote</span></span>(word: <span class="type">String</span>): <span class="type">String</span> = <span class="string">&quot;\&quot;&quot;</span> + word + <span class="string">&quot;\&quot;&quot;</span>  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>下面两种表达等价</li>
+</ul>
+<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line"><span class="keyword">val</span> hello1 = <span class="keyword">new</span> <span class="type">IIRecord</span>(<span class="string">&quot;hello1&quot;</span>)</span><br><span class="line"><span class="keyword">val</span> hello2 = <span class="type">IIRecord</span>(<span class="string">&quot;hello2&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>Scala允许object和class名以小写字母开始，并向函数或方法的形式进行调用</li>
+</ul>
+<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">object</span> <span class="title">stem</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">apply</span></span>(word: <span class="type">String</span>): <span class="type">String</span> = word.replaceFirst(<span class="string">&quot;s$&quot;</span>, <span class="string">&quot;&quot;</span>) <span class="comment">// insert real implementation!</span></span><br><span class="line">&#125;</span><br><span class="line">println(stem(<span class="string">&quot;dog&quot;</span>))</span><br><span class="line">println(stem(<span class="string">&quot;dogs&quot;</span>))</span><br><span class="line"></span><br><span class="line"><span class="comment">//dog</span></span><br><span class="line"><span class="comment">//dog</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><em>companion object</em>支持模式匹配</li>
+</ul>
+<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line"><span class="type">Seq</span>(hello, world).map &#123;</span><br><span class="line">    <span class="keyword">case</span> <span class="type">IIRecord</span>(word, <span class="number">0</span>, _, _) =&gt; <span class="string">s&quot;<span class="subst">$word</span> with no occurrences.&quot;</span></span><br><span class="line">    <span class="keyword">case</span> <span class="type">IIRecord</span>(word, cnt, locs, cnts) =&gt; </span><br><span class="line">        <span class="string">s&quot;<span class="subst">$word</span> occurs <span class="subst">$cnt</span> times: <span class="subst">$&#123;locs.zip(cnts).mkString(&quot;, &quot;)&#125;</span>&quot;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="Scala-for-Spark"><a href="#Scala-for-Spark" class="headerlink" title="Scala for Spark"></a>Scala for Spark</h1><ul>
+<li>demo1是一个经典的WordCount实现</li>
+<li>demo2在demo1的基础上使用了case关键字来优化代码</li>
+<li>demo3对demo1的输出结果的格式进行修改以进行SQL查询</li>
+</ul>
+<h2 id="demo1"><a href="#demo1" class="headerlink" title="demo1"></a>demo1</h2><p>这边我先列出了一些demo中用到的tips，可以和demo代码相互印证</p>
+<ul>
+<li><p><strong>flatMap</strong>能够遍历集合的每个元素，并对应这些元素建立集合，最终将这些集合平铺到一个大集合中</p>
+</li>
+<li><p>匿名函数有超过一个参数时需要使用圆括号包裹这些参数</p>
+<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line">(some_tuple3: (<span class="type">String</span>,<span class="type">Int</span>,<span class="type">Double</span>)) =&gt; ...</span><br><span class="line">(arg1, arg2, arg3) =&gt; ...</span><br><span class="line">(arg1: <span class="type">String</span>, arg2: <span class="type">Int</span>, arg3: <span class="type">Double</span>) =&gt; ...</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>Scala在表示多行匿名函数时使用大括号后包裹匿名函数，不同于单行匿名函数的圆括号</p>
+<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line">flatMap &#123; location_contents_tuple2 =&gt; </span><br><span class="line">        <span class="keyword">val</span> words = location_contents_tuple2._2.split(<span class="string">&quot;&quot;</span><span class="string">&quot;\W+&quot;</span><span class="string">&quot;&quot;</span>)</span><br><span class="line">        <span class="keyword">val</span> fileName = location_contents_tuple2._1.split(pathSeparator).last</span><br><span class="line">        words.map(word =&gt; ((word, fileName), <span class="number">1</span>))</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<p>PS：Python使用圆括号包裹匿名函数的函数体</p>
+</li>
+<li><p>Tuple2可以使用<code>_1</code> 和<code>_2</code>方法访问第一和第二个元素（注意不是<code>_0</code>和<code>_1</code>）</p>
+</li>
+<li><p>对于使用”””表示的字符串，在使用正则表达式时，不需要额外进行转义<code>&quot;\\W+&quot; =&gt; &quot;&quot;&quot;\W+&quot;&quot;&quot;</code></p>
+</li>
+<li><p><strong>reduceByKey</strong>对所有相同Key（第一个元素）的Tuple进行groupBy操作，Value按照传入的匿名函数进行聚合</p>
+<p>Spark的所有<strong>*ByKey</strong>都针对两个元素的Tuple，其中第一个元素作为Key，第二个元素作为Value</p>
+</li>
+<li><p><strong>groupByKey</strong>不需要传入匿名函数，按Key聚合后Value会全部放入一个CompactBuffer对象中作为一个Group</p>
+</li>
+<li><p><strong>mapValues</strong>相较于<strong>map</strong>只针对元素为二元组且只操作Value的情况</p>
+</li>
+<li><p>Vector的sortBy方法传入的匿名函数参数表示Vector的每个元素，返回用于排序的部分</p>
+<p><code>file_count_tup2 =&gt; (-file_count_tup2._2, file_count_tup2._1)</code>表示首先按二元组的第二个元素降序排序，再按第一个元素升序排序</p>
+</li>
+</ul>
+<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> java.io.<span class="type">File</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">val</span> shakespeare = <span class="keyword">new</span> <span class="type">File</span>(<span class="string">&quot;/home/jovyan/work/data/shakespeare&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">val</span> iiFirstPass1 = sc.wholeTextFiles(shakespeare.toString).</span><br><span class="line">    flatMap &#123; location_contents_tuple2 =&gt; </span><br><span class="line">        <span class="keyword">val</span> words = location_contents_tuple2._2.split(<span class="string">&quot;&quot;</span><span class="string">&quot;\W+&quot;</span><span class="string">&quot;&quot;</span>)</span><br><span class="line">        <span class="keyword">val</span> fileName = location_contents_tuple2._1.split(pathSeparator).last</span><br><span class="line">        words.map(word =&gt; ((word, fileName), <span class="number">1</span>))</span><br><span class="line">    &#125;.</span><br><span class="line">    reduceByKey((count1, count2) =&gt; count1 + count2).</span><br><span class="line">    map &#123; word_file_count_tup3 =&gt; </span><br><span class="line">        (word_file_count_tup3._1._1, (word_file_count_tup3._1._2, word_file_count_tup3._2)) </span><br><span class="line">    &#125;.</span><br><span class="line">    groupByKey.</span><br><span class="line">    sortByKey(ascending = <span class="literal">true</span>).</span><br><span class="line">    mapValues &#123; iterable =&gt; </span><br><span class="line">        <span class="keyword">val</span> vect = iterable.toVector.sortBy &#123; file_count_tup2 =&gt; </span><br><span class="line">            (-file_count_tup2._2, file_count_tup2._1)</span><br><span class="line">        &#125;</span><br><span class="line">        vect.mkString(<span class="string">&quot;,&quot;</span>)</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<ol>
+<li><p>sc.wholeTextFiles获取shakespeare路径下每个文档（文档路径，文档内容）的二元组组成的集合RDD</p>
+</li>
+<li><p>flatMap对RDD每个二元组遍历，将文档内容按照单词分割建立一个数组，文档路径只保留文件名，最终原RDD的每个二元组被处理成一个包含多个（（单词，文件名），1）结构的数组，flatMap自动将最后得到的所有数组平铺成一个新的RDD</p>
+<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line">((<span class="type">AS</span>,asyoulikeit),<span class="number">1</span>)</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>reduceByKey按照新RDD的Key值，如上面的(AS,asyoulikeit)对所有Key相同的元素进行整合，对Value进行相加操作，于是便得到所有相同文件相同单词的数量</p>
+<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line">((<span class="type">All</span>,twelfthnight),<span class="number">3</span>)</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>map通过遍历RDD的每个元素对所有元素的格式进行修改</p>
+<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line">(<span class="type">All</span>,(twelfthnight,<span class="number">3</span>))</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>groupByKey和sortByKey将RDD按照Key值进行聚合和排序，相同Key的Value通过CompactBuffer对象进行存储</p>
+<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line">(<span class="type">A</span>,<span class="type">CompactBuffer</span>((loveslabourslost,<span class="number">78</span>), (midsummersnightsdream,<span class="number">39</span>), (muchadoaboutnothing,<span class="number">31</span>), (merrywivesofwindsor,<span class="number">38</span>), (comedyoferrors,<span class="number">42</span>), (asyoulikeit,<span class="number">34</span>), (twelfthnight,<span class="number">47</span>), (tamingoftheshrew,<span class="number">59</span>)))</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>mapValues对Value遍历，即上面的CompactBuffer对象，通过将其转化为Vector来使用Vector的sortBy方法和mkString方法进行排序和字符串化，最终得到如下结构的一系列元素</p>
+<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line">(<span class="type">A</span>,(loveslabourslost,<span class="number">78</span>),(tamingoftheshrew,<span class="number">59</span>),(twelfthnight,<span class="number">47</span>),(comedyoferrors,<span class="number">42</span>),(midsummersnightsdream,<span class="number">39</span>),(merrywivesofwindsor,<span class="number">38</span>),(asyoulikeit,<span class="number">34</span>),(muchadoaboutnothing,<span class="number">31</span>))</span><br><span class="line">(<span class="type">ABOUT</span>,(muchadoaboutnothing,<span class="number">18</span>))</span><br></pre></td></tr></table></figure>
+
+</li>
+</ol>
+<h2 id="demo2"><a href="#demo2" class="headerlink" title="demo2"></a>demo2</h2><ul>
+<li>使用case关键词可以在传入参数时将元组分解</li>
+</ul>
+<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line"><span class="keyword">val</span> ii1 = sc.wholeTextFiles(shakespeare.toString).</span><br><span class="line">    flatMap &#123;</span><br><span class="line">        <span class="keyword">case</span> (location, contents) =&gt; </span><br><span class="line">            <span class="keyword">val</span> words = contents.split(<span class="string">&quot;&quot;</span><span class="string">&quot;\W+&quot;</span><span class="string">&quot;&quot;</span>).</span><br><span class="line">                filter(word =&gt; word.size &gt; <span class="number">0</span>)                      <span class="comment">// #1</span></span><br><span class="line">            <span class="keyword">val</span> fileName = location.split(pathSeparator).last</span><br><span class="line">            words.map(word =&gt; ((word.toLowerCase, fileName), <span class="number">1</span>))   <span class="comment">// #2</span></span><br><span class="line">    &#125;.</span><br><span class="line">    reduceByKey((count1, count2) =&gt; count1 + count2).</span><br><span class="line">    map &#123; </span><br><span class="line">        <span class="keyword">case</span> ((word, fileName), count) =&gt; (word, (fileName, count)) </span><br><span class="line">    &#125;.</span><br><span class="line">    groupByKey.</span><br><span class="line">    sortByKey(ascending = <span class="literal">true</span>).</span><br><span class="line">    mapValues &#123; iterable =&gt; </span><br><span class="line">        <span class="keyword">val</span> vect = iterable.toVector.sortBy &#123; </span><br><span class="line">            <span class="keyword">case</span> (fileName, count) =&gt; (-count, fileName) </span><br><span class="line">        &#125;</span><br><span class="line">        vect.mkString(<span class="string">&quot;,&quot;</span>)</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>使用多个case语句来进行参数匹配，这种模式的匿名函数被称为<em>partial function</em></li>
+</ul>
+<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="keyword">case</span> (location, <span class="string">&quot;&quot;</span>) =&gt; </span><br><span class="line">        <span class="type">Array</span>.empty[((<span class="type">String</span>, <span class="type">String</span>), <span class="type">Int</span>)]  <span class="comment">// Return an empty array</span></span><br><span class="line">    <span class="keyword">case</span> (location, contents) =&gt; </span><br><span class="line">        <span class="keyword">val</span> words = contents.split(<span class="string">&quot;&quot;</span><span class="string">&quot;\W+&quot;</span><span class="string">&quot;&quot;</span>)</span><br><span class="line">        <span class="keyword">val</span> fileName = location.split(pathSep).last</span><br><span class="line">        words.map(word =&gt; ((word, fileName), <span class="number">1</span>))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="demo3"><a href="#demo3" class="headerlink" title="demo3"></a>demo3</h2><ul>
+<li>本例目的是将最终结果转换成便于进行SQL查询的格式并进行简单的查询，例如下面的格式</li>
+</ul>
+<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line">(a,<span class="number">3350</span>,<span class="type">Vector</span>(loveslabourslost, merrywivesofwindsor, muchadoaboutnothing, asyoulikeit, tamingoftheshrew, twelfthnight, midsummersnightsdream, comedyoferrors),<span class="type">Vector</span>(<span class="number">507</span>, <span class="number">494</span>, <span class="number">492</span>, <span class="number">461</span>, <span class="number">445</span>, <span class="number">416</span>, <span class="number">281</span>, <span class="number">254</span>))</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>zip和unzip方法正如现实中拉链拉开拉上的过程，可以将长度一样的两个集合合并成一个每个元素是一个二元组的集合，或者将一个二元组集合分开成两个集合，其中二元组集合中二元组的第一个元素与分开后第一个集合的元素能一一对应</li>
+</ul>
+<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line">[(<span class="number">1</span>,<span class="number">2</span>),(<span class="number">3</span>,<span class="number">4</span>),(<span class="number">5</span>,<span class="number">6</span>)] =&gt; ([<span class="number">1</span>,<span class="number">3</span>,<span class="number">5</span>],[<span class="number">2</span>,<span class="number">4</span>,<span class="number">6</span>]) <span class="comment">//unzip</span></span><br><span class="line">([<span class="number">1</span>,<span class="number">3</span>,<span class="number">5</span>],[<span class="number">2</span>,<span class="number">4</span>,<span class="number">6</span>]) =&gt; [(<span class="number">1</span>,<span class="number">2</span>),(<span class="number">3</span>,<span class="number">4</span>),(<span class="number">5</span>,<span class="number">6</span>)] <span class="comment">//zip</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line"><span class="keyword">val</span> ii = sc.wholeTextFiles(shakespeare.toString).</span><br><span class="line">    flatMap &#123;</span><br><span class="line">        <span class="keyword">case</span> (location, contents) =&gt; </span><br><span class="line">            <span class="keyword">val</span> words = contents.split(<span class="string">&quot;&quot;</span><span class="string">&quot;\W+&quot;</span><span class="string">&quot;&quot;</span>).</span><br><span class="line">                filter(word =&gt; word.size &gt; <span class="number">0</span>)                      <span class="comment">// #1</span></span><br><span class="line">            <span class="keyword">val</span> fileName = location.split(pathSeparator).last</span><br><span class="line">            words.map(word =&gt; ((word.toLowerCase, fileName), <span class="number">1</span>))   <span class="comment">// #2</span></span><br><span class="line">    &#125;.</span><br><span class="line">    reduceByKey((count1, count2) =&gt; count1 + count2).</span><br><span class="line">    map &#123; </span><br><span class="line">        <span class="keyword">case</span> ((word, fileName), count) =&gt; (word, (fileName, count)) </span><br><span class="line">    &#125;.</span><br><span class="line">    groupByKey.</span><br><span class="line">    sortByKey(ascending = <span class="literal">true</span>).</span><br><span class="line">    map &#123;</span><br><span class="line">      <span class="keyword">case</span> (word, iterable) =&gt;</span><br><span class="line">        <span class="keyword">val</span> vect = iterable.toVector.sortBy &#123; </span><br><span class="line">            <span class="keyword">case</span> (fileName, count) =&gt; (-count, fileName) </span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">val</span> (locations, counts) = vect.unzip  </span><br><span class="line">        <span class="keyword">val</span> totalCount = counts.reduceLeft((n1,n2) =&gt; n1+n2)</span><br><span class="line">        (word, totalCount, locations, counts)</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>使用SQL语句进行查询</li>
+</ul>
+<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> org.apache.spark.sql.<span class="type">SQLContext</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">val</span> sqlContext = <span class="keyword">new</span> <span class="type">SQLContext</span>(sc)</span><br><span class="line"><span class="keyword">val</span> iiDF = sqlContext.createDataFrame(ii).toDF(<span class="string">&quot;word&quot;</span>, <span class="string">&quot;locations_counts&quot;</span>)</span><br><span class="line">iiDF.cache</span><br><span class="line">iiDF.registerTempTable(<span class="string">&quot;inverted_index&quot;</span>)</span><br><span class="line"><span class="keyword">val</span> topLocations = sqlContext.sql(<span class="string">&quot;&quot;</span><span class="string">&quot;</span></span><br><span class="line"><span class="string">    SELECT word, total_count, locations[0] AS top_location, counts[0] AS top_count</span></span><br><span class="line"><span class="string">    FROM inverted_index </span></span><br><span class="line"><span class="string">&quot;</span><span class="string">&quot;&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line">+-----------+-----------+---------------------+---------+</span><br><span class="line">|word       |total_count|top_location         |top_count|</span><br><span class="line">+-----------+-----------+---------------------+---------+</span><br><span class="line">|a          |<span class="number">3350</span>       |loveslabourslost     |<span class="number">507</span>      |</span><br><span class="line">|abandon    |<span class="number">6</span>          |asyoulikeit          |<span class="number">4</span>        |</span><br><span class="line">|abate      |<span class="number">3</span>          |loveslabourslost     |<span class="number">1</span>        |</span><br><span class="line">|abatement  |<span class="number">1</span>          |twelfthnight         |<span class="number">1</span>        |</span><br><span class="line">|abbess     |<span class="number">8</span>          |comedyoferrors       |<span class="number">8</span>        |</span><br><span class="line">|abbey      |<span class="number">9</span>          |comedyoferrors       |<span class="number">9</span>        |</span><br><span class="line">+-----------+-----------+---------------------+---------+</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>在DataFrame之外Spark提供了Dataset，相较提供了类型保障，类似于RTT[T]，T表示记录的类型</li>
+</ul>
+<h1 id="Tips"><a href="#Tips" class="headerlink" title="Tips"></a>Tips</h1><ul>
+<li><p>Scala支持将*****作为方法名，在实例之间进行乘法操作时进行调用</p>
+<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line"><span class="keyword">case</span> <span class="class"><span class="keyword">class</span> <span class="title">Matrix</span>(<span class="params">rows: <span class="type">Array</span>[<span class="type">Array</span>[<span class="type">Double</span>]]</span>) </span>&#123;  <span class="comment">// Each row is an Array[Double]</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">/** Multiple this matrix by another. */</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">*</span></span>(other: <span class="type">Matrix</span>): <span class="type">Matrix</span> = ...</span><br><span class="line"></span><br><span class="line">    <span class="comment">/** Add this matrix by another. */</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">+</span></span>(other: <span class="type">Matrix</span>): <span class="type">Matrix</span> = ...</span><br><span class="line"></span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">val</span> m1_times_m2 = m1.*(m2) <span class="comment">//两者等同</span></span><br><span class="line"><span class="keyword">val</span> m1_times_m2 = m1 * m2</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>Scala提供<strong>Traits</strong>作为关键字提供类似Java接口的功能<a href="https://scala.cool/2018/11/java-2-scala-4/">https://scala.cool/2018/11/java-2-scala-4/</a></p>
+</li>
+<li><p>Scala提供<strong>until</strong>和<strong>to</strong>两种关键词生成一个Range，其中until左闭右开，to左闭右闭，另外使用<strong>by</strong>关键字控制步长</p>
+</li>
+<li><p><strong>Option</strong>功能类似于Try，可以用来表示一个值是可选的（有值或无值）</p>
+<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line">options.foreach &#123;</span><br><span class="line">    <span class="keyword">case</span> <span class="type">None</span>    =&gt; println(<span class="type">None</span>)</span><br><span class="line">    <span class="keyword">case</span> <span class="type">Some</span>(i) =&gt; println(i)  <span class="comment">// Note how we extract the enclosed value.</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>Implicits</strong><a href="https://www.jianshu.com/p/1d119c937015">https://www.jianshu.com/p/1d119c937015</a></p>
+</li>
+</ul>
+]]></content>
+      <categories>
+        <category>学习笔记</category>
+        <category>Bigdata</category>
+      </categories>
+      <tags>
+        <tag>学习笔记</tag>
+        <tag>Spark</tag>
+        <tag>Scala</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>spark连接elasticsearch进行数据处理</title>
+    <url>/2021/11/22/spark%E8%BF%9E%E6%8E%A5elasticsearch%E8%BF%9B%E8%A1%8C%E6%95%B0%E6%8D%AE%E5%A4%84%E7%90%86/</url>
+    <content><![CDATA[<p>在数据处理时希望结合Spark和Elasticsearch这两大流行的工具，设想了将大量运维数据存储在Elasticsearch中通过Spark访问处理后再返回Elasticsearch，结合Kibana进行展示，或者使用Spark Streaming在入库Elasticsearch前进行预处理两种场景</p>
+<p>本文总结了Spark与Elasticsearch进行交互的几种模式及一些demo</p>
+<p><code>#TODO</code></p>
+<a id="more"></a>
+
+<p>方案1：elasticsearch部署在kubernetes环境下，本机使用local[*]方案访问用于简单测试</p>
+<figure class="highlight xml"><table><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.apache.spark<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spark-core_2.12<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">version</span>&gt;</span>3.2.0<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.elasticsearch<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>elasticsearch-spark-30_2.12<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">version</span>&gt;</span>7.15.2<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">WordCount</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">        SparkConf conf = <span class="keyword">new</span> SparkConf().setAppName(<span class="string">&quot;Elastic App&quot;</span>).setMaster(<span class="string">&quot;local[*]&quot;</span>);</span><br><span class="line">        conf.set(<span class="string">&quot;es.nodes&quot;</span>, <span class="string">&quot;10.108.23.161&quot;</span>);  <span class="comment">// CLUSTER_IP</span></span><br><span class="line">        conf.set(<span class="string">&quot;es.port&quot;</span>, <span class="string">&quot;9200&quot;</span>);</span><br><span class="line">        conf.set(<span class="string">&quot;es.net.http.auth.user&quot;</span>, <span class="string">&quot;elastic&quot;</span>);</span><br><span class="line">        conf.set(<span class="string">&quot;es.net.http.auth.pass&quot;</span>, <span class="string">&quot;nwT9nh83KTZw1RoMjxDo&quot;</span>);</span><br><span class="line">        conf.set(<span class="string">&quot;es.nodes.wan.only&quot;</span>, <span class="string">&quot;true&quot;</span>);</span><br><span class="line"></span><br><span class="line">        JavaSparkContext jsc = <span class="keyword">new</span> JavaSparkContext(conf);</span><br><span class="line">        jsc.setLogLevel(<span class="string">&quot;ERROR&quot;</span>);</span><br><span class="line"></span><br><span class="line">        JavaPairRDD&lt;String, Map&lt;String, Object&gt;&gt; esRDD = JavaEsSpark.esRDD(jsc, <span class="string">&quot;metricbeat-7.8.0-2021.11.22-000001&quot;</span>);  <span class="comment">// index</span></span><br><span class="line">        System.out.println(esRDD.first().toString());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>#TODO</code></p>
+]]></content>
+      <categories>
+        <category>大数据</category>
+      </categories>
+      <tags>
+        <tag>Spark</tag>
+        <tag>Elasticsearch</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>一些联邦学习方向的调研</title>
     <url>/2021/01/29/%E4%B8%80%E4%BA%9B%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0%E6%96%B9%E5%90%91%E7%9A%84%E8%B0%83%E7%A0%94/</url>
     <content><![CDATA[<p>试图探索联邦学习方向进行研究的方向，搜索了一些资料对联邦学习领域的一些问题或者研究方向进行了一个简单的调研和整理，主要分为联邦学习的<strong>通信加速</strong>和<strong>隐私保护</strong>问题</p>
@@ -1190,130 +1406,11 @@
 ]]></content>
       <categories>
         <category>机器学习</category>
-        <category>联邦学习</category>
       </categories>
       <tags>
         <tag>学习笔记</tag>
         <tag>联邦学习</tag>
         <tag>sketch</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>协作学习与网络安全大赛参赛总结</title>
-    <url>/2021/01/16/%E5%8D%8F%E4%BD%9C%E5%AD%A6%E4%B9%A0%E4%B8%8E%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8%E5%A4%A7%E8%B5%9B%E5%8F%82%E8%B5%9B%E6%80%BB%E7%BB%93/</url>
-    <content><![CDATA[<p>前段时间一直在参加第一届全国大学生协作学习与网络安全大赛，刚答辩结束，于是在此对比赛过程做一个总结，也对决赛其他队伍的优秀思路做个简单的整理</p>
-<p>相比于其他团队，我们的论文阅读更偏向于工程实现方面，参考论文也大多是将本地的GBDT算法无损的实现到联邦环境，但似乎联邦学习方面的研究课题更倾向于以深度学习为基础，也是我们调研不够充分，导致我们比赛时的很多思路以及调研受限于传统机器学习，无法很好响应协作学习的主题</p>
- <a id="more"></a>
-
-<h1 id="赛题的主要挑战"><a href="#赛题的主要挑战" class="headerlink" title="赛题的主要挑战"></a>赛题的主要挑战</h1><ul>
-<li>联邦环境 单PS+多Worker</li>
-<li>缺失值处理</li>
-<li>噪声处理</li>
-<li>数据倾斜 Non-IID</li>
-<li>测试集存在训练集没有的类</li>
-<li>隐私保护</li>
-</ul>
-<h1 id="相关思路整理"><a href="#相关思路整理" class="headerlink" title="相关思路整理"></a>相关思路整理</h1><p>对我们以及决赛其他队伍一些思路做一个简单的整理</p>
-<ul>
-<li>缺失值处理<ul>
-<li>超过19维直接删除</li>
-<li>随机森林</li>
-</ul>
-</li>
-<li>特征工程<ul>
-<li>特征编码（无用或高相关特征）</li>
-<li>LightGBM 互斥绑定</li>
-<li>归一化（基于GBDT的特征映射）</li>
-</ul>
-</li>
-<li>联邦学习安全：拜占庭问题（相似梯度聚合）</li>
-<li>一些深度学习的方案<ul>
-<li><code>#TODO</code></li>
-</ul>
-</li>
-</ul>
-<h1 id="比赛经历总结"><a href="#比赛经历总结" class="headerlink" title="比赛经历总结"></a>比赛经历总结</h1><ul>
-<li>有必要对多种方法进行尝试比对，在最后答辩或者展示的时候对效果进行评测</li>
-<li>当时认为GBDT对噪声不敏感，把缺失值只进行简单的处理，反而引入了噪声，事实上还是需要对缺失值进行合适的处理，10%的缺失值不进行合适的处理可能会完全影响预测的准确性</li>
-<li>手动实现secureBoost发现效率极不理想（比赛的时候因为这个头秃了好久），在构建直方图的时候时间复杂度达到O(#instance * #feature * #bin)，而LightGBM同样使用了直方图效率好像会快很多，一方面时使用了GOSS和特征的互斥绑定等优化算法，一方面可能也是数据结构的优化问题，这可以方面后续进行了解，另外，在多进程和多线程方面也可以加以考虑，比赛时因环境限制，两者对运行时间也没有明显的减少</li>
-<li>比赛时模拟环境限制，将secureBoost迁移到比赛环境时底层数据结构还是得重新设计，代码结构也做了一些修改，也是花了蛮多时间，后来加上了一些LightGBM的优化方案，整个过程也是对GBDT系列的算法实现有了较深的理解（然而实际部署联邦环境大部分都有现成的库了）</li>
-</ul>
-<h1 id="比赛总结"><a href="#比赛总结" class="headerlink" title="比赛总结"></a>比赛总结</h1><p>下面是我们队答辩PPT的简单文字稿，后来看了别人队感觉就很粗糙hhh</p>
-<h2 id="赛题理解"><a href="#赛题理解" class="headerlink" title="赛题理解"></a>赛题理解</h2><ul>
-<li>对DDOS流量进行多分类 =&gt; 决策树算法，适用于多分类情况，可解释性强，有助于后续分析</li>
-<li>模拟分布式环境，单PS &amp; 多Worker =&gt; 分布式</li>
-<li>数据集划分（每个Worker的数据集包含所有特征，但只有部分标签） =&gt; 横向联邦的secureBoost</li>
-</ul>
-<h3 id="解题思路"><a href="#解题思路" class="headerlink" title="解题思路"></a>解题思路</h3><p>使用适用于横向联邦的分布式GBDT算法对数据集进行多分类，并结合数据集特征进行优化</p>
-<h2 id="算法说明"><a href="#算法说明" class="headerlink" title="算法说明"></a>算法说明</h2><ul>
-<li>在具体实现上，参考了FATE secureBoost，XGBoost，LightGBM等工程实现项目，使用直方图算法来收集各个Worker的梯度信息，并据此找到决策树对应各个节点的分裂点</li>
-</ul>
-<img src="1.png" alt="图片1" style="zoom: 40%;" />
-
-<ul>
-<li><p>如上图所示，由Worker计算当前节点的训练数据的一阶和二阶梯度直方图，汇总到Server建立全局的直方图，据此可以计算得到节点的最佳分裂点</p>
-</li>
-<li><p>通过这种方法来建立决策树，并结合Boosting的集成学习方法实现了secureBoost算法</p>
-</li>
-<li><p>考虑到在模拟环境下使用全部数据集来进行建模时间消耗过大，不利于后续模型调整，我们权衡之下，基于secureBoost算法实现使用了如下的方案</p>
-</li>
-</ul>
-<img src="2.png" alt="图片2" style="zoom:50%;" />
-
-<ul>
-<li>仅使用部分数据集来进行建模，并使用对每个Worker的数据集进行进一步划分重组来集成投票的方式来提升性能</li>
-</ul>
-<h2 id="性能分析"><a href="#性能分析" class="headerlink" title="性能分析"></a>性能分析</h2><ul>
-<li>隐私性：通过结合同态加密技术，可以保障数据的隐私性</li>
-<li>通信开销：O(#feature * #bin)</li>
-<li>训练开销：O(#instance * #feature * log(#bin) / #worker)</li>
-<li>能够进行无损的联邦学习</li>
-<li>GBDT算法对噪声不敏感</li>
-<li>通过结合集成学习保证了模型的泛化性</li>
-</ul>
-<h2 id="总结与展望"><a href="#总结与展望" class="headerlink" title="总结与展望"></a>总结与展望</h2><h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><ul>
-<li>主要工作：在官方环境中重写了secureBoost，实现了直方图算法，level-wise和leaf-wise两种树的生长方式以及特征选择等，另外也实现了</li>
-<li>实现了以一轮GBDT作为基决策树的随机森林</li>
-<li>没有对缺失值进行合适的处理，遗漏了secureBoost本身对缺失值处理的能力</li>
-</ul>
-<h3 id="展望"><a href="#展望" class="headerlink" title="展望"></a>展望</h3><ul>
-<li>考虑使用随机森林算法的列抽样来对缺失值进行处理</li>
-<li>实现在分布式环境上部署，探索学习更高效的算法实现</li>
-</ul>
-]]></content>
-      <categories>
-        <category>机器学习</category>
-        <category>联邦学习</category>
-      </categories>
-      <tags>
-        <tag>联邦学习</tag>
-        <tag>机器学习</tag>
-        <tag>协作学习</tag>
-        <tag>比赛经历</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>spark连接elasticsearch进行数据处理</title>
-    <url>/2021/11/22/spark%E8%BF%9E%E6%8E%A5elasticsearch%E8%BF%9B%E8%A1%8C%E6%95%B0%E6%8D%AE%E5%A4%84%E7%90%86/</url>
-    <content><![CDATA[<p>在数据处理时希望结合Spark和Elasticsearch这两大流行的工具，设想了将大量运维数据存储在Elasticsearch中通过Spark访问处理后再返回Elasticsearch，结合Kibana进行展示，或者使用Spark Streaming在入库Elasticsearch前进行预处理两种场景</p>
-<p>本文总结了Spark与Elasticsearch进行交互的几种模式及一些demo</p>
-<p><code>#TODO</code></p>
-<a id="more"></a>
-
-<p>方案1：elasticsearch部署在kubernetes环境下，本机使用local[*]方案访问用于简单测试</p>
-<figure class="highlight xml"><table><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.apache.spark<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spark-core_2.12<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">version</span>&gt;</span>3.2.0<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.elasticsearch<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>elasticsearch-spark-30_2.12<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">version</span>&gt;</span>7.15.2<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
-
-<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">WordCount</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">        SparkConf conf = <span class="keyword">new</span> SparkConf().setAppName(<span class="string">&quot;Elastic App&quot;</span>).setMaster(<span class="string">&quot;local[*]&quot;</span>);</span><br><span class="line">        conf.set(<span class="string">&quot;es.nodes&quot;</span>, <span class="string">&quot;10.108.23.161&quot;</span>);  <span class="comment">// CLUSTER_IP</span></span><br><span class="line">        conf.set(<span class="string">&quot;es.port&quot;</span>, <span class="string">&quot;9200&quot;</span>);</span><br><span class="line">        conf.set(<span class="string">&quot;es.net.http.auth.user&quot;</span>, <span class="string">&quot;elastic&quot;</span>);</span><br><span class="line">        conf.set(<span class="string">&quot;es.net.http.auth.pass&quot;</span>, <span class="string">&quot;nwT9nh83KTZw1RoMjxDo&quot;</span>);</span><br><span class="line">        conf.set(<span class="string">&quot;es.nodes.wan.only&quot;</span>, <span class="string">&quot;true&quot;</span>);</span><br><span class="line"></span><br><span class="line">        JavaSparkContext jsc = <span class="keyword">new</span> JavaSparkContext(conf);</span><br><span class="line">        jsc.setLogLevel(<span class="string">&quot;ERROR&quot;</span>);</span><br><span class="line"></span><br><span class="line">        JavaPairRDD&lt;String, Map&lt;String, Object&gt;&gt; esRDD = JavaEsSpark.esRDD(jsc, <span class="string">&quot;metricbeat-7.8.0-2021.11.22-000001&quot;</span>);  <span class="comment">// index</span></span><br><span class="line">        System.out.println(esRDD.first().toString());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p><code>#TODO</code></p>
-]]></content>
-      <categories>
-        <category>大数据</category>
-        <category>spark</category>
-      </categories>
-      <tags>
-        <tag>Spark</tag>
-        <tag>Elasticsearch</tag>
       </tags>
   </entry>
   <entry>
@@ -1461,12 +1558,11 @@
 ]]></content>
       <categories>
         <category>AIOps</category>
-        <category>日志分析</category>
       </categories>
       <tags>
+        <tag>AIOps</tag>
         <tag>日志分析</tag>
         <tag>算法学习</tag>
-        <tag>AIOps</tag>
       </tags>
   </entry>
   <entry>
@@ -1603,10 +1699,103 @@
         <category>比赛经历</category>
       </categories>
       <tags>
-        <tag>机器学习</tag>
-        <tag>比赛经历</tag>
         <tag>AIOps</tag>
+        <tag>机器学习</tag>
         <tag>天池大赛</tag>
+        <tag>比赛经历</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>协作学习与网络安全大赛参赛总结</title>
+    <url>/2021/01/16/%E5%8D%8F%E4%BD%9C%E5%AD%A6%E4%B9%A0%E4%B8%8E%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8%E5%A4%A7%E8%B5%9B%E5%8F%82%E8%B5%9B%E6%80%BB%E7%BB%93/</url>
+    <content><![CDATA[<p>前段时间一直在参加第一届全国大学生协作学习与网络安全大赛，刚答辩结束，于是在此对比赛过程做一个总结，也对决赛其他队伍的优秀思路做个简单的整理</p>
+<p>相比于其他团队，我们的论文阅读更偏向于工程实现方面，参考论文也大多是将本地的GBDT算法无损的实现到联邦环境，但似乎联邦学习方面的研究课题更倾向于以深度学习为基础，也是我们调研不够充分，导致我们比赛时的很多思路以及调研受限于传统机器学习，无法很好响应协作学习的主题</p>
+ <a id="more"></a>
+
+<h1 id="赛题的主要挑战"><a href="#赛题的主要挑战" class="headerlink" title="赛题的主要挑战"></a>赛题的主要挑战</h1><ul>
+<li>联邦环境 单PS+多Worker</li>
+<li>缺失值处理</li>
+<li>噪声处理</li>
+<li>数据倾斜 Non-IID</li>
+<li>测试集存在训练集没有的类</li>
+<li>隐私保护</li>
+</ul>
+<h1 id="相关思路整理"><a href="#相关思路整理" class="headerlink" title="相关思路整理"></a>相关思路整理</h1><p>对我们以及决赛其他队伍一些思路做一个简单的整理</p>
+<ul>
+<li>缺失值处理<ul>
+<li>超过19维直接删除</li>
+<li>随机森林</li>
+</ul>
+</li>
+<li>特征工程<ul>
+<li>特征编码（无用或高相关特征）</li>
+<li>LightGBM 互斥绑定</li>
+<li>归一化（基于GBDT的特征映射）</li>
+</ul>
+</li>
+<li>联邦学习安全：拜占庭问题（相似梯度聚合）</li>
+<li>一些深度学习的方案<ul>
+<li><code>#TODO</code></li>
+</ul>
+</li>
+</ul>
+<h1 id="比赛经历总结"><a href="#比赛经历总结" class="headerlink" title="比赛经历总结"></a>比赛经历总结</h1><ul>
+<li>有必要对多种方法进行尝试比对，在最后答辩或者展示的时候对效果进行评测</li>
+<li>当时认为GBDT对噪声不敏感，把缺失值只进行简单的处理，反而引入了噪声，事实上还是需要对缺失值进行合适的处理，10%的缺失值不进行合适的处理可能会完全影响预测的准确性</li>
+<li>手动实现secureBoost发现效率极不理想（比赛的时候因为这个头秃了好久），在构建直方图的时候时间复杂度达到O(#instance * #feature * #bin)，而LightGBM同样使用了直方图效率好像会快很多，一方面时使用了GOSS和特征的互斥绑定等优化算法，一方面可能也是数据结构的优化问题，这可以方面后续进行了解，另外，在多进程和多线程方面也可以加以考虑，比赛时因环境限制，两者对运行时间也没有明显的减少</li>
+<li>比赛时模拟环境限制，将secureBoost迁移到比赛环境时底层数据结构还是得重新设计，代码结构也做了一些修改，也是花了蛮多时间，后来加上了一些LightGBM的优化方案，整个过程也是对GBDT系列的算法实现有了较深的理解（然而实际部署联邦环境大部分都有现成的库了）</li>
+</ul>
+<h1 id="比赛总结"><a href="#比赛总结" class="headerlink" title="比赛总结"></a>比赛总结</h1><p>下面是我们队答辩PPT的简单文字稿，后来看了别人队感觉就很粗糙hhh</p>
+<h2 id="赛题理解"><a href="#赛题理解" class="headerlink" title="赛题理解"></a>赛题理解</h2><ul>
+<li>对DDOS流量进行多分类 =&gt; 决策树算法，适用于多分类情况，可解释性强，有助于后续分析</li>
+<li>模拟分布式环境，单PS &amp; 多Worker =&gt; 分布式</li>
+<li>数据集划分（每个Worker的数据集包含所有特征，但只有部分标签） =&gt; 横向联邦的secureBoost</li>
+</ul>
+<h3 id="解题思路"><a href="#解题思路" class="headerlink" title="解题思路"></a>解题思路</h3><p>使用适用于横向联邦的分布式GBDT算法对数据集进行多分类，并结合数据集特征进行优化</p>
+<h2 id="算法说明"><a href="#算法说明" class="headerlink" title="算法说明"></a>算法说明</h2><ul>
+<li>在具体实现上，参考了FATE secureBoost，XGBoost，LightGBM等工程实现项目，使用直方图算法来收集各个Worker的梯度信息，并据此找到决策树对应各个节点的分裂点</li>
+</ul>
+<img src="1.png" alt="图片1" style="zoom: 40%;" />
+
+<ul>
+<li><p>如上图所示，由Worker计算当前节点的训练数据的一阶和二阶梯度直方图，汇总到Server建立全局的直方图，据此可以计算得到节点的最佳分裂点</p>
+</li>
+<li><p>通过这种方法来建立决策树，并结合Boosting的集成学习方法实现了secureBoost算法</p>
+</li>
+<li><p>考虑到在模拟环境下使用全部数据集来进行建模时间消耗过大，不利于后续模型调整，我们权衡之下，基于secureBoost算法实现使用了如下的方案</p>
+</li>
+</ul>
+<img src="2.png" alt="图片2" style="zoom:50%;" />
+
+<ul>
+<li>仅使用部分数据集来进行建模，并使用对每个Worker的数据集进行进一步划分重组来集成投票的方式来提升性能</li>
+</ul>
+<h2 id="性能分析"><a href="#性能分析" class="headerlink" title="性能分析"></a>性能分析</h2><ul>
+<li>隐私性：通过结合同态加密技术，可以保障数据的隐私性</li>
+<li>通信开销：O(#feature * #bin)</li>
+<li>训练开销：O(#instance * #feature * log(#bin) / #worker)</li>
+<li>能够进行无损的联邦学习</li>
+<li>GBDT算法对噪声不敏感</li>
+<li>通过结合集成学习保证了模型的泛化性</li>
+</ul>
+<h2 id="总结与展望"><a href="#总结与展望" class="headerlink" title="总结与展望"></a>总结与展望</h2><h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><ul>
+<li>主要工作：在官方环境中重写了secureBoost，实现了直方图算法，level-wise和leaf-wise两种树的生长方式以及特征选择等，另外也实现了</li>
+<li>实现了以一轮GBDT作为基决策树的随机森林</li>
+<li>没有对缺失值进行合适的处理，遗漏了secureBoost本身对缺失值处理的能力</li>
+</ul>
+<h3 id="展望"><a href="#展望" class="headerlink" title="展望"></a>展望</h3><ul>
+<li>考虑使用随机森林算法的列抽样来对缺失值进行处理</li>
+<li>实现在分布式环境上部署，探索学习更高效的算法实现</li>
+</ul>
+]]></content>
+      <categories>
+        <category>机器学习</category>
+      </categories>
+      <tags>
+        <tag>机器学习</tag>
+        <tag>联邦学习</tag>
+        <tag>比赛经历</tag>
+        <tag>协作学习</tag>
       </tags>
   </entry>
   <entry>
@@ -1805,200 +1994,13 @@
 ]]></content>
       <categories>
         <category>机器学习</category>
+        <category>比赛经历</category>
       </categories>
       <tags>
-        <tag>联邦学习</tag>
         <tag>机器学习</tag>
+        <tag>联邦学习</tag>
         <tag>协作学习</tag>
         <tag>决策树算法</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Istio &amp; AIOps环境搭建</title>
-    <url>/2021/06/30/Istio-AIOps%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/</url>
-    <content><![CDATA[<p>在AIOps挑战赛学习了智能运维相关的内容，尝试在Service Mesh环境下模拟配置挑战赛环境</p>
-<p>使用minikube搭建微服务网络，通过Istio进行监控，分别通过Prometheus、Fluented以及Jaeger获取服务的指标、日志和调用链信息，并汇总到Elasticsearch用作后续分析</p>
-<p>后续发现使用全栈的Elastic解决方案能够不依赖istio实现轻松可靠的在Elasticseach中汇总指标、日志和性能追踪，于是又尝试了如下的解决方案<a href="https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-1/">https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-1/</a></p>
-<p>除此之外，<a href="https://juejin.cn/post/6847902217979052045">KubeSphere</a>汇总了包括运维数据获取等的一系列解决方案，可以非常方便地安装与管理用户最常用的云原生工具</p>
-<a id="more"></a>
-
-<h1 id="Istio-环境配置"><a href="#Istio-环境配置" class="headerlink" title="Istio 环境配置"></a>Istio 环境配置</h1><p>参考教程配置环境<a href="https://istio.io/latest/docs/setup/getting-started/">https://istio.io/latest/docs/setup/getting-started/</a></p>
-<h2 id="配置流程"><a href="#配置流程" class="headerlink" title="配置流程"></a>配置流程</h2><p>参见官网demo <a href="https://istio.io/latest/docs/setup/getting-started/">https://istio.io/latest/docs/setup/getting-started/</a></p>
-<p>安装minikube <a href="https://minikube.sigs.k8s.io/docs/start/#install-a-hypervisor">https://minikube.sigs.k8s.io/docs/start/#install-a-hypervisor</a></p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">minikube start</span><br><span class="line">kubectl get po -A</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">istioctl install --set profile=demo -y</span><br><span class="line">kubectl label namespace default istio-injection=enabled</span><br><span class="line">kubectl apply -f samples/bookinfo/platform/kube/bookinfo.yaml</span><br><span class="line">kubectl get services</span><br><span class="line">kubectl get pods //等待直到所有pods处于Running状态</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl exec &quot;$(kubectl get pod -l app=ratings -o jsonpath=&#x27;&#123;.items[0].metadata.name&#125;&#x27;)&quot; -c ratings -- curl -sS productpage:9080/productpage | grep -o &quot;&lt;title&gt;.*&lt;/title&gt;&quot;</span><br><span class="line">//命令行返回&lt;title&gt;Simple Bookstore App&lt;/title&gt;则当前配置过程正常</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">//创建一个Istio Ingress Gateway，该网关将路径映射到网格边缘处的路线</span><br><span class="line">kubectl apply -f samples/bookinfo/networking/bookinfo-gateway.yaml</span><br><span class="line">istioctl analyze</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">export INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath=&#x27;&#123;.spec.ports[?(@.name==&quot;http2&quot;)].nodePort&#125;&#x27;)</span><br><span class="line">export SECURE_INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath=&#x27;&#123;.spec.ports[?(@.name==&quot;https&quot;)].nodePort&#125;&#x27;)</span><br><span class="line">export INGRESS_HOST=$(minikube ip)</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">minikube tunnel &#x2F;&#x2F;在新的终端窗口中运行以下命令，以启动将流量发送到Istio Ingress网关的Minikube隧道</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">export GATEWAY_URL=$INGRESS_HOST:$INGRESS_PORT</span><br><span class="line">echo &quot;http://$GATEWAY_URL/productpage&quot;</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl apply -f samples/addons</span><br><span class="line">kubectl rollout status deployment/kiali -n istio-system</span><br><span class="line">istioctl dashboard kiali</span><br></pre></td></tr></table></figure>
-
-<h2 id="kubernets相关命令"><a href="#kubernets相关命令" class="headerlink" title="kubernets相关命令"></a>kubernets相关命令</h2><p>minikube是本地的Kubernetes，致力于使Kubernetes易于学习和开发</p>
-<p><a href="https://minikube.sigs.k8s.io/docs/start/#install-a-hypervisor">https://minikube.sigs.k8s.io/docs/start/#install-a-hypervisor</a></p>
-<p><a href="https://istio.io/latest/docs/setup/platform-setup/minikube/">https://istio.io/latest/docs/setup/platform-setup/minikube/</a></p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">minikube start --driver=docker</span><br><span class="line">minikube start --memory=16384 --cpus=4 --kubernetes-version=v1.20.2</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl get po -A</span><br><span class="line">minikube kubectl -- get po -A </span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">minikube pause</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">minikube stop</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">minikube delete --all</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl get po -A //查看所有pods，第一列为命名空間</span><br><span class="line">kubectl get pod -n istio-system //查看命名空间istio-system下的pods</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl get deployment -n istio-system</span><br><span class="line">kubectl delete deployment prometheus -n istio-system</span><br><span class="line">kubectl delete pod prometheus -n istio-system</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl delete pod prometheus -n istio-system //从命名空间istio-system删除prometheus</span><br><span class="line">kubectl rollout status deployment/prometheus -n istio-system //重新安装prometheus</span><br></pre></td></tr></table></figure>
-
-<h2 id="Istio相关命令"><a href="#Istio相关命令" class="headerlink" title="Istio相关命令"></a>Istio相关命令</h2><p><a href="https://www.servicemesher.com/istio-handbook/practice/setup-istio.html">https://www.servicemesher.com/istio-handbook/practice/setup-istio.html</a></p>
-<p><a href="https://istio.io/latest/docs/setup/install/istioctl/">https://istio.io/latest/docs/setup/install/istioctl/</a></p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">istioctl install</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">istioctl install --set profile=demo</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">istioctl x uninstall --purge</span><br></pre></td></tr></table></figure>
-
-<p>可选<code>--purge</code>标志将删除所有Istio资源，包括可能与其他Istio控制平面共享的群集范围的资源。</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">istioctl dashboard //查看可用的仪表盘</span><br></pre></td></tr></table></figure>
-
-<h1 id="运维环境搭建"><a href="#运维环境搭建" class="headerlink" title="运维环境搭建"></a>运维环境搭建</h1><p>将指标、日志以及调用链数据集中到elasticsearch以便后续分析</p>
-<p><a href="https://kubernetes.io/zh/docs/tasks/configure-pod-container/pull-image-private-registry/">https://kubernetes.io/zh/docs/tasks/configure-pod-container/pull-image-private-registry/</a></p>
-<p>环境搭建速度较慢时考虑使用本地镜像</p>
-<h2 id="Prometheus配置"><a href="#Prometheus配置" class="headerlink" title="Prometheus配置"></a>Prometheus配置</h2><p><a href="https://www.servicemesher.com/istio-handbook/practice/prometheus.html">https://www.servicemesher.com/istio-handbook/practice/prometheus.html</a></p>
-<p>istio的sample/addons目录提供了prometheus的yaml文件，之前通过<code>kubectl apply -f samples/addons</code>已安装，可以直接<code>istioctl dashboard prometheus</code>进行观察</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">//进入prometheus所在pod</span><br><span class="line">//pod名通过kubectl get po -A命令查找并替换</span><br><span class="line">kubectl exec -it prometheus-7cb88b5945-8jbkf -n istio-system sh</span><br></pre></td></tr></table></figure>
-
-<p>找到配置文件prometheus.yml并打开，我的在/etc/config/prometheus.yml并修改</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">//也可以通过修改 Prometheus 的 ConfigMap 对其配置进行如下修改</span><br><span class="line">kubectl edit configmap prometheus -n istio-system </span><br></pre></td></tr></table></figure>
-
-<p>修改完成后保存，需要给 Prometheus 加上 –web.enable-lifecycle 启动参数来支持热更新（可能默认支持）</p>
-<p>这些配置参数在prometheus.yaml中已经定义</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl edit deployment prometheus -n istio-system</span><br><span class="line"> ...</span><br><span class="line"> containers:</span><br><span class="line">      - args:</span><br><span class="line">        - --storage.tsdb.retention=6h</span><br><span class="line"></span><br><span class="line">        - --config.file=/etc/prometheus/prometheus.yml</span><br><span class="line"></span><br><span class="line">        - --web.enable-lifecycle</span><br><span class="line">          image: docker.io/prom/prometheus:v2.15.1</span><br><span class="line">          imagePullPolicy: IfNotPresent</span><br><span class="line"> ...</span><br></pre></td></tr></table></figure>
-
-<p>然后再调用 Prometheus 的 HTTP API 即可更新配置：</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">curl -X POST http://&lt;Prometheus URL&gt;:9090/-/reload</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">istioctl dashboard prometheus</span><br></pre></td></tr></table></figure>
-
-<p><a href="https://www.elastic.co/cn/what-is/prometheus-monitoring">https://www.elastic.co/cn/what-is/prometheus-monitoring</a></p>
-<p>将prometheus数据导出到elasticsearch</p>
-<h2 id="EFK配置"><a href="#EFK配置" class="headerlink" title="EFK配置"></a>EFK配置</h2><p><a href="https://www.servicemesher.com/istio-handbook/practice/efk.html">https://www.servicemesher.com/istio-handbook/practice/efk.html</a></p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">//具体设置参数的位置需要参考demo.yaml，1.10版本默认使用meshConfig.accessLogFile为/dev/stdout</span><br><span class="line">istioctl manifest apply --set profile=demo --set values.global.proxy.accessLogFile=&quot;/dev/stdout&quot;</span><br></pre></td></tr></table></figure>
-
-<p>以下通过部署 <code>sleep</code> 示例应用程序来测试日志采集过程</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl apply -f samples/sleep/sleep.yaml</span><br><span class="line">kubectl apply -f &lt;(istioctl kube-inject -f samples/sleep/sleep.yaml) //手动注入sidecar</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl logs -l app=sleep -c istio-proxy //查看应用日志</span><br></pre></td></tr></table></figure>
-
-<p><a href="https://www.servicemesher.com/istio-handbook/practice/efk.html">https://www.servicemesher.com/istio-handbook/practice/efk.html</a></p>
-<p>参考上文构建EFK的YAML文件</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl apply -f samples/efk.yaml</span><br></pre></td></tr></table></figure>
-
-<p>执行命令产生访问日志：</p>
-<blockquote>
-<p>如果你已经按照本书部署了 <code>Bookinfo</code> 示例，你也可以直接通过浏览器访问 /productpage 页面也可以产生访问日志。</p>
-</blockquote>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl exec -it $(kubectl get pod -l app=sleep -o jsonpath=&#x27;&#123;.items[0].metadata.name&#125;&#x27;) -c sleep -- curl -v httpbin:8000/status/418</span><br></pre></td></tr></table></figure>
-
-<p>设置 Kibana 的端口转发：</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl -n logging port-forward $(kubectl -n logging get pod -l app=kibana -o jsonpath=&#x27;&#123;.items[0].metadata.name&#125;&#x27;) 5601:5601 &amp;</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>此命令将 Kibaba <a href="https://www.servicemesher.com/istio-handbook/GLOSSARY.html#pod">Pod</a> 的 <code>5601</code> 端口转发到 <code>localhost:5601</code> ，<code>&amp;</code> 代表后台运行</li>
-</ul>
-<p>后续需要对 <code>Fluentd</code> 进行细致的配置。如果用于生产环境，可以前往 Kubernetes 官方 github 仓库找到完整的 <code>EFK</code> 配置来进行部署：</p>
-<p><a href="https://github.com/kubernetes/kubernetes/tree/master/cluster/addons/fluentd-elasticsearch">https://github.com/kubernetes/kubernetes/tree/master/cluster/addons/fluentd-elasticsearch</a></p>
-<h2 id="Jaeger配置"><a href="#Jaeger配置" class="headerlink" title="Jaeger配置"></a>Jaeger配置</h2><p><a href="https://www.servicemesher.com/istio-handbook/practice/jaeger.html">https://www.servicemesher.com/istio-handbook/practice/jaeger.html</a></p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl apply -f samples/addons/jaeger.yaml</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">istioctl dashboard jaeger</span><br></pre></td></tr></table></figure>
-
-<p>可以在jaeger.yaml配置文件中修改参数</p>
-<p>将调用链数据持久化存储 <a href="https://www.jaegertracing.io/docs/1.23/operator/#production-strategy">https://www.jaegertracing.io/docs/1.23/operator/#production-strategy</a></p>
-<p><code>#TODO</code> </p>
-<ul>
-<li><code>Jaeger Collector</code> 默认采用直接写入存储服务的方式，大规模的使用场景下建议使用 Kafka 作为中间缓存区。</li>
-</ul>
-<h1 id="Istio构架"><a href="#Istio构架" class="headerlink" title="Istio构架"></a>Istio构架</h1><p><a href="https://www.servicemesher.com/istio-handbook/concepts/basic.html">https://www.servicemesher.com/istio-handbook/concepts/basic.html</a></p>
-<p><a href="https://zhuanlan.zhihu.com/p/145544378">https://zhuanlan.zhihu.com/p/145544378</a></p>
-<blockquote>
-<p>服务网格是一个<strong>基础设施层</strong>，用于处理服务间通信。云原生应用有着复杂的服务拓扑，服务网格保证<strong>请求在这些拓扑中可靠地穿梭</strong>。在实际应用当中，服务网格通常是由一系列轻量级的<strong>网络代理</strong>组成的，它们与应用程序部署在一起，但<strong>对应用程序透明</strong>。</p>
-</blockquote>
-<p>Istio 服务网格在逻辑上分为控制平面和数据平面两部分。其中，控制平面 <strong>Pilot</strong> 负责管理和配置代理来路由流量，并配置 <strong>Mixer</strong> 以实施策略和收集遥测数据；数据平面由一组以 Sidecar 方式部署的智能代理（<strong>Envoy</strong>）组成，这些代理可以调节和控制微服务及 <strong>Mixer</strong> 之间所有的网络通信。</p>
-<p>控制平面的特点：</p>
-<ul>
-<li>不直接解析数据包</li>
-<li>与控制平面中的代理通信，下发策略和配置</li>
-<li>负责网络行为的可视化</li>
-<li>通常提供 API 或者命令行工具可用于配置版本化管理，便于持续集成和部署</li>
-</ul>
-<p>数据平面的特点：</p>
-<ul>
-<li>通常是按照无状态目标设计的，但实际上为了提高流量转发性能，需要缓存一些数据</li>
-<li>直接处理入站和出站数据包，转发、路由、健康检查、负载均衡、认证、鉴权、产生监控数据等</li>
-<li>对应用来说透明，即可以做到无感知部署</li>
-</ul>
-<p><strong>优点</strong></p>
-<ul>
-<li>屏蔽分布式系统通信的复杂性(负载均衡、服务发现、认证授权、监控追踪、流量控制等等)，服务只用关注业务逻辑；</li>
-<li>真正的语言无关，服务可以用任何语言编写，只需和Service Mesh通信即可；</li>
-<li>对应用透明，Service Mesh组件可以单独升级；</li>
-</ul>
-<p><strong>挑战</strong></p>
-<ul>
-<li>Service Mesh组件以代理模式计算并转发请求，一定程度上会降低通信系统性能，并增加系统资源开销；</li>
-<li>Service Mesh组件接管了网络流量，因此服务的整体稳定性依赖于Service Mesh，同时额外引入的大量Service Mesh服务实例的运维和管理也是一个挑战；</li>
-</ul>
-<h2 id="Kubernetes"><a href="#Kubernetes" class="headerlink" title="Kubernetes"></a>Kubernetes</h2><p><a href="https://jimmysong.io/kubernetes-handbook/concepts/">https://jimmysong.io/kubernetes-handbook/concepts/</a></p>
-<h1 id="微服务"><a href="#微服务" class="headerlink" title="微服务"></a>微服务</h1><p><a href="https://zhuanlan.zhihu.com/p/61901608">https://zhuanlan.zhihu.com/p/61901608</a></p>
-<ul>
-<li>不同服务间直接进行通信</li>
-<li>加入对<strong>网络传输问题</strong>的处理逻辑</li>
-<li>使用<strong>TCP协议</strong>处理网络传输问题</li>
-<li>第一代微服务：<strong>分布式系统</strong>发展带来的新需求（分布式系统的通用语义），如熔断策略、负载均衡、服务发现、认证和授权、quota限制、trace和监控等</li>
-<li>第二代微服务：<strong>面向微服务架构的开发框架</strong>出现</li>
-<li>第一代 Service Mesh：Linkerd，Envoy，NginxMesh为代表的<strong>代理模式（边车模式）</strong>将分布式服务的通信抽象为单独一层，在这一层中实现负载均衡、服务发现、认证授权、监控追踪、流量控制等分布式系统所需要的功能，作为一个和服务对等的代理服务，和服务部署在一起，接管服务的流量，通过代理之间的通信间接完成服务之间的通信请求，从而保证微服务语言无关的特性，解决版本兼容问题，同时避免开发者掌握管理复杂框架本身花费的时间精力</li>
-<li>第二代 Service Mesh：以 Istio 为代表，提供统一的上层运维入口，演化出了集中式的控制面板，所有的单机代理组件通过和控制面板交互进行<strong>网络拓扑策略的更新</strong>和<strong>单机数据的汇报</strong></li>
-</ul>
-<h1 id="使用-Elastic-技术栈构建-K8S-全栈监控"><a href="#使用-Elastic-技术栈构建-K8S-全栈监控" class="headerlink" title="使用 Elastic 技术栈构建 K8S 全栈监控"></a>使用 Elastic 技术栈构建 K8S 全栈监控</h1><p><a href="https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-1/">https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-1/</a></p>
-<p><a href="https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-2/">https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-2/</a></p>
-<p><a href="https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-3/">https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-3/</a></p>
-<p><a href="https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-4/">https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-4/</a></p>
-<p>在安装 ElasticSearch数据节点时，storageClass需要绑定现有的storageclass name</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl get sc # 获取storageclass</span><br></pre></td></tr></table></figure>
-
-<p><img src="2021-11-17_17-46.png" alt="2021-11-17_17-46"></p>
-<p>修改yaml文件，将storageClassName改为查询到的storageclass name</p>
-<p><img src="2021-11-17_17-48.png" alt="2021-11-17_17-48"></p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">Changed password for user apm_system</span><br><span class="line">PASSWORD apm_system = KDDHU4TJi9EuD87x1DBT</span><br><span class="line"></span><br><span class="line">Changed password for user kibana_system</span><br><span class="line">PASSWORD kibana_system = LsyKNl7OqhBCc9ChCXMm</span><br><span class="line"></span><br><span class="line">Changed password for user kibana</span><br><span class="line">PASSWORD kibana = LsyKNl7OqhBCc9ChCXMm</span><br><span class="line"></span><br><span class="line">Changed password for user logstash_system</span><br><span class="line">PASSWORD logstash_system = MTUGYEFhbtSN4wU2OvjR</span><br><span class="line"></span><br><span class="line">Changed password for user beats_system</span><br><span class="line">PASSWORD beats_system = wob24NOj3J0apT8Rc62T</span><br><span class="line"></span><br><span class="line">Changed password for user remote_monitoring_user</span><br><span class="line">PASSWORD remote_monitoring_user = 0geQaxGmygn90wjVMEfe</span><br><span class="line"></span><br><span class="line">Changed password for user elastic</span><br><span class="line">PASSWORD elastic = zjA9fYQfUgwgmJn4shv5</span><br></pre></td></tr></table></figure>
-
-<p>注意将elastic用户名和密码添加到Kubernetes的Secret 对象中一步需要将password改为之前生成的最后一个密码，即上面的zjA9fYQfUgwgmJn4shv5</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl logs -f -n elastic $(kubectl get pods -n elastic | grep kibana | sed -n 1p | awk &#x27;&#123;print $1&#125;&#x27;) | grep &quot;Status changed from yellow to green&quot;</span><br><span class="line"></span><br><span class="line">kubectl get svc kibana -n elastic</span><br></pre></td></tr></table></figure>
-
-<p>获取elastic service的CLUSTER-IP，通过CLUSTER-IP:5601访问Kibana可视化界面，登录使用elastic作为用户名和之前获取的zjA9fYQfUgwgmJn4shv5作为密码</p>
-<ul>
-<li>tips：pod创建出现ImagePullBackOff时，很可能时镜像拉不下来，可以考虑在dockerhub搜索对于的镜像，拉下来后使用<code>docker tag</code>命令修改标签，或者直接在yaml里直接改image对于的地址</li>
-</ul>
-]]></content>
-      <categories>
-        <category>环境搭建</category>
-      </categories>
-      <tags>
-        <tag>ELK</tag>
-        <tag>环境搭建</tag>
-        <tag>AIOps</tag>
-        <tag>istio</tag>
-        <tag>云原生</tag>
       </tags>
   </entry>
 </search>
