@@ -62,6 +62,144 @@
       </tags>
   </entry>
   <entry>
+    <title>ELK环境搭建&amp;流量分析</title>
+    <url>/2021/01/20/ELK%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA-%E6%B5%81%E9%87%8F%E5%88%86%E6%9E%90/</url>
+    <content><![CDATA[<p>记录使用Prometheus或ELK来搭建一个最基础的流量监控平台的过程（针对原始流量和Zeek的日志文件），对Prometheus和ELK做了一个简单的调研和整理，然后对配置过程中部分关键步骤进行一个整理</p>
+ <a id="more"></a>
+
+<p><a href="https://www.metricfire.com/blog/prometheus-vs-elk/?GAID=167038562.1611213247#span-stylefontweight-400Use-ELK-in-the-following-casesspan">https://www.metricfire.com/blog/prometheus-vs-elk/?GAID=167038562.1611213247#span-stylefontweight-400Use-ELK-in-the-following-casesspan</a></p>
+<h1 id="Prometheus-amp-ELK"><a href="#Prometheus-amp-ELK" class="headerlink" title="Prometheus &amp; ELK"></a>Prometheus &amp; ELK</h1><blockquote>
+<p>Prometheus和ELK都是当前流行的开源监控系统，两者各有特色</p>
+<p>Prometheus专攻指标，ELK专攻日志，大多数产品会同时使用两者</p>
+</blockquote>
+<h2 id="Prometheus"><a href="#Prometheus" class="headerlink" title="Prometheus"></a>Prometheus</h2><p>Prometheus是一个开源的监视和警报系统，可以从指定的目标源获取指标，主要针对需要跨多种来源来收集指标并进行警报的情况</p>
+<p><strong>优势</strong></p>
+<ul>
+<li><p>提供与Kubernetes高度集成的服务发现功能</p>
+</li>
+<li><p>其他部分的基础架构损坏不影响Prometheus的工作</p>
+</li>
+<li><p>配置简单，操作简单</p>
+</li>
+<li><p>对受监视服务的负载较低</p>
+</li>
+</ul>
+<p><strong>缺点</strong></p>
+<ul>
+<li>不提供可靠的长期数据存储、异常检测、水平扩展以及用户管理</li>
+</ul>
+<p>Prometheus一般配合Grafana进行可视化</p>
+<p>prometheus_client是一个python包，可用于很方便的创建Prometheus可以抓取的指标对象</p>
+<h2 id="ELK"><a href="#ELK" class="headerlink" title="ELK"></a>ELK</h2><p>ELK是Elasticsearch、Logstash、Kibana三个开源工具的组合，从而来对日志进行可视化的分析研究，主要针对结合大量日志数据来对特定事件进行分析的情况</p>
+<p>ELK一般结合filebeat来使用，filebeat将日志信息收集，发送到logstash进行处理后存入elasticsearch，然后通过kibana来进行可视化</p>
+<ul>
+<li><p>Filebeat：轻量级的日志采集器</p>
+</li>
+<li><p>Logstash：能从一个或多个来源采集、转换并将数据发送到Elasticsearch的数据处理管道</p>
+</li>
+<li><p>Elasticsearch：提供分布式数据存储的NoSQL数据库</p>
+</li>
+<li><p>Kibana：用于Elasticsearch日志的最佳可视化工具</p>
+</li>
+</ul>
+<p><strong>优势</strong></p>
+<ul>
+<li>能够对大量日志数据源进行分布式的管理</li>
+<li>支持纵向和水平的扩展，提供了一系列SDK</li>
+</ul>
+<p><strong>缺点</strong></p>
+<ul>
+<li>安装、设置和调试较为复杂</li>
+<li>需要额外的工作来保证可靠性</li>
+</ul>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><ul>
+<li>Prometheus用于指标收集，并根据这些指标来设计存储模式；ELK能获取所有类型的数据，更有效的保留数据用于后续分析，同时使用倒排索引的结构，保证快速的全文搜索</li>
+<li>ELK提供更长时间的数据存储，Prometheus需要结合其他存储方案来实现长期数据存储</li>
+</ul>
+<h1 id="zeek-Elastic-Stack"><a href="#zeek-Elastic-Stack" class="headerlink" title="zeek + Elastic Stack"></a>zeek + Elastic Stack</h1><p>使用docker来搭建ELK环境</p>
+<p><a href="https://github.com/deviantony/docker-elk">https://github.com/deviantony/docker-elk</a></p>
+<blockquote>
+<p>docker-compose up</p>
+</blockquote>
+<p>Docker Compose构建ELK环境</p>
+<blockquote>
+<p>docker-compose down -v</p>
+</blockquote>
+<p>暂停容器并清除数据</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">version:</span> <span class="string">&#x27;3.2&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="attr">services:</span></span><br><span class="line">  <span class="attr">elasticsearch:</span></span><br><span class="line">    <span class="attr">build:</span></span><br><span class="line">      <span class="attr">context:</span> <span class="string">elasticsearch/</span></span><br><span class="line">      <span class="attr">args:</span></span><br><span class="line">        <span class="attr">ELK_VERSION:</span> <span class="string">$ELK_VERSION</span></span><br><span class="line">    <span class="attr">volumes:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">type:</span> <span class="string">bind</span></span><br><span class="line">        <span class="attr">source:</span> <span class="string">./elasticsearch/config/elasticsearch.yml</span></span><br><span class="line">        <span class="attr">target:</span> <span class="string">/usr/share/elasticsearch/config/elasticsearch.yml</span></span><br><span class="line">        <span class="attr">read_only:</span> <span class="literal">true</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">type:</span> <span class="string">volume</span></span><br><span class="line">        <span class="attr">source:</span> <span class="string">elasticsearch</span></span><br><span class="line">        <span class="attr">target:</span> <span class="string">/usr/share/elasticsearch/data</span></span><br><span class="line">    <span class="attr">ports:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;9200:9200&quot;</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;9300:9300&quot;</span></span><br><span class="line">    <span class="attr">environment:</span></span><br><span class="line">      <span class="attr">ES_JAVA_OPTS:</span> <span class="string">&quot;-Xmx256m -Xms256m&quot;</span></span><br><span class="line">      <span class="attr">ELASTIC_PASSWORD:</span> <span class="string">changeme</span></span><br><span class="line">      <span class="comment"># Use single node discovery in order to disable production mode and avoid bootstrap checks.</span></span><br><span class="line">      <span class="comment"># see: https://www.elastic.co/guide/en/elasticsearch/reference/current/bootstrap-checks.html</span></span><br><span class="line">      <span class="attr">discovery.type:</span> <span class="string">single-node</span></span><br><span class="line">    <span class="attr">networks:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">elk</span></span><br><span class="line"></span><br><span class="line">  <span class="attr">logstash:</span></span><br><span class="line">    <span class="attr">build:</span></span><br><span class="line">      <span class="attr">context:</span> <span class="string">logstash/</span></span><br><span class="line">      <span class="attr">args:</span></span><br><span class="line">        <span class="attr">ELK_VERSION:</span> <span class="string">$ELK_VERSION</span></span><br><span class="line">    <span class="attr">volumes:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">type:</span> <span class="string">bind</span></span><br><span class="line">        <span class="attr">source:</span> <span class="string">./logstash/config/logstash.yml</span></span><br><span class="line">        <span class="attr">target:</span> <span class="string">/usr/share/logstash/config/logstash.yml</span></span><br><span class="line">        <span class="attr">read_only:</span> <span class="literal">true</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">type:</span> <span class="string">bind</span></span><br><span class="line">        <span class="attr">source:</span> <span class="string">./logstash/pipeline</span></span><br><span class="line">        <span class="attr">target:</span> <span class="string">/usr/share/logstash/pipeline</span></span><br><span class="line">        <span class="attr">read_only:</span> <span class="literal">true</span></span><br><span class="line">    <span class="attr">ports:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;5044:5044&quot;</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;5000:5000/tcp&quot;</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;5000:5000/udp&quot;</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;9600:9600&quot;</span></span><br><span class="line">    <span class="attr">environment:</span></span><br><span class="line">      <span class="attr">LS_JAVA_OPTS:</span> <span class="string">&quot;-Xmx256m -Xms256m&quot;</span></span><br><span class="line">    <span class="attr">networks:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">elk</span></span><br><span class="line">    <span class="attr">depends_on:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">elasticsearch</span></span><br><span class="line"></span><br><span class="line">  <span class="attr">kibana:</span></span><br><span class="line">    <span class="attr">build:</span></span><br><span class="line">      <span class="attr">context:</span> <span class="string">kibana/</span></span><br><span class="line">      <span class="attr">args:</span></span><br><span class="line">        <span class="attr">ELK_VERSION:</span> <span class="string">$ELK_VERSION</span></span><br><span class="line">    <span class="attr">volumes:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">type:</span> <span class="string">bind</span></span><br><span class="line">        <span class="attr">source:</span> <span class="string">./kibana/config/kibana.yml</span></span><br><span class="line">        <span class="attr">target:</span> <span class="string">/usr/share/kibana/config/kibana.yml</span></span><br><span class="line">        <span class="attr">read_only:</span> <span class="literal">true</span></span><br><span class="line">    <span class="attr">ports:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;5601:5601&quot;</span></span><br><span class="line">    <span class="attr">networks:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">elk</span></span><br><span class="line">    <span class="attr">depends_on:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">elasticsearch</span></span><br><span class="line"></span><br><span class="line"><span class="attr">networks:</span></span><br><span class="line">  <span class="attr">elk:</span></span><br><span class="line">    <span class="attr">driver:</span> <span class="string">bridge</span></span><br><span class="line"></span><br><span class="line"><span class="attr">volumes:</span></span><br><span class="line">  <span class="attr">elasticsearch:</span></span><br></pre></td></tr></table></figure>
+
+<p>上面是docker-compose的配置文件，ELK的配置文件分别在docker-elk的elasticsearch、logstash、kibana文件夹下的config文件夹下，三个容器通过使用docker建立的elk网络桥接起来，通过命令<code>docker network network ls</code>可以查看该网络</p>
+<p>ELK提供了通过filebeat来收集zeek日志的方法</p>
+<blockquote>
+<p>sudo docker run –rm –cap-add=NET_RAW –net=host -v <code>pwd</code>:/pcap:rw blacktop/zeek:elastic -i af_packet::eth0 local</p>
+</blockquote>
+<p>使用docker运行zeek来监听eth0网口的流量</p>
+<p>参考官方在<a href="http://localhost:5601/app/home#/tutorial/zeekLogs%E7%9A%84%E6%96%B9%E6%B3%95%E5%AE%89%E8%A3%85filebeat">http://localhost:5601/app/home#/tutorial/zeekLogs的方法安装filebeat</a></p>
+<p>其中，可以对zeek.yml进行修改</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="bullet">-</span> <span class="attr">module:</span> <span class="string">zeek</span></span><br><span class="line">  <span class="attr">capture_loss:</span></span><br><span class="line">    <span class="attr">enabled:</span> <span class="literal">false</span></span><br><span class="line">  <span class="attr">connection:</span></span><br><span class="line">    <span class="attr">enabled:</span> <span class="literal">true</span></span><br><span class="line">    <span class="attr">var.paths:</span> [<span class="string">&quot;[path]/conn.log&quot;</span>]</span><br></pre></td></tr></table></figure>
+
+<p>上面是一个简单的例子，对不需要的日志置false，为需要收集的日志配置响应日志所在的路径，ubuntu系统zeek采集实时流量的日志应在<code>/usr/local/zeek/logs/current</code>文件夹下，即<code>var.paths: [&quot;/usr/local/zeek/logs/current/conn.log&quot;]</code></p>
+<p>回到<a href="http://localhost:5601/app/home#/tutorial/zeekLogs%EF%BC%8C%E5%9C%A8%E6%9C%80%E5%90%8E%E4%B8%80%E6%AD%A5check">http://localhost:5601/app/home#/tutorial/zeekLogs，在最后一步check</a> data，成功则点击Zeek Overview进入kibana为zeek设计的界面</p>
+<p>侧边栏Kibana的Discover可以查看存储在elasticsearch的数据</p>
+<h2 id="离线分析的情况"><a href="#离线分析的情况" class="headerlink" title="离线分析的情况"></a>离线分析的情况</h2><p>使用logstash来做日志收集，logstash会根据事件传输的当前时间自动给事件加上@timestamp字段，但针对离线分析的情况，则需要手动指定时间戳</p>
+<p>通过使用filebeat来处理zeek能够自动将zeek的ts时间作为索引存入elasticsearch，以此为基础可以进行离线分析</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo filebeat setup</span><br><span class="line"></span><br><span class="line">sudo service filebeat start</span><br><span class="line"></span><br><span class="line">sudo docker run --rm -v `<span class="built_in">pwd</span>`:/pcap blacktop/zeek -r dns-traffic.20140409.pcap <span class="built_in">local</span> <span class="string">&quot;Site::local_nets += &#123; 192.168.11.0/24 &#125;&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h1 id="ELK监测网络流量"><a href="#ELK监测网络流量" class="headerlink" title="ELK监测网络流量"></a>ELK监测网络流量</h1><p><a href="https://www.elastic.co/guide/en/beats/packetbeat/current/packetbeat-installation-configuration.html">https://www.elastic.co/guide/en/beats/packetbeat/current/packetbeat-installation-configuration.html</a></p>
+<p>以ubuntu为例，使用命令</p>
+<blockquote>
+<p>curl -L -O <a href="https://artifacts.elastic.co/downloads/beats/packetbeat/packetbeat-7.10.2-amd64.deb">https://artifacts.elastic.co/downloads/beats/packetbeat/packetbeat-7.10.2-amd64.deb</a></p>
+</blockquote>
+<blockquote>
+<p>sudo dpkg -i packetbeat-7.10.2-amd64.deb</p>
+</blockquote>
+<p>配置/etc/packetbeat/packetbeat.yml</p>
+<p>修改kibana和elasticsearch的配置部分</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">setup.kibana:</span></span><br><span class="line">  <span class="attr">host:</span> <span class="string">&quot;localhost:5601&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="attr">output.elasticsearch:</span></span><br><span class="line">  <span class="attr">hosts:</span> [<span class="string">&quot;localhost:9200&quot;</span>]</span><br><span class="line">  <span class="attr">username:</span> <span class="string">&quot;elastic&quot;</span></span><br><span class="line">  <span class="attr">password:</span> <span class="string">&quot;changeme&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>在配置文件上加上嗅探类型</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">packetbeat.interfaces.type:</span> <span class="string">af_packet</span></span><br></pre></td></tr></table></figure>
+
+<p>选择网络接口，packetbeat提供了<code>packetbeat devices</code>的命令来查询</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">packetbeat.interfaces.device:</span> <span class="string">eth0</span></span><br></pre></td></tr></table></figure>
+
+<p>其他配置参考<a href="https://www.elastic.co/guide/en/beats/packetbeat/current/configuring-howto-packetbeat.html">https://www.elastic.co/guide/en/beats/packetbeat/current/configuring-howto-packetbeat.html</a></p>
+<p>类似于filebeat，使用下述命令启动服务</p>
+<blockquote>
+<p>packetbeat setup</p>
+</blockquote>
+<blockquote>
+<p>sudo service packetbeat start</p>
+</blockquote>
+<p>侧边栏Kibana的Discover可以查看存储在elasticsearch的数据</p>
+<p>可以在Dashboard处自定义图表来可视化监控到的流量</p>
+<h2 id="离线分析的情况-1"><a href="#离线分析的情况-1" class="headerlink" title="离线分析的情况"></a>离线分析的情况</h2><p><a href="https://www.elastic.co/cn/blog/analyzing-network-packets-with-wireshark-elasticsearch-and-kibana">https://www.elastic.co/cn/blog/analyzing-network-packets-with-wireshark-elasticsearch-and-kibana</a></p>
+<p><a href="https://harrunisk.github.io/2018-09-12-ElasticWifiAnalysisEn/">https://harrunisk.github.io/2018-09-12-ElasticWifiAnalysisEn/</a></p>
+<p>上面几种方案尝试了一下都没能成功将pcap导入elasticsearch，可能是哪里疏忽了</p>
+<p>使用tshark导出pcap包中流量的三元组</p>
+<blockquote>
+<p>tshark -r example.pcap -T fields -e frame.time -e ip.src -e ip.dst -e ip.proto -E header=y -E separator=, -E quote=d -E occurrence=f &gt; pcap.csv</p>
+</blockquote>
+<p><code>#TODO</code></p>
+<h1 id="kafka-amp-prometheus"><a href="#kafka-amp-prometheus" class="headerlink" title="kafka&amp;prometheus"></a>kafka&amp;prometheus</h1><p>之后尝试使用kafka和prometheus来进行流量分析，发现使用jmx_exporter和node_exporter prometheus只能采集到kafka本身的指标，官方似乎也没有提供将流量数据通过kafka导入prometheus的方案，具体原因<code>#TODO</code></p>
+<p><a href="https://www.metricfire.com/blog/kafka-monitoring-using-prometheus/?GAID=167038562.1611213247&amp;GAID=167038562.1611213247">https://www.metricfire.com/blog/kafka-monitoring-using-prometheus/?GAID=167038562.1611213247&amp;GAID=167038562.1611213247</a></p>
+<ul>
+<li>注意缩进</li>
+<li><code>sudo chown -R 472:472 grafana/</code></li>
+</ul>
+<p><a href="https://www.confluent.io/blog/kafka-client-cannot-connect-to-broker-on-aws-on-docker-etc/">https://www.confluent.io/blog/kafka-client-cannot-connect-to-broker-on-aws-on-docker-etc/</a></p>
+]]></content>
+      <categories>
+        <category>环境搭建</category>
+      </categories>
+      <tags>
+        <tag>Prometheus</tag>
+        <tag>ELK</tag>
+        <tag>流量分析</tag>
+        <tag>环境搭建</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Docker学习&amp;使用Docker构建zeek到kafka的连接</title>
     <url>/2020/09/19/Docker%E5%AD%A6%E4%B9%A0-%E4%BD%BF%E7%94%A8Docker%E6%9E%84%E5%BB%BAzeek%E5%88%B0kafka%E7%9A%84%E8%BF%9E%E6%8E%A5/</url>
     <content><![CDATA[<p>记录一个又是在debug的下午，试图通过kafka将zeek解析pcap文件的结果导入Timescaledb，在开心的参照官方给出的使用docker构建zeek到kafka连接的<a href="https://github.com/blacktop/docker-zeek/blob/master/docs/kafka.md">教程</a>复制粘贴的过程中碰到了奇怪的问题<code>can&#39;t update DNS cache</code>，后来发现似乎只要删除命令中的<code>-P</code>就能解决问题</p>
@@ -237,144 +375,6 @@
         <tag>Docker</tag>
         <tag>Zeek</tag>
         <tag>Kafka</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>ELK环境搭建&amp;流量分析</title>
-    <url>/2021/01/20/ELK%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA-%E6%B5%81%E9%87%8F%E5%88%86%E6%9E%90/</url>
-    <content><![CDATA[<p>记录使用Prometheus或ELK来搭建一个最基础的流量监控平台的过程（针对原始流量和Zeek的日志文件），对Prometheus和ELK做了一个简单的调研和整理，然后对配置过程中部分关键步骤进行一个整理</p>
- <a id="more"></a>
-
-<p><a href="https://www.metricfire.com/blog/prometheus-vs-elk/?GAID=167038562.1611213247#span-stylefontweight-400Use-ELK-in-the-following-casesspan">https://www.metricfire.com/blog/prometheus-vs-elk/?GAID=167038562.1611213247#span-stylefontweight-400Use-ELK-in-the-following-casesspan</a></p>
-<h1 id="Prometheus-amp-ELK"><a href="#Prometheus-amp-ELK" class="headerlink" title="Prometheus &amp; ELK"></a>Prometheus &amp; ELK</h1><blockquote>
-<p>Prometheus和ELK都是当前流行的开源监控系统，两者各有特色</p>
-<p>Prometheus专攻指标，ELK专攻日志，大多数产品会同时使用两者</p>
-</blockquote>
-<h2 id="Prometheus"><a href="#Prometheus" class="headerlink" title="Prometheus"></a>Prometheus</h2><p>Prometheus是一个开源的监视和警报系统，可以从指定的目标源获取指标，主要针对需要跨多种来源来收集指标并进行警报的情况</p>
-<p><strong>优势</strong></p>
-<ul>
-<li><p>提供与Kubernetes高度集成的服务发现功能</p>
-</li>
-<li><p>其他部分的基础架构损坏不影响Prometheus的工作</p>
-</li>
-<li><p>配置简单，操作简单</p>
-</li>
-<li><p>对受监视服务的负载较低</p>
-</li>
-</ul>
-<p><strong>缺点</strong></p>
-<ul>
-<li>不提供可靠的长期数据存储、异常检测、水平扩展以及用户管理</li>
-</ul>
-<p>Prometheus一般配合Grafana进行可视化</p>
-<p>prometheus_client是一个python包，可用于很方便的创建Prometheus可以抓取的指标对象</p>
-<h2 id="ELK"><a href="#ELK" class="headerlink" title="ELK"></a>ELK</h2><p>ELK是Elasticsearch、Logstash、Kibana三个开源工具的组合，从而来对日志进行可视化的分析研究，主要针对结合大量日志数据来对特定事件进行分析的情况</p>
-<p>ELK一般结合filebeat来使用，filebeat将日志信息收集，发送到logstash进行处理后存入elasticsearch，然后通过kibana来进行可视化</p>
-<ul>
-<li><p>Filebeat：轻量级的日志采集器</p>
-</li>
-<li><p>Logstash：能从一个或多个来源采集、转换并将数据发送到Elasticsearch的数据处理管道</p>
-</li>
-<li><p>Elasticsearch：提供分布式数据存储的NoSQL数据库</p>
-</li>
-<li><p>Kibana：用于Elasticsearch日志的最佳可视化工具</p>
-</li>
-</ul>
-<p><strong>优势</strong></p>
-<ul>
-<li>能够对大量日志数据源进行分布式的管理</li>
-<li>支持纵向和水平的扩展，提供了一系列SDK</li>
-</ul>
-<p><strong>缺点</strong></p>
-<ul>
-<li>安装、设置和调试较为复杂</li>
-<li>需要额外的工作来保证可靠性</li>
-</ul>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><ul>
-<li>Prometheus用于指标收集，并根据这些指标来设计存储模式；ELK能获取所有类型的数据，更有效的保留数据用于后续分析，同时使用倒排索引的结构，保证快速的全文搜索</li>
-<li>ELK提供更长时间的数据存储，Prometheus需要结合其他存储方案来实现长期数据存储</li>
-</ul>
-<h1 id="zeek-Elastic-Stack"><a href="#zeek-Elastic-Stack" class="headerlink" title="zeek + Elastic Stack"></a>zeek + Elastic Stack</h1><p>使用docker来搭建ELK环境</p>
-<p><a href="https://github.com/deviantony/docker-elk">https://github.com/deviantony/docker-elk</a></p>
-<blockquote>
-<p>docker-compose up</p>
-</blockquote>
-<p>Docker Compose构建ELK环境</p>
-<blockquote>
-<p>docker-compose down -v</p>
-</blockquote>
-<p>暂停容器并清除数据</p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">version:</span> <span class="string">&#x27;3.2&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="attr">services:</span></span><br><span class="line">  <span class="attr">elasticsearch:</span></span><br><span class="line">    <span class="attr">build:</span></span><br><span class="line">      <span class="attr">context:</span> <span class="string">elasticsearch/</span></span><br><span class="line">      <span class="attr">args:</span></span><br><span class="line">        <span class="attr">ELK_VERSION:</span> <span class="string">$ELK_VERSION</span></span><br><span class="line">    <span class="attr">volumes:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">type:</span> <span class="string">bind</span></span><br><span class="line">        <span class="attr">source:</span> <span class="string">./elasticsearch/config/elasticsearch.yml</span></span><br><span class="line">        <span class="attr">target:</span> <span class="string">/usr/share/elasticsearch/config/elasticsearch.yml</span></span><br><span class="line">        <span class="attr">read_only:</span> <span class="literal">true</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">type:</span> <span class="string">volume</span></span><br><span class="line">        <span class="attr">source:</span> <span class="string">elasticsearch</span></span><br><span class="line">        <span class="attr">target:</span> <span class="string">/usr/share/elasticsearch/data</span></span><br><span class="line">    <span class="attr">ports:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;9200:9200&quot;</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;9300:9300&quot;</span></span><br><span class="line">    <span class="attr">environment:</span></span><br><span class="line">      <span class="attr">ES_JAVA_OPTS:</span> <span class="string">&quot;-Xmx256m -Xms256m&quot;</span></span><br><span class="line">      <span class="attr">ELASTIC_PASSWORD:</span> <span class="string">changeme</span></span><br><span class="line">      <span class="comment"># Use single node discovery in order to disable production mode and avoid bootstrap checks.</span></span><br><span class="line">      <span class="comment"># see: https://www.elastic.co/guide/en/elasticsearch/reference/current/bootstrap-checks.html</span></span><br><span class="line">      <span class="attr">discovery.type:</span> <span class="string">single-node</span></span><br><span class="line">    <span class="attr">networks:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">elk</span></span><br><span class="line"></span><br><span class="line">  <span class="attr">logstash:</span></span><br><span class="line">    <span class="attr">build:</span></span><br><span class="line">      <span class="attr">context:</span> <span class="string">logstash/</span></span><br><span class="line">      <span class="attr">args:</span></span><br><span class="line">        <span class="attr">ELK_VERSION:</span> <span class="string">$ELK_VERSION</span></span><br><span class="line">    <span class="attr">volumes:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">type:</span> <span class="string">bind</span></span><br><span class="line">        <span class="attr">source:</span> <span class="string">./logstash/config/logstash.yml</span></span><br><span class="line">        <span class="attr">target:</span> <span class="string">/usr/share/logstash/config/logstash.yml</span></span><br><span class="line">        <span class="attr">read_only:</span> <span class="literal">true</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">type:</span> <span class="string">bind</span></span><br><span class="line">        <span class="attr">source:</span> <span class="string">./logstash/pipeline</span></span><br><span class="line">        <span class="attr">target:</span> <span class="string">/usr/share/logstash/pipeline</span></span><br><span class="line">        <span class="attr">read_only:</span> <span class="literal">true</span></span><br><span class="line">    <span class="attr">ports:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;5044:5044&quot;</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;5000:5000/tcp&quot;</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;5000:5000/udp&quot;</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;9600:9600&quot;</span></span><br><span class="line">    <span class="attr">environment:</span></span><br><span class="line">      <span class="attr">LS_JAVA_OPTS:</span> <span class="string">&quot;-Xmx256m -Xms256m&quot;</span></span><br><span class="line">    <span class="attr">networks:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">elk</span></span><br><span class="line">    <span class="attr">depends_on:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">elasticsearch</span></span><br><span class="line"></span><br><span class="line">  <span class="attr">kibana:</span></span><br><span class="line">    <span class="attr">build:</span></span><br><span class="line">      <span class="attr">context:</span> <span class="string">kibana/</span></span><br><span class="line">      <span class="attr">args:</span></span><br><span class="line">        <span class="attr">ELK_VERSION:</span> <span class="string">$ELK_VERSION</span></span><br><span class="line">    <span class="attr">volumes:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">type:</span> <span class="string">bind</span></span><br><span class="line">        <span class="attr">source:</span> <span class="string">./kibana/config/kibana.yml</span></span><br><span class="line">        <span class="attr">target:</span> <span class="string">/usr/share/kibana/config/kibana.yml</span></span><br><span class="line">        <span class="attr">read_only:</span> <span class="literal">true</span></span><br><span class="line">    <span class="attr">ports:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;5601:5601&quot;</span></span><br><span class="line">    <span class="attr">networks:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">elk</span></span><br><span class="line">    <span class="attr">depends_on:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">elasticsearch</span></span><br><span class="line"></span><br><span class="line"><span class="attr">networks:</span></span><br><span class="line">  <span class="attr">elk:</span></span><br><span class="line">    <span class="attr">driver:</span> <span class="string">bridge</span></span><br><span class="line"></span><br><span class="line"><span class="attr">volumes:</span></span><br><span class="line">  <span class="attr">elasticsearch:</span></span><br></pre></td></tr></table></figure>
-
-<p>上面是docker-compose的配置文件，ELK的配置文件分别在docker-elk的elasticsearch、logstash、kibana文件夹下的config文件夹下，三个容器通过使用docker建立的elk网络桥接起来，通过命令<code>docker network network ls</code>可以查看该网络</p>
-<p>ELK提供了通过filebeat来收集zeek日志的方法</p>
-<blockquote>
-<p>sudo docker run –rm –cap-add=NET_RAW –net=host -v <code>pwd</code>:/pcap:rw blacktop/zeek:elastic -i af_packet::eth0 local</p>
-</blockquote>
-<p>使用docker运行zeek来监听eth0网口的流量</p>
-<p>参考官方在<a href="http://localhost:5601/app/home#/tutorial/zeekLogs%E7%9A%84%E6%96%B9%E6%B3%95%E5%AE%89%E8%A3%85filebeat">http://localhost:5601/app/home#/tutorial/zeekLogs的方法安装filebeat</a></p>
-<p>其中，可以对zeek.yml进行修改</p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="bullet">-</span> <span class="attr">module:</span> <span class="string">zeek</span></span><br><span class="line">  <span class="attr">capture_loss:</span></span><br><span class="line">    <span class="attr">enabled:</span> <span class="literal">false</span></span><br><span class="line">  <span class="attr">connection:</span></span><br><span class="line">    <span class="attr">enabled:</span> <span class="literal">true</span></span><br><span class="line">    <span class="attr">var.paths:</span> [<span class="string">&quot;[path]/conn.log&quot;</span>]</span><br></pre></td></tr></table></figure>
-
-<p>上面是一个简单的例子，对不需要的日志置false，为需要收集的日志配置响应日志所在的路径，ubuntu系统zeek采集实时流量的日志应在<code>/usr/local/zeek/logs/current</code>文件夹下，即<code>var.paths: [&quot;/usr/local/zeek/logs/current/conn.log&quot;]</code></p>
-<p>回到<a href="http://localhost:5601/app/home#/tutorial/zeekLogs%EF%BC%8C%E5%9C%A8%E6%9C%80%E5%90%8E%E4%B8%80%E6%AD%A5check">http://localhost:5601/app/home#/tutorial/zeekLogs，在最后一步check</a> data，成功则点击Zeek Overview进入kibana为zeek设计的界面</p>
-<p>侧边栏Kibana的Discover可以查看存储在elasticsearch的数据</p>
-<h2 id="离线分析的情况"><a href="#离线分析的情况" class="headerlink" title="离线分析的情况"></a>离线分析的情况</h2><p>使用logstash来做日志收集，logstash会根据事件传输的当前时间自动给事件加上@timestamp字段，但针对离线分析的情况，则需要手动指定时间戳</p>
-<p>通过使用filebeat来处理zeek能够自动将zeek的ts时间作为索引存入elasticsearch，以此为基础可以进行离线分析</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo filebeat setup</span><br><span class="line"></span><br><span class="line">sudo service filebeat start</span><br><span class="line"></span><br><span class="line">sudo docker run --rm -v `<span class="built_in">pwd</span>`:/pcap blacktop/zeek -r dns-traffic.20140409.pcap <span class="built_in">local</span> <span class="string">&quot;Site::local_nets += &#123; 192.168.11.0/24 &#125;&quot;</span></span><br></pre></td></tr></table></figure>
-
-<h1 id="ELK监测网络流量"><a href="#ELK监测网络流量" class="headerlink" title="ELK监测网络流量"></a>ELK监测网络流量</h1><p><a href="https://www.elastic.co/guide/en/beats/packetbeat/current/packetbeat-installation-configuration.html">https://www.elastic.co/guide/en/beats/packetbeat/current/packetbeat-installation-configuration.html</a></p>
-<p>以ubuntu为例，使用命令</p>
-<blockquote>
-<p>curl -L -O <a href="https://artifacts.elastic.co/downloads/beats/packetbeat/packetbeat-7.10.2-amd64.deb">https://artifacts.elastic.co/downloads/beats/packetbeat/packetbeat-7.10.2-amd64.deb</a></p>
-</blockquote>
-<blockquote>
-<p>sudo dpkg -i packetbeat-7.10.2-amd64.deb</p>
-</blockquote>
-<p>配置/etc/packetbeat/packetbeat.yml</p>
-<p>修改kibana和elasticsearch的配置部分</p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">setup.kibana:</span></span><br><span class="line">  <span class="attr">host:</span> <span class="string">&quot;localhost:5601&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="attr">output.elasticsearch:</span></span><br><span class="line">  <span class="attr">hosts:</span> [<span class="string">&quot;localhost:9200&quot;</span>]</span><br><span class="line">  <span class="attr">username:</span> <span class="string">&quot;elastic&quot;</span></span><br><span class="line">  <span class="attr">password:</span> <span class="string">&quot;changeme&quot;</span></span><br></pre></td></tr></table></figure>
-
-<p>在配置文件上加上嗅探类型</p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">packetbeat.interfaces.type:</span> <span class="string">af_packet</span></span><br></pre></td></tr></table></figure>
-
-<p>选择网络接口，packetbeat提供了<code>packetbeat devices</code>的命令来查询</p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">packetbeat.interfaces.device:</span> <span class="string">eth0</span></span><br></pre></td></tr></table></figure>
-
-<p>其他配置参考<a href="https://www.elastic.co/guide/en/beats/packetbeat/current/configuring-howto-packetbeat.html">https://www.elastic.co/guide/en/beats/packetbeat/current/configuring-howto-packetbeat.html</a></p>
-<p>类似于filebeat，使用下述命令启动服务</p>
-<blockquote>
-<p>packetbeat setup</p>
-</blockquote>
-<blockquote>
-<p>sudo service packetbeat start</p>
-</blockquote>
-<p>侧边栏Kibana的Discover可以查看存储在elasticsearch的数据</p>
-<p>可以在Dashboard处自定义图表来可视化监控到的流量</p>
-<h2 id="离线分析的情况-1"><a href="#离线分析的情况-1" class="headerlink" title="离线分析的情况"></a>离线分析的情况</h2><p><a href="https://www.elastic.co/cn/blog/analyzing-network-packets-with-wireshark-elasticsearch-and-kibana">https://www.elastic.co/cn/blog/analyzing-network-packets-with-wireshark-elasticsearch-and-kibana</a></p>
-<p><a href="https://harrunisk.github.io/2018-09-12-ElasticWifiAnalysisEn/">https://harrunisk.github.io/2018-09-12-ElasticWifiAnalysisEn/</a></p>
-<p>上面几种方案尝试了一下都没能成功将pcap导入elasticsearch，可能是哪里疏忽了</p>
-<p>使用tshark导出pcap包中流量的三元组</p>
-<blockquote>
-<p>tshark -r example.pcap -T fields -e frame.time -e ip.src -e ip.dst -e ip.proto -E header=y -E separator=, -E quote=d -E occurrence=f &gt; pcap.csv</p>
-</blockquote>
-<p><code>#TODO</code></p>
-<h1 id="kafka-amp-prometheus"><a href="#kafka-amp-prometheus" class="headerlink" title="kafka&amp;prometheus"></a>kafka&amp;prometheus</h1><p>之后尝试使用kafka和prometheus来进行流量分析，发现使用jmx_exporter和node_exporter prometheus只能采集到kafka本身的指标，官方似乎也没有提供将流量数据通过kafka导入prometheus的方案，具体原因<code>#TODO</code></p>
-<p><a href="https://www.metricfire.com/blog/kafka-monitoring-using-prometheus/?GAID=167038562.1611213247&amp;GAID=167038562.1611213247">https://www.metricfire.com/blog/kafka-monitoring-using-prometheus/?GAID=167038562.1611213247&amp;GAID=167038562.1611213247</a></p>
-<ul>
-<li>注意缩进</li>
-<li><code>sudo chown -R 472:472 grafana/</code></li>
-</ul>
-<p><a href="https://www.confluent.io/blog/kafka-client-cannot-connect-to-broker-on-aws-on-docker-etc/">https://www.confluent.io/blog/kafka-client-cannot-connect-to-broker-on-aws-on-docker-etc/</a></p>
-]]></content>
-      <categories>
-        <category>环境搭建</category>
-      </categories>
-      <tags>
-        <tag>Prometheus</tag>
-        <tag>ELK</tag>
-        <tag>流量分析</tag>
-        <tag>环境搭建</tag>
       </tags>
   </entry>
   <entry>
@@ -735,14 +735,15 @@
 <figure class="highlight scala"><table><tr><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="keyword">case</span> (location, <span class="string">&quot;&quot;</span>) =&gt; </span><br><span class="line">        <span class="type">Array</span>.empty[((<span class="type">String</span>, <span class="type">String</span>), <span class="type">Int</span>)]  <span class="comment">// Return an empty array</span></span><br><span class="line">    <span class="keyword">case</span> (location, contents) =&gt; </span><br><span class="line">        <span class="keyword">val</span> words = contents.split(<span class="string">&quot;&quot;</span><span class="string">&quot;\W+&quot;</span><span class="string">&quot;&quot;</span>)</span><br><span class="line">        <span class="keyword">val</span> fileName = location.split(pathSep).last</span><br><span class="line">        words.map(word =&gt; ((word, fileName), <span class="number">1</span>))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <h2 id="demo3"><a href="#demo3" class="headerlink" title="demo3"></a>demo3</h2><ul>
-<li><p>本例目的是将最终结果转换成便于进行SQL查询的格式并进行简单的查询，例如下面的格式</p>
+<li>本例目的是将最终结果转换成便于进行SQL查询的格式并进行简单的查询，例如下面的格式</li>
+</ul>
 <figure class="highlight scala"><table><tr><td class="code"><pre><span class="line">(a,<span class="number">3350</span>,<span class="type">Vector</span>(loveslabourslost, merrywivesofwindsor, muchadoaboutnothing, asyoulikeit, tamingoftheshrew, twelfthnight, midsummersnightsdream, comedyoferrors),<span class="type">Vector</span>(<span class="number">507</span>, <span class="number">494</span>, <span class="number">492</span>, <span class="number">461</span>, <span class="number">445</span>, <span class="number">416</span>, <span class="number">281</span>, <span class="number">254</span>))</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>zip和unzip方法正如现实中拉链拉开拉上的过程，可以将长度一样的两个集合合并成一个每个元素是一个二元组的集合，或者将一个二元组集合分开成两个集合，其中二元组集合中二元组的第一个元素与分开后第一个集合的元素能一一对应</p>
+
+<ul>
+<li>zip和unzip方法正如现实中拉链拉开拉上的过程，可以将长度一样的两个集合合并成一个每个元素是一个二元组的集合，或者将一个二元组集合分开成两个集合，其中二元组集合中二元组的第一个元素与分开后第一个集合的元素能一一对应</li>
+</ul>
 <figure class="highlight scala"><table><tr><td class="code"><pre><span class="line">[(<span class="number">1</span>,<span class="number">2</span>),(<span class="number">3</span>,<span class="number">4</span>),(<span class="number">5</span>,<span class="number">6</span>)] =&gt; ([<span class="number">1</span>,<span class="number">3</span>,<span class="number">5</span>],[<span class="number">2</span>,<span class="number">4</span>,<span class="number">6</span>]) <span class="comment">//unzip</span></span><br><span class="line">([<span class="number">1</span>,<span class="number">3</span>,<span class="number">5</span>],[<span class="number">2</span>,<span class="number">4</span>,<span class="number">6</span>]) =&gt; [(<span class="number">1</span>,<span class="number">2</span>),(<span class="number">3</span>,<span class="number">4</span>),(<span class="number">5</span>,<span class="number">6</span>)] <span class="comment">//zip</span></span><br></pre></td></tr></table></figure>
 
-</li>
-</ul>
 <figure class="highlight scala"><table><tr><td class="code"><pre><span class="line"><span class="keyword">val</span> ii = sc.wholeTextFiles(shakespeare.toString).</span><br><span class="line">    flatMap &#123;</span><br><span class="line">        <span class="keyword">case</span> (location, contents) =&gt; </span><br><span class="line">            <span class="keyword">val</span> words = contents.split(<span class="string">&quot;&quot;</span><span class="string">&quot;\W+&quot;</span><span class="string">&quot;&quot;</span>).</span><br><span class="line">                filter(word =&gt; word.size &gt; <span class="number">0</span>)                      <span class="comment">// #1</span></span><br><span class="line">            <span class="keyword">val</span> fileName = location.split(pathSeparator).last</span><br><span class="line">            words.map(word =&gt; ((word.toLowerCase, fileName), <span class="number">1</span>))   <span class="comment">// #2</span></span><br><span class="line">    &#125;.</span><br><span class="line">    reduceByKey((count1, count2) =&gt; count1 + count2).</span><br><span class="line">    map &#123; </span><br><span class="line">        <span class="keyword">case</span> ((word, fileName), count) =&gt; (word, (fileName, count)) </span><br><span class="line">    &#125;.</span><br><span class="line">    groupByKey.</span><br><span class="line">    sortByKey(ascending = <span class="literal">true</span>).</span><br><span class="line">    map &#123;</span><br><span class="line">      <span class="keyword">case</span> (word, iterable) =&gt;</span><br><span class="line">        <span class="keyword">val</span> vect = iterable.toVector.sortBy &#123; </span><br><span class="line">            <span class="keyword">case</span> (fileName, count) =&gt; (-count, fileName) </span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">val</span> (locations, counts) = vect.unzip  </span><br><span class="line">        <span class="keyword">val</span> totalCount = counts.reduceLeft((n1,n2) =&gt; n1+n2)</span><br><span class="line">        (word, totalCount, locations, counts)</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
 
 <ul>
@@ -784,15 +785,12 @@
 <p>其间参考了一些其他算法的spark实现进行学习，<a href="https://www.cnblogs.com/brooksj/p/spark-Apriori.html">Apriori实现</a>，<a href="https://www.infoq.cn/article/use-spark-to-achieve-naive-bayesian-algorithm">朴素贝叶斯算法</a>以及之前学习GBDT时参考的<a href="https://www.infoq.cn/article/use-spark-to-achieve-naive-bayesian-algorithm">FATE secureboost</a></p>
 <a id="more"></a>
 
-<h1 id="Spark数据处理思路"><a href="#Spark数据处理思路" class="headerlink" title="Spark数据处理思路"></a>Spark数据处理思路</h1><p><strong>Apriori 频繁项集挖掘并行化实现思路</strong></p>
-<p>常规Apriori算法计算频繁k项集需要从频繁1项集开始逐次递加项数，每次计算k+1项集时，需要根据频繁k项集通过扫描整个数据集来生成候选集并进行候选集的支持度计算，于是支持度最小的候选项便是频繁k+1项集</p>
+<h1 id="Spark数据处理思路"><a href="#Spark数据处理思路" class="headerlink" title="Spark数据处理思路"></a>Spark数据处理思路</h1><h2 id="Apriori-频繁项集挖掘并行化实现思路"><a href="#Apriori-频繁项集挖掘并行化实现思路" class="headerlink" title="Apriori 频繁项集挖掘并行化实现思路"></a>Apriori 频繁项集挖掘并行化实现思路</h2><p>常规Apriori算法计算频繁k项集需要从频繁1项集开始逐次递加项数，每次计算k+1项集时，需要根据频繁k项集通过扫描整个数据集来生成候选集并进行候选集的支持度计算，于是支持度最小的候选项便是频繁k+1项集</p>
 <p>可以看出常规算法在数据集较大时会在<strong>支持度计算部分</strong>消耗大量时间，因此要进行并行化改造的关键就在于对该部分设计并行化算法</p>
 <p><a href="https://www.cnblogs.com/brooksj/p/spark-Apriori.html">https://www.cnblogs.com/brooksj/p/spark-Apriori.html</a> 并行化设计的思路主要是考虑将对于支持度计数的过程使用wordcount来进行统计，通过<strong>flatmap</strong>操作生成候选集，然后通过<strong>map</strong>和<strong>reduceByKey</strong>进行支持度的统计</p>
-<p><strong>secureboost并行化实现思路</strong></p>
-<p>FATE项目的secureboost基于spark平台实现了联邦的GBDT算法，可以说是在spark上实现复杂算法的典型案例了（当然也是因为GBDT天然对并行化的支持）</p>
+<h2 id="secureboost并行化实现思路"><a href="#secureboost并行化实现思路" class="headerlink" title="secureboost并行化实现思路"></a>secureboost并行化实现思路</h2><p>FATE项目的secureboost基于spark平台实现了联邦的GBDT算法，可以说是在spark上实现复杂算法的典型案例了（当然也是因为GBDT天然对并行化的支持）</p>
 <p>secureboost算法实现具体也可以参考我的另外一篇文章 GBDT协作学习实现，主要实现思路便是对所有样本计算梯度，整合成<strong>直方图</strong>的形式进行分裂收益的计算和最佳分裂点的选择</p>
-<p><strong>思路整理</strong></p>
-<ul>
+<h2 id="思路整理"><a href="#思路整理" class="headerlink" title="思路整理"></a>思路整理</h2><ul>
 <li>因为在进行spark的transformation时只能并行化的对RDD内数据进行处理，不能对共享进行写操作，因此也无法支持复杂的逻辑，这是spark进行分布式批量计算所必然的设计，所以在进行设计时一个重要的问题就是，对<strong>算法复杂逻辑</strong>和对<strong>大量数据进行处理</strong>时必须藉由并行化来保证时间开销的平衡</li>
 <li>算法在处理大量数据集时，限制主要在于从全部数据中进行相关值的计算，而进行算法的spark实现也是主要将这部分通过spark的transformer和action两种操作替代该部分的计算，而其他设计有限量数据的或者对提取到的类似梯度或统计量的数值进行处理的算法部分则没有必要额外使用spark来实现</li>
 <li>所以，一般思路便是，先对全部数据的RDD集通过transformation以及action操作得到一个概括性的数据结构，例如GBDT算法的直方图，基于这个<strong>概括性的数据结构</strong>来进行复杂的算法流程，计算结果再通过transformation分配给RDD的各个元素，至此可能完成了算法的一次循环</li>
@@ -806,12 +804,16 @@
 <li>为了实现词元数据与日志树的关联，我采用将日志树节点通过id进行标识的方法，每次计算得到当前token对应的节点后，将节点id保存在RDD的键值(pre,roken_list)中前缀pre的最后一位来进入下一层的循环</li>
 <li>数据持久化方面因为在每一层的循环中都要做一次countByKey的action操作，如果不进行持久化的话在每次循环在countByKey会重复之前循环的transformation操作，但进行持久化的话每循环一次，仅为了一次action操作就需要进行持久化，频繁持久化可能也会影响效率，我这里是简单的采用持久化的方案，对每一层计算得到的RDD就进行持久化并释放上一层的持久化，更优的方案需要之后探索<code>#TODO</code></li>
 </ul>
-<p><strong>算法流程</strong></p>
-<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line"><span class="type">RDD</span> &lt;- 日志数据</span><br><span class="line"><span class="type">RDD</span>.map(日志清洗和建立token list)</span><br><span class="line"><span class="keyword">while</span>(没有待匹配的日志 || 层数达到预设的最大值)&#123;</span><br><span class="line">    <span class="comment">// 将前缀（路径节点id）和当前token作为RDD的key来进行countByKey的统计，并行计算</span></span><br><span class="line">    next_token_count &lt;- <span class="type">RDD</span>.map((pre,token_list) =&gt; ((pre,curr_token),rest_token_list)).countByKey <span class="comment">// Spark操作</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 计算各token的PF路径频率（密度）</span></span><br><span class="line">    token_PF_map:<span class="type">Map</span>[(pre,curr_token),<span class="type">PF</span>] &lt;- 对next_token_count的value值除以父节点的count得到各token的<span class="type">PF</span></span><br><span class="line">    <span class="comment">//针对相同前缀下的token计算</span></span><br><span class="line">    pre_list_map &lt;- 统计各前缀下的token及其count、<span class="type">PF</span>等指标</span><br><span class="line">    <span class="keyword">for</span>((pre,metrics_list) &lt;- pre_list_map)&#123;</span><br><span class="line">        node_id &lt;- 自增</span><br><span class="line">        node &lt;- 参考<span class="type">AECID</span>-<span class="type">PG</span>算法建立当前层对应的节点，赋值包括(是否可变、token、count、node_id等)，并加入父节点的子节点列表</span><br><span class="line">        id2node += (node_id -&gt; node)</span><br><span class="line">        token_node_map += ((pre,token),node_id)</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="type">RDD</span>.filter(过滤没有加入日志树的日志行).map(将新节点加入前缀) <span class="comment">// Spark操作</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="算法流程"><a href="#算法流程" class="headerlink" title="算法流程"></a>算法流程</h2><ul>
+<li>token2PF: mutable.Map[(ListBuffer[Int], String), (Int, Double, Long)] // (pre, token) -&gt; (parent_id, PF, count)</li>
+<li>pre2metrics: mutable.Map[ListBuffer[Int], ListBuffer[(String, Int, Double, Long)]] // pre -&gt; [(token1,parent_id,PF,count), …]</li>
+<li>token2node: mutable.Map[(ListBuffer[Int], String), Int] // (pre,token) -&gt; node_id</li>
+<li>id2node: mutable.Map[Int, ParserNode] // node_id -&gt; node</li>
+</ul>
+<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line"><span class="type">Input</span>:通过elasticsearch-spark库将elasticsearch日志数据以<span class="type">RDD</span>数据形式进行获取</span><br><span class="line"></span><br><span class="line">new_RDD = <span class="type">RDD</span>.map(日志清洗和建立token列表).cache()</span><br><span class="line"><span class="keyword">while</span>(没有待匹配的日志 || 层数达到预设的最大值)&#123;</span><br><span class="line">	<span class="type">RDD</span> = new_RDD</span><br><span class="line">    <span class="comment">// 将前缀（路径节点id）和当前token作为RDD的key来进行countByKey的统计，并行计算</span></span><br><span class="line">    next_token_count = <span class="type">RDD</span>.map((pre,token_list) =&gt; ((pre,curr_token),rest_token_list)).countByKey <span class="comment">// Spark操作</span></span><br><span class="line">    </span><br><span class="line">    token2PF &lt;- 根据next_token_count通过获取父节点的count信息，计算<span class="type">PF</span>并得到token到(parent_id,<span class="type">PF</span>,count)的映射</span><br><span class="line">    pre2metrics &lt;- 根据token2PF统计相同前缀下各token及其parent_id,<span class="type">PF</span>,count等指标</span><br><span class="line">    token_node_map &lt;- 遍历pre2metrics，根据指标分配节点并通过token_node_map记录&#123;</span><br><span class="line">        node_id &lt;- 自增</span><br><span class="line">        node &lt;- 参考<span class="type">AECID</span>-<span class="type">PG</span>算法建立当前层对应的节点，赋值包括(是否可变、token、count、node_id等)，并加入父节点的子节点列表</span><br><span class="line">        id2node += (node_id -&gt; node)</span><br><span class="line">        token_node_map += ((pre,token),node_id)</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    new_RDD = <span class="type">RDD</span>.filter(过滤没有加入日志树的日志行).map(根据token_node_map将新节点加入前缀).cache() <span class="comment">// Spark操作</span></span><br><span class="line">    <span class="type">RDD</span>.unpersist() <span class="comment">// 释放上一层持久化</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<p><strong>结果示例</strong></p>
-<p>在kubernetes取了apisix一个组件pod的日志进行日志树生成，这里取了前10层的日志树进行简单的可视化</p>
-<p><img src="1.png" alt="1"></p>
+<h2 id="结果示例"><a href="#结果示例" class="headerlink" title="结果示例"></a>结果示例</h2><p>在kubernetes取了apisix一个组件pod的日志进行日志树生成，这里取了前10层的日志树进行简单的可视化</p>
+<p><img src="2.png" alt="1"></p>
 ]]></content>
       <categories>
         <category>AIOps</category>
@@ -822,6 +824,30 @@
         <tag>Elasticsearch</tag>
         <tag>算法实现</tag>
         <tag>日志分析</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>spark连接elasticsearch进行数据处理</title>
+    <url>/2021/11/22/spark%E8%BF%9E%E6%8E%A5elasticsearch%E8%BF%9B%E8%A1%8C%E6%95%B0%E6%8D%AE%E5%A4%84%E7%90%86/</url>
+    <content><![CDATA[<p>在数据处理时希望结合Spark和Elasticsearch这两大流行的工具，设想了将大量运维数据存储在Elasticsearch中通过Spark访问处理后再返回Elasticsearch，结合Kibana进行展示，或者使用Spark Streaming在入库Elasticsearch前进行预处理两种场景</p>
+<p>本文总结了Spark与Elasticsearch进行交互的几种模式及一些demo</p>
+<p><code>#TODO</code></p>
+<a id="more"></a>
+
+<p>方案1：elasticsearch部署在kubernetes环境下，本机使用local[*]方案访问用于简单测试</p>
+<figure class="highlight xml"><table><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.apache.spark<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spark-core_2.12<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">version</span>&gt;</span>3.2.0<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.elasticsearch<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>elasticsearch-spark-30_2.12<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">version</span>&gt;</span>7.15.2<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">WordCount</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">        SparkConf conf = <span class="keyword">new</span> SparkConf().setAppName(<span class="string">&quot;Elastic App&quot;</span>).setMaster(<span class="string">&quot;local[*]&quot;</span>);</span><br><span class="line">        conf.set(<span class="string">&quot;es.nodes&quot;</span>, <span class="string">&quot;10.108.23.161&quot;</span>);  <span class="comment">// CLUSTER_IP</span></span><br><span class="line">        conf.set(<span class="string">&quot;es.port&quot;</span>, <span class="string">&quot;9200&quot;</span>);</span><br><span class="line">        conf.set(<span class="string">&quot;es.net.http.auth.user&quot;</span>, <span class="string">&quot;elastic&quot;</span>);</span><br><span class="line">        conf.set(<span class="string">&quot;es.net.http.auth.pass&quot;</span>, <span class="string">&quot;nwT9nh83KTZw1RoMjxDo&quot;</span>);</span><br><span class="line">        conf.set(<span class="string">&quot;es.nodes.wan.only&quot;</span>, <span class="string">&quot;true&quot;</span>);</span><br><span class="line"></span><br><span class="line">        JavaSparkContext jsc = <span class="keyword">new</span> JavaSparkContext(conf);</span><br><span class="line">        jsc.setLogLevel(<span class="string">&quot;ERROR&quot;</span>);</span><br><span class="line"></span><br><span class="line">        JavaPairRDD&lt;String, Map&lt;String, Object&gt;&gt; esRDD = JavaEsSpark.esRDD(jsc, <span class="string">&quot;metricbeat-7.8.0-2021.11.22-000001&quot;</span>);  <span class="comment">// index</span></span><br><span class="line">        System.out.println(esRDD.first().toString());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>#TODO</code></p>
+]]></content>
+      <categories>
+        <category>大数据</category>
+        <category>spark</category>
+      </categories>
+      <tags>
+        <tag>Spark</tag>
+        <tag>Elasticsearch</tag>
       </tags>
   </entry>
   <entry>
@@ -858,8 +884,7 @@
 <h1 id="多周期解耦"><a href="#多周期解耦" class="headerlink" title="多周期解耦"></a>多周期解耦</h1><ul>
 <li>这部分使用最大重复离散小波转换(Maximal overlap discrete wavelet transform, MODWT)将经过预处理的时间序列分解成不同层次的多个时间序列然后交给下一步进行周期分析</li>
 </ul>
-<p><strong>Daubechies MODWT</strong></p>
-<p>小波变换<a href="https://zhuanlan.zhihu.com/p/22450818">https://zhuanlan.zhihu.com/p/22450818</a> ，将傅里叶变换的基函数改为小波母函数，通过两个参数控制函数位移和伸缩（时间和频率），建立能将信号在时间和频率两种层面上进行体现的时频谱</p>
+<h2 id="Daubechies-MODWT"><a href="#Daubechies-MODWT" class="headerlink" title="Daubechies MODWT"></a>Daubechies MODWT</h2><p>小波变换<a href="https://zhuanlan.zhihu.com/p/22450818">https://zhuanlan.zhihu.com/p/22450818</a> ，将傅里叶变换的基函数改为小波母函数，通过两个参数控制函数位移和伸缩（时间和频率），建立能将信号在时间和频率两种层面上进行体现的时频谱</p>
 <p>在连续小波变换的基础上，考虑到现实场景下数据采集是不连续的且有限的，包括计算机也不擅长进行连续问题的计算，提出了离散小波变换discrete wavelet transform<a href="https://zhuanlan.zhihu.com/p/69956002">https://zhuanlan.zhihu.com/p/69956002</a> ，这里介绍了离散小波变换的Mallet算法，通过一次半子带滤波分离出高频信号然后将低频信号进行两倍下采样后重复该过程，最后得到在时间线上频率在$(\frac{F_s}{2},F_s),(\frac{F_s}{4},\frac{F_s}{2}),(\frac{F_s}{8},\frac{F_s}{4}),…$的小波信号，这些小波信号也是对于当前频率范围兼顾时域分辨率和频域分辨率的结果</p>
 <p>MODWT作为一种DWT的方案，应该是在滤波和重采样方面采用了不同的方法，带来如下优势</p>
 <ul>
@@ -874,12 +899,10 @@
 <blockquote>
 <p>A wavelet coefficient is the scalar product between a function (your observation) and a basis function, the wavelet. In other words, it is the “coordinate” of your function on this wavelet if you do an orthogonal projection.</p>
 </blockquote>
-<p><strong>Robust Unbiased Wavelet Variance</strong></p>
-<p>除了多周期解耦，MODWT的另外一个优势在于其对应的小波方差估计corresponding wavelet variance estimation能够辅助在频带中定位周期分量，其实际上也类似于一个<a href="https://zh.wikipedia.org/wiki/%E8%B0%B1%E5%AF%86%E5%BA%A6">功率谱密度</a>PSD估计器。</p>
+<h2 id="Robust-Unbiased-Wavelet-Variance"><a href="#Robust-Unbiased-Wavelet-Variance" class="headerlink" title="Robust Unbiased Wavelet Variance"></a>Robust Unbiased Wavelet Variance</h2><p>除了多周期解耦，MODWT的另外一个优势在于其对应的小波方差估计corresponding wavelet variance estimation能够辅助在频带中定位周期分量，其实际上也类似于一个<a href="https://zh.wikipedia.org/wiki/%E8%B0%B1%E5%AF%86%E5%BA%A6">功率谱密度</a>PSD估计器。</p>
 <p>根据小波方差，可以得到各个周期分量内包含单个周期的可能排序，从而优先输出最重要的周期分量。这里应该主要通过判断该周期分量是更稳态的则该周期分量更重要，因为当时间序列是稳态的时满足 $\hat{\sigma}_{y^{‘}}^2=\sum_{j=1}^{\infty}\hat{\sigma}_{w_j}^2$ ，所以这里进行排名时更期望更大的 $\hat{\sigma}_{w_j}^2$ 。</p>
 <p>这里RobustPeriod进一步使用更鲁棒高效的双权中位方差biweight midvariance来计算小波方差，因为结果近似于the integral of PSD at corresponding nominal octave passband，为了加速计算过程进行了替代。</p>
-<h1 id="鲁棒的单周期检测"><a href="#鲁棒的单周期检测" class="headerlink" title="鲁棒的单周期检测"></a>鲁棒的单周期检测</h1><p><strong>Robust Single Periodicity Detection</strong></p>
-<p>对周期分量使用鲁棒的基于Huber-Periodogram的Fisher’s Test来生成周期候选</p>
+<h1 id="鲁棒的单周期检测"><a href="#鲁棒的单周期检测" class="headerlink" title="鲁棒的单周期检测"></a>鲁棒的单周期检测</h1><h2 id="Robust-Single-Periodicity-Detection"><a href="#Robust-Single-Periodicity-Detection" class="headerlink" title="Robust Single Periodicity Detection"></a>Robust Single Periodicity Detection</h2><p>对周期分量使用鲁棒的基于Huber-Periodogram的Fisher’s Test来生成周期候选</p>
 <ul>
 <li>通过补零来将小波系数的长度变成原先的两倍以适用于后面Huber-periodogram以及ACF。</li>
 <li>Fisher’s test假设具有周期性的时间序列是<ol>
@@ -894,8 +917,7 @@
 <li>其中 g 统计量被定义为 $g=max_kP_k/(\sum_{t=0}^{N^{‘}-1}||x_te^{-i2\pi kt/N^{‘}}||^2),i=\sqrt{-1}$，$P_k$ 值的计算比较复杂，参考论文，这里结合了 M-periodogram 以及 Huber loss等概念。</li>
 <li>证明过程参见论文</li>
 </ul>
-<p><strong>Robust Huber-Periodogram based ACF for Validating Periodicity Candidates</strong></p>
-<p>在这里对上一步从小波系数中获取到周期候选进行ACF峰值检测来验证以保证结果准确性（Fisher’s test的结果会受频谱泄露等的影响），ACF常规方案 $ACF(t)=\frac{1}{(N-t)\delta_w^2}\sum_{n=0}^{N-t-1}w_nw_{n+t},t=0,1,…,N-1$ ，其中$\delta_w$ 是 $w_t$ 的样本方差，但该方案对离群点不够鲁棒且复杂度是 $O(N^2)$。</p>
+<h2 id="Robust-Huber-Periodogram-based-ACF-for-Validating-Periodicity-Candidates"><a href="#Robust-Huber-Periodogram-based-ACF-for-Validating-Periodicity-Candidates" class="headerlink" title="Robust Huber-Periodogram based ACF for Validating Periodicity Candidates"></a>Robust Huber-Periodogram based ACF for Validating Periodicity Candidates</h2><p>在这里对上一步从小波系数中获取到周期候选进行ACF峰值检测来验证以保证结果准确性（Fisher’s test的结果会受频谱泄露等的影响），ACF常规方案 $ACF(t)=\frac{1}{(N-t)\delta_w^2}\sum_{n=0}^{N-t-1}w_nw_{n+t},t=0,1,…,N-1$ ，其中$\delta_w$ 是 $w_t$ 的样本方差，但该方案对离群点不够鲁棒且复杂度是 $O(N^2)$。</p>
 <p>RobustPeriod使用Huber-periodogram的输出来建立了一个 $O(NlogN)$的鲁棒的ACF方案，具体参见论文<br>$$<br>\begin{align}<br>HuberACF(t)=\frac{p_t}{(N-t)p_0},t=0,1,…,N-1\\<br>p_t=\frac{1}{\sqrt{N^{‘}}}\sum_{k=0}^{N^{‘}-1}\bar{P_k}e^{i2\pi kt/N^{‘}}<br>\end{align}<br>$$<br>对HuberACF结果的峰值进行检测，计算峰值超过阈值的峰之间距离的中位数作为周期长度，只有周期长度处于 $R_k=[\frac{1}{2}(\frac{N}{k+1}+\frac{N}{k})-1,…,\frac{1}{2}(\frac{N}{k}+\frac{N}{k-1})+1]$ 的范围才会被认为时最终的周期长度</p>
 <h1 id="算法实践"><a href="#算法实践" class="headerlink" title="算法实践"></a>算法实践</h1><p><code>#TODO</code></p>
 ]]></content>
@@ -904,8 +926,183 @@
         <category>时序分析</category>
       </categories>
       <tags>
-        <tag>异常检测</tag>
         <tag>论文阅读</tag>
+        <tag>异常检测</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>一些联邦学习方向的调研</title>
+    <url>/2021/01/29/%E4%B8%80%E4%BA%9B%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0%E6%96%B9%E5%90%91%E7%9A%84%E8%B0%83%E7%A0%94/</url>
+    <content><![CDATA[<p>试图探索联邦学习方向进行研究的方向，搜索了一些资料对联邦学习领域的一些问题或者研究方向进行了一个简单的调研和整理，主要分为联邦学习的<strong>通信加速</strong>和<strong>隐私保护</strong>问题</p>
+ <a id="more"></a>
+
+<h1 id="联邦学习通信加速问题"><a href="#联邦学习通信加速问题" class="headerlink" title="联邦学习通信加速问题"></a>联邦学习通信加速问题</h1><p>From: 胡水海-联邦学习海量加密数据高效传输的探索</p>
+<h2 id="数据中心内场景"><a href="#数据中心内场景" class="headerlink" title="数据中心内场景"></a>数据中心内场景</h2><p>该主题主要面向高速网络时代如何加速联邦学习通信问题</p>
+<p><strong>点对点通信</strong>：一个方案是使用<strong>RDMA技术</strong>优化两点间通信，因为使用TCP协议吞吐量受限、延迟较大，通过RDMA内核旁路使用硬件加速传输层，甚至GPU-Direct-RDMA实现GPU与RMA之间的数据零拷贝，从而极大节省通信时间</p>
+<p><strong>多点通信</strong>：因为在传统参数聚合场景Parameter Server参数服务器位置容易出现链路瓶颈，而且某一跳阻塞会导致整个聚合任务的停滞。这里提出了使用<strong>动态参数聚合模型</strong>优化多点间通信，通过根据网络状态（物理拓扑、动态状态等）生成参数汇聚方案，避免参数传递集中在延迟严重的链路</p>
+<h2 id="跨区域场景"><a href="#跨区域场景" class="headerlink" title="跨区域场景"></a>跨区域场景</h2><p>针对高延迟、高丢包率网络环境下如何加速联邦学习通信提出了跨区域场景下的联邦学习，在该场景下，物理距离增加，跨区域通信时间在联邦学习中的时间占比越来越大，而且跨区域主干网具有高延迟、高丢包率等特征,丢包侦测与丢包恢复代价很大</p>
+<p>因此，一个思路是结合某些联邦学习算法的特点，例如目前模型训练大多采用随机梯度下降（SGD）方式通过多轮迭代进行,丢失一部分数据不影响训练算法找到模型收敛点，基于此便可以通过设计机器学习专用的网络传输协议 MLT 等方式在一定程度上免去丢包侦测与丢包恢复的时间</p>
+<p>另一个思路是对数据进行压缩，通过减少需要传输的数据量来减少传输的时间开销，也降低丢包的概率。一些研究基于此结合了概率数据结构的方法，对传递的参数信息提取Sketch，很大程度减少了数据了的同时保留数据的某些特性，例如 Count Sketch 可以在较小的空间内存储大量的模型更新信息，并在一定程度上不影响模型的最终训练效果，通过这种方式减少需要传输的数据量来减少传输的时间开销 。另外，Fetchsgd: Communication-efficient federated learning with sketching 和 Fedsketch: Communication-efficient and private federated learning via sketching 就是两种通过将 sketch 和联邦学习结合来加速联邦学习的实现</p>
+<h1 id="联邦学习隐私保护问题"><a href="#联邦学习隐私保护问题" class="headerlink" title="联邦学习隐私保护问题"></a>联邦学习隐私保护问题</h1><blockquote>
+<p>目标：实现隐私性的同时保证模型训练的效率和准确率</p>
+</blockquote>
+<ul>
+<li>sketches如何应用与联邦学习场景</li>
+<li>当前哪些sketches有利于保证隐私性和准确度</li>
+<li>如何利用当前sketches进一步提升隐私性</li>
+</ul>
+<h2 id="隐私性的定义"><a href="#隐私性的定义" class="headerlink" title="隐私性的定义"></a>隐私性的定义</h2><p>From: Enhancing the Privacy of Federated Learning with Sketching</p>
+<ul>
+<li>Level-0：无隐私性</li>
+<li>Level-1：原始数据保护<ul>
+<li>传统联邦学习</li>
+<li>模型更新信息（梯度）共享</li>
+</ul>
+</li>
+<li>Level-2：全局隐私<ul>
+<li>模型更新信息仅对汇聚节点（参数服务器）可见</li>
+</ul>
+</li>
+<li>Level-3：本地隐私<ul>
+<li>模型更新信息对所有其他节点不可见</li>
+</ul>
+</li>
+<li>Level-4：终极目标<ul>
+<li>包括用户信息、模型更新信息以及训练得到的模型对第三方都不可见</li>
+<li>对于所有参与者，整个系统是一个黑盒，仅持有对预测功能的接口</li>
+</ul>
+</li>
+</ul>
+<h2 id="保护数据隐私的多方计算方法"><a href="#保护数据隐私的多方计算方法" class="headerlink" title="保护数据隐私的多方计算方法"></a>保护数据隐私的多方计算方法</h2><h3 id="基于噪音的安全计算方法"><a href="#基于噪音的安全计算方法" class="headerlink" title="基于噪音的安全计算方法"></a>基于噪音的安全计算方法</h3><p>差分隐私，保护的是数据源中一点微小的改动导致的隐私泄露问题</p>
+<p>使用基于噪声的差分隐私方法的主要思想是，对计算过程用噪音干扰，让原始数据淹没在噪音中，而无法从得到的结果反推原始数据的细节</p>
+<p>比较常用的是加拉普拉斯噪音（Laplace noise）。由于拉普拉斯分布的数学性质正好与差分隐私的定义相契合</p>
+<p>该方法通常也要求数据满足一定的分布，这一点在现实中通常很难满足</p>
+<h3 id="非噪音的安全计算方法"><a href="#非噪音的安全计算方法" class="headerlink" title="非噪音的安全计算方法"></a>非噪音的安全计算方法</h3><p>混淆电路（Garbled Circuit）、同态加密（Homomorphic Encryption）和密钥分享（Secret Sharing）</p>
+<ul>
+<li>基于密码学的方法</li>
+<li>能够以准确值进行传输，但计算量和通讯开销会比较大</li>
+<li>联邦学习保障数据隐私的另一种一种常用方法是采用同态加密技术</li>
+</ul>
+<p><strong>同态加密</strong></p>
+<ul>
+<li>同态加密是一种依赖数学计算复杂性的的加密算法,能让密文能够进行某种代数运算得到的仍是加密的<br>结果而且结果与明文进行运算后再进行加密的结果一致。</li>
+<li>同态加密包括部分同态（只针对加法或乘法有同态性质，即加法同态、乘法同态等）、层次同态（只支持有限次运算）以及全同态等,相较于差分隐私的方法，同态加密的计算开销要大得多,目前大多解决方案仍是使用效率较高的部分同态</li>
+<li>一般使用的同态加密算法为 PHE（多见为加法同态加密算法)），例如在 FATE 项目中使用的 Paillier 即为加法同态加密算法，在联邦学习中，大多也采用加法的梯度聚合方式，各个数据孤岛在本地计算各自的模型更新信息使用同态加密的算法进行加密后发送给参数服务器,参数服务器通过对密文直接采用基于加法或乘法的聚合方式计算得到全局模型更新信息的密文形式，由于同态加密的特性，保证了此时解密得到的结果是正确的全局模型更新信息，对模型进行更新,至此完成一轮的联邦学习过程</li>
+</ul>
+<h2 id="差分隐私-Sketch"><a href="#差分隐私-Sketch" class="headerlink" title="差分隐私+Sketch"></a>差分隐私+Sketch</h2><p>$$<br>\forall{S} , Pr[M(D_1)\in S]\leq e^{\epsilon} * Pr[M(D_2)\in S]<br>$$</p>
+<p>上式表示对于相似的数据集D1和D2，两者通过随机化机制M处理后得到的结果属于同一个M的输出结果集合S的概率接近于1</p>
+<ul>
+<li>方案1： 直接在模型更新信息中加入噪声</li>
+<li>方案2： Laplace噪声+Count-Min和Count（From: Efficient private statistics with succinct sketches）</li>
+<li>方案3： Count-Min or Count（From: Enhancing the privacy of federated learning with sketching）<ul>
+<li>模型空间远大于sketch的大小，count sketch可以满足差分隐私的条件</li>
+<li>否则需要hash算法的不可逆性来在一定程度上保证数据隐私</li>
+</ul>
+</li>
+</ul>
+]]></content>
+      <categories>
+        <category>机器学习</category>
+        <category>联邦学习</category>
+      </categories>
+      <tags>
+        <tag>学习笔记</tag>
+        <tag>联邦学习</tag>
+        <tag>sketch</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>协作学习与网络安全大赛参赛总结</title>
+    <url>/2021/01/16/%E5%8D%8F%E4%BD%9C%E5%AD%A6%E4%B9%A0%E4%B8%8E%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8%E5%A4%A7%E8%B5%9B%E5%8F%82%E8%B5%9B%E6%80%BB%E7%BB%93/</url>
+    <content><![CDATA[<p>前段时间一直在参加第一届全国大学生协作学习与网络安全大赛，刚答辩结束，于是在此对比赛过程做一个总结，也对决赛其他队伍的优秀思路做个简单的整理</p>
+<p>相比于其他团队，我们的论文阅读更偏向于工程实现方面，参考论文也大多是将本地的GBDT算法无损的实现到联邦环境，但似乎联邦学习方面的研究课题更倾向于以深度学习为基础，也是我们调研不够充分，导致我们比赛时的很多思路以及调研受限于传统机器学习，无法很好响应协作学习的主题</p>
+ <a id="more"></a>
+
+<h1 id="赛题的主要挑战"><a href="#赛题的主要挑战" class="headerlink" title="赛题的主要挑战"></a>赛题的主要挑战</h1><ul>
+<li>联邦环境 单PS+多Worker</li>
+<li>缺失值处理</li>
+<li>噪声处理</li>
+<li>数据倾斜 Non-IID</li>
+<li>测试集存在训练集没有的类</li>
+<li>隐私保护</li>
+</ul>
+<h1 id="相关思路整理"><a href="#相关思路整理" class="headerlink" title="相关思路整理"></a>相关思路整理</h1><p>对我们以及决赛其他队伍一些思路做一个简单的整理</p>
+<ul>
+<li>缺失值处理<ul>
+<li>超过19维直接删除</li>
+<li>随机森林</li>
+</ul>
+</li>
+<li>特征工程<ul>
+<li>特征编码（无用或高相关特征）</li>
+<li>LightGBM 互斥绑定</li>
+<li>归一化（基于GBDT的特征映射）</li>
+</ul>
+</li>
+<li>联邦学习安全：拜占庭问题（相似梯度聚合）</li>
+<li>一些深度学习的方案<ul>
+<li><code>#TODO</code></li>
+</ul>
+</li>
+</ul>
+<h1 id="比赛经历总结"><a href="#比赛经历总结" class="headerlink" title="比赛经历总结"></a>比赛经历总结</h1><ul>
+<li>有必要对多种方法进行尝试比对，在最后答辩或者展示的时候对效果进行评测</li>
+<li>当时认为GBDT对噪声不敏感，把缺失值只进行简单的处理，反而引入了噪声，事实上还是需要对缺失值进行合适的处理，10%的缺失值不进行合适的处理可能会完全影响预测的准确性</li>
+<li>手动实现secureBoost发现效率极不理想（比赛的时候因为这个头秃了好久），在构建直方图的时候时间复杂度达到O(#instance * #feature * #bin)，而LightGBM同样使用了直方图效率好像会快很多，一方面时使用了GOSS和特征的互斥绑定等优化算法，一方面可能也是数据结构的优化问题，这可以方面后续进行了解，另外，在多进程和多线程方面也可以加以考虑，比赛时因环境限制，两者对运行时间也没有明显的减少</li>
+<li>比赛时模拟环境限制，将secureBoost迁移到比赛环境时底层数据结构还是得重新设计，代码结构也做了一些修改，也是花了蛮多时间，后来加上了一些LightGBM的优化方案，整个过程也是对GBDT系列的算法实现有了较深的理解（然而实际部署联邦环境大部分都有现成的库了）</li>
+</ul>
+<h1 id="比赛总结"><a href="#比赛总结" class="headerlink" title="比赛总结"></a>比赛总结</h1><p>下面是我们队答辩PPT的简单文字稿，后来看了别人队感觉就很粗糙hhh</p>
+<h2 id="赛题理解"><a href="#赛题理解" class="headerlink" title="赛题理解"></a>赛题理解</h2><ul>
+<li>对DDOS流量进行多分类 =&gt; 决策树算法，适用于多分类情况，可解释性强，有助于后续分析</li>
+<li>模拟分布式环境，单PS &amp; 多Worker =&gt; 分布式</li>
+<li>数据集划分（每个Worker的数据集包含所有特征，但只有部分标签） =&gt; 横向联邦的secureBoost</li>
+</ul>
+<h3 id="解题思路"><a href="#解题思路" class="headerlink" title="解题思路"></a>解题思路</h3><p>使用适用于横向联邦的分布式GBDT算法对数据集进行多分类，并结合数据集特征进行优化</p>
+<h2 id="算法说明"><a href="#算法说明" class="headerlink" title="算法说明"></a>算法说明</h2><ul>
+<li>在具体实现上，参考了FATE secureBoost，XGBoost，LightGBM等工程实现项目，使用直方图算法来收集各个Worker的梯度信息，并据此找到决策树对应各个节点的分裂点</li>
+</ul>
+<img src="1.png" alt="图片1" style="zoom: 40%;" />
+
+<ul>
+<li><p>如上图所示，由Worker计算当前节点的训练数据的一阶和二阶梯度直方图，汇总到Server建立全局的直方图，据此可以计算得到节点的最佳分裂点</p>
+</li>
+<li><p>通过这种方法来建立决策树，并结合Boosting的集成学习方法实现了secureBoost算法</p>
+</li>
+<li><p>考虑到在模拟环境下使用全部数据集来进行建模时间消耗过大，不利于后续模型调整，我们权衡之下，基于secureBoost算法实现使用了如下的方案</p>
+</li>
+</ul>
+<img src="2.png" alt="图片2" style="zoom:50%;" />
+
+<ul>
+<li>仅使用部分数据集来进行建模，并使用对每个Worker的数据集进行进一步划分重组来集成投票的方式来提升性能</li>
+</ul>
+<h2 id="性能分析"><a href="#性能分析" class="headerlink" title="性能分析"></a>性能分析</h2><ul>
+<li>隐私性：通过结合同态加密技术，可以保障数据的隐私性</li>
+<li>通信开销：O(#feature * #bin)</li>
+<li>训练开销：O(#instance * #feature * log(#bin) / #worker)</li>
+<li>能够进行无损的联邦学习</li>
+<li>GBDT算法对噪声不敏感</li>
+<li>通过结合集成学习保证了模型的泛化性</li>
+</ul>
+<h2 id="总结与展望"><a href="#总结与展望" class="headerlink" title="总结与展望"></a>总结与展望</h2><h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><ul>
+<li>主要工作：在官方环境中重写了secureBoost，实现了直方图算法，level-wise和leaf-wise两种树的生长方式以及特征选择等，另外也实现了</li>
+<li>实现了以一轮GBDT作为基决策树的随机森林</li>
+<li>没有对缺失值进行合适的处理，遗漏了secureBoost本身对缺失值处理的能力</li>
+</ul>
+<h3 id="展望"><a href="#展望" class="headerlink" title="展望"></a>展望</h3><ul>
+<li>考虑使用随机森林算法的列抽样来对缺失值进行处理</li>
+<li>实现在分布式环境上部署，探索学习更高效的算法实现</li>
+</ul>
+]]></content>
+      <categories>
+        <category>机器学习</category>
+        <category>联邦学习</category>
+      </categories>
+      <tags>
+        <tag>联邦学习</tag>
+        <tag>机器学习</tag>
+        <tag>协作学习</tag>
+        <tag>比赛经历</tag>
       </tags>
   </entry>
   <entry>
@@ -1113,219 +1310,10 @@
 ]]></content>
       <categories>
         <category>Database</category>
-        <category>TimescaleDB</category>
       </categories>
       <tags>
         <tag>TimescaleDB</tag>
         <tag>时序数据库</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>一些联邦学习方向的调研</title>
-    <url>/2021/01/29/%E4%B8%80%E4%BA%9B%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0%E6%96%B9%E5%90%91%E7%9A%84%E8%B0%83%E7%A0%94/</url>
-    <content><![CDATA[<p>试图探索联邦学习方向进行研究的方向，搜索了一些资料对联邦学习领域的一些问题或者研究方向进行了一个简单的调研和整理，主要分为联邦学习的<strong>通信加速</strong>和<strong>隐私保护</strong>问题</p>
- <a id="more"></a>
-
-<h1 id="联邦学习通信加速问题"><a href="#联邦学习通信加速问题" class="headerlink" title="联邦学习通信加速问题"></a>联邦学习通信加速问题</h1><p>From: 胡水海-联邦学习海量加密数据高效传输的探索</p>
-<h2 id="数据中心内场景"><a href="#数据中心内场景" class="headerlink" title="数据中心内场景"></a>数据中心内场景</h2><p>高速网络时代如何加速联邦学习通信</p>
-<h3 id="RDMA技术优化两点间通信"><a href="#RDMA技术优化两点间通信" class="headerlink" title="RDMA技术优化两点间通信"></a>RDMA技术优化两点间通信</h3><ul>
-<li>使用TCP协议吞吐量受限、延迟较大</li>
-<li>RDMA内核旁路使用硬件加速传输层<ul>
-<li>GPU-Direct-RDMA实现GPU与RMA之间的数据零拷贝</li>
-</ul>
-</li>
-</ul>
-<h3 id="动态参数聚合模型优化多点间通信"><a href="#动态参数聚合模型优化多点间通信" class="headerlink" title="动态参数聚合模型优化多点间通信"></a>动态参数聚合模型优化多点间通信</h3><h4 id="传统参数聚合模型"><a href="#传统参数聚合模型" class="headerlink" title="传统参数聚合模型"></a>传统参数聚合模型</h4><ul>
-<li>Parameter Server<ul>
-<li>PS容易出现链路瓶颈</li>
-</ul>
-</li>
-<li>Ring Allreduce<ul>
-<li>某一跳阻塞会导致整个聚合任务的停滞</li>
-</ul>
-</li>
-</ul>
-<h4 id="动态参数模型"><a href="#动态参数模型" class="headerlink" title="动态参数模型"></a>动态参数模型</h4><blockquote>
-<p>根据网络状态（物理拓扑、动态状态等）生成参数汇聚方案</p>
-</blockquote>
-<ul>
-<li>根据网络情况将两种模型结合起来</li>
-</ul>
-<h2 id="跨区域场景"><a href="#跨区域场景" class="headerlink" title="跨区域场景"></a>跨区域场景</h2><p>高延迟、高丢包率网络环境下如何加速联邦学习通信</p>
-<h3 id="机器学习专用的网络传输协议"><a href="#机器学习专用的网络传输协议" class="headerlink" title="机器学习专用的网络传输协议"></a>机器学习专用的网络传输协议</h3><ul>
-<li>物理距离增加，跨区域通信时间在联邦学习中的时间占比越来越大</li>
-<li>跨区域主干网具有高延迟、高丢包率等特征,丢包侦测与丢包恢复代价很大</li>
-<li>机器学习模型训练可以容忍一定的丢包率<ul>
-<li>目前模型训练大多采用随机梯度下降（SGD）方式通过多轮迭代进行,丢失一部分数据不影响训练算法找到模型收敛点</li>
-</ul>
-</li>
-<li>机器学习专用的网络传输协议 MLT</li>
-</ul>
-<h2 id="使用-sketch-加速联邦学习"><a href="#使用-sketch-加速联邦学习" class="headerlink" title="使用 sketch 加速联邦学习"></a>使用 sketch 加速联邦学习</h2><ul>
-<li><p>使用 sketch 加速联邦学习的核心思想就是利用 sketch 能够对数据进行压缩，但对数据的某些特性在一定<br>程度上进行保留，例如 Count Sketch 可以在较小的空间内存储大量的模型更新信息，并在一定程度上不影响<br>模型的最终训练效果，通过这种方式减少需要传输的数据量来减少传输的时间开销 </p>
-</li>
-<li><p>Fetchsgd: Communication-efficient federated learning with sketching 和 Fedsketch: Communication-efficient and private federated learning via sketching 就是两种通过将 sketch 和联邦学习结合来加速联邦学习的实现</p>
-</li>
-</ul>
-<h1 id="联邦学习隐私保护问题"><a href="#联邦学习隐私保护问题" class="headerlink" title="联邦学习隐私保护问题"></a>联邦学习隐私保护问题</h1><blockquote>
-<p>目标：实现隐私性的同时保证模型训练的效率和准确率</p>
-</blockquote>
-<ul>
-<li>sketches如何应用与联邦学习场景</li>
-<li>当前哪些sketches有利于保证隐私性和准确度</li>
-<li>如何利用当前sketches进一步提升隐私性</li>
-</ul>
-<h2 id="隐私性的定义"><a href="#隐私性的定义" class="headerlink" title="隐私性的定义"></a>隐私性的定义</h2><p>From: Enhancing the Privacy of Federated Learning with Sketching</p>
-<ul>
-<li>Level-0：无隐私性</li>
-<li>Level-1：原始数据保护<ul>
-<li>传统联邦学习</li>
-<li>模型更新信息（梯度）共享</li>
-</ul>
-</li>
-<li>Level-2：全局隐私<ul>
-<li>模型更新信息仅对汇聚节点（参数服务器）可见</li>
-</ul>
-</li>
-<li>Level-3：本地隐私<ul>
-<li>模型更新信息对所有其他节点不可见</li>
-</ul>
-</li>
-<li>Level-4：终极目标<ul>
-<li>包括用户信息、模型更新信息以及训练得到的模型对第三方都不可见</li>
-<li>对于所有参与者，整个系统是一个黑盒，仅持有对预测功能的接口</li>
-</ul>
-</li>
-</ul>
-<h2 id="保护数据隐私的多方计算方法"><a href="#保护数据隐私的多方计算方法" class="headerlink" title="保护数据隐私的多方计算方法"></a>保护数据隐私的多方计算方法</h2><h3 id="基于噪音的安全计算方法"><a href="#基于噪音的安全计算方法" class="headerlink" title="基于噪音的安全计算方法"></a>基于噪音的安全计算方法</h3><p>差分隐私，保护的是数据源中一点微小的改动导致的隐私泄露问题</p>
-<p>使用基于噪声的差分隐私方法的主要思想是，对计算过程用噪音干扰，让原始数据淹没在噪音中，而无法从得到的结果反推原始数据的细节</p>
-<p>比较常用的是加拉普拉斯噪音（Laplace noise）。由于拉普拉斯分布的数学性质正好与差分隐私的定义相契合</p>
-<p>该方法通常也要求数据满足一定的分布，这一点在现实中通常很难满足</p>
-<h3 id="非噪音的安全计算方法"><a href="#非噪音的安全计算方法" class="headerlink" title="非噪音的安全计算方法"></a>非噪音的安全计算方法</h3><p>混淆电路（Garbled Circuit）、同态加密（Homomorphic Encryption）和密钥分享（Secret Sharing）</p>
-<ul>
-<li>基于密码学的方法</li>
-<li>能够以准确值进行传输，但计算量和通讯开销会比较大</li>
-<li>联邦学习保障数据隐私的另一种一种常用方法是采用同态加密技术</li>
-</ul>
-<h4 id="同态加密"><a href="#同态加密" class="headerlink" title="同态加密"></a>同态加密</h4><ul>
-<li>同态加密是一种依赖数学计算复杂性的的加密算法,能让密文能够进行某种代数运算得到的仍是加密的<br>结果而且结果与明文进行运算后再进行加密的结果一致。</li>
-<li>同态加密包括部分同态（只针对加法或乘法有同态性质，即加法同态、乘法同态等）、层次同态（只支持有限次运算）以及全同态等,相较于差分隐私的方法，同态加密的计算开销要大得多,目前大多解决方案仍是使用效率较高的部分同态</li>
-<li>一般使用的同态加密算法为 PHE（多见为加法同态加密算法)），例如在 FATE 项目中使用的 Paillier 即为加法<br>同态加密算法，在联邦学习中，大多也采用加法的梯度聚合方式，各个数据孤岛在本地计算各自的模型更新<br>信息使用同态加密的算法进行加密后发送给参数服务器,参数服务器通过对密文直接采用基于加法或乘法的<br>聚合方式计算得到全局模型更新信息的密文形式，由于同态加密的特性，保证了此时解密得到的结果是正确<br>的全局模型更新信息，对模型进行更新,至此完成一轮的联邦学习过程</li>
-</ul>
-<h2 id="差分隐私-Sketch"><a href="#差分隐私-Sketch" class="headerlink" title="差分隐私+Sketch"></a>差分隐私+Sketch</h2><p>$$<br>\forall{S} , Pr[M(D_1)\in S]\leq e^{\epsilon} * Pr[M(D_2)\in S]<br>$$</p>
-<p>上式表示对于相似的数据集D1和D2，两者通过随机化机制M处理后得到的结果属于同一个M的输出结果集合S的概率接近于1</p>
-<ul>
-<li>方案1： 直接在模型更新信息中加入噪声</li>
-<li>方案2： Laplace噪声+Count-Min和Count（From: Efficient private statistics with succinct sketches）</li>
-<li>方案3： Count-Min or Count（From: Enhancing the privacy of federated learning with sketching）<ul>
-<li>模型空间远大于sketch的大小，count sketch可以满足差分隐私的条件</li>
-<li>否则需要hash算法的不可逆性来在一定程度上保证数据隐私</li>
-</ul>
-</li>
-</ul>
-]]></content>
-      <categories>
-        <category>机器学习</category>
-        <category>联邦学习</category>
-      </categories>
-      <tags>
-        <tag>学习笔记</tag>
-        <tag>联邦学习</tag>
-        <tag>sketch</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>协作学习与网络安全大赛参赛总结</title>
-    <url>/2021/01/16/%E5%8D%8F%E4%BD%9C%E5%AD%A6%E4%B9%A0%E4%B8%8E%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8%E5%A4%A7%E8%B5%9B%E5%8F%82%E8%B5%9B%E6%80%BB%E7%BB%93/</url>
-    <content><![CDATA[<p>前段时间一直在参加第一届全国大学生协作学习与网络安全大赛，刚答辩结束，于是在此对比赛过程做一个总结，也对决赛其他队伍的优秀思路做个简单的整理</p>
-<p>相比于其他团队，我们的论文阅读更偏向于工程实现方面，参考论文也大多是将本地的GBDT算法无损的实现到联邦环境，但似乎联邦学习方面的研究课题更倾向于以深度学习为基础，也是我们调研不够充分，导致我们比赛时的很多思路以及调研受限于传统机器学习，无法很好响应协作学习的主题</p>
- <a id="more"></a>
-
-<h1 id="赛题的主要挑战"><a href="#赛题的主要挑战" class="headerlink" title="赛题的主要挑战"></a>赛题的主要挑战</h1><ul>
-<li>联邦环境 单PS+多Worker</li>
-<li>缺失值处理</li>
-<li>噪声处理</li>
-<li>数据倾斜 Non-IID</li>
-<li>测试集存在训练集没有的类</li>
-<li>隐私保护</li>
-</ul>
-<h1 id="相关思路整理"><a href="#相关思路整理" class="headerlink" title="相关思路整理"></a>相关思路整理</h1><p>对我们以及决赛其他队伍一些思路做一个简单的整理</p>
-<ul>
-<li>缺失值处理<ul>
-<li>超过19维直接删除</li>
-<li>随机森林</li>
-</ul>
-</li>
-<li>特征工程<ul>
-<li>特征编码（无用或高相关特征）</li>
-<li>LightGBM 互斥绑定</li>
-<li>归一化（基于GBDT的特征映射）</li>
-</ul>
-</li>
-<li>联邦学习安全：拜占庭问题（相似梯度聚合）</li>
-<li>一些深度学习的方案<ul>
-<li><code>#TODO</code></li>
-</ul>
-</li>
-</ul>
-<h1 id="比赛经历总结"><a href="#比赛经历总结" class="headerlink" title="比赛经历总结"></a>比赛经历总结</h1><ul>
-<li>有必要对多种方法进行尝试比对，在最后答辩或者展示的时候对效果进行评测</li>
-<li>当时认为GBDT对噪声不敏感，把缺失值只进行简单的处理，反而引入了噪声，事实上还是需要对缺失值进行合适的处理，10%的缺失值不进行合适的处理可能会完全影响预测的准确性</li>
-<li>手动实现secureBoost发现效率极不理想（比赛的时候因为这个头秃了好久），在构建直方图的时候时间复杂度达到O(#instance * #feature * #bin)，而LightGBM同样使用了直方图效率好像会快很多，一方面时使用了GOSS和特征的互斥绑定等优化算法，一方面可能也是数据结构的优化问题，这可以方面后续进行了解，另外，在多进程和多线程方面也可以加以考虑，比赛时因环境限制，两者对运行时间也没有明显的减少</li>
-<li>比赛时模拟环境限制，将secureBoost迁移到比赛环境时底层数据结构还是得重新设计，代码结构也做了一些修改，也是花了蛮多时间，后来加上了一些LightGBM的优化方案，整个过程也是对GBDT系列的算法实现有了较深的理解（然而实际部署联邦环境大部分都有现成的库了）</li>
-</ul>
-<h1 id="比赛总结"><a href="#比赛总结" class="headerlink" title="比赛总结"></a>比赛总结</h1><p>下面是我们队答辩PPT的简单文字稿，后来看了别人队感觉就很粗糙hhh</p>
-<h2 id="赛题理解"><a href="#赛题理解" class="headerlink" title="赛题理解"></a>赛题理解</h2><ul>
-<li>对DDOS流量进行多分类 =&gt; 决策树算法，适用于多分类情况，可解释性强，有助于后续分析</li>
-<li>模拟分布式环境，单PS &amp; 多Worker =&gt; 分布式</li>
-<li>数据集划分（每个Worker的数据集包含所有特征，但只有部分标签） =&gt; 横向联邦的secureBoost</li>
-</ul>
-<h3 id="解题思路"><a href="#解题思路" class="headerlink" title="解题思路"></a>解题思路</h3><p>使用适用于横向联邦的分布式GBDT算法对数据集进行多分类，并结合数据集特征进行优化</p>
-<h2 id="算法说明"><a href="#算法说明" class="headerlink" title="算法说明"></a>算法说明</h2><ul>
-<li>在具体实现上，参考了FATE secureBoost，XGBoost，LightGBM等工程实现项目，使用直方图算法来收集各个Worker的梯度信息，并据此找到决策树对应各个节点的分裂点</li>
-</ul>
-<img src="1.png" alt="图片1" style="zoom: 40%;" />
-
-<ul>
-<li><p>如上图所示，由Worker计算当前节点的训练数据的一阶和二阶梯度直方图，汇总到Server建立全局的直方图，据此可以计算得到节点的最佳分裂点</p>
-</li>
-<li><p>通过这种方法来建立决策树，并结合Boosting的集成学习方法实现了secureBoost算法</p>
-</li>
-<li><p>考虑到在模拟环境下使用全部数据集来进行建模时间消耗过大，不利于后续模型调整，我们权衡之下，基于secureBoost算法实现使用了如下的方案</p>
-</li>
-</ul>
-<img src="2.png" alt="图片2" style="zoom:50%;" />
-
-<ul>
-<li>仅使用部分数据集来进行建模，并使用对每个Worker的数据集进行进一步划分重组来集成投票的方式来提升性能</li>
-</ul>
-<h2 id="性能分析"><a href="#性能分析" class="headerlink" title="性能分析"></a>性能分析</h2><ul>
-<li>隐私性：通过结合同态加密技术，可以保障数据的隐私性</li>
-<li>通信开销：O(#feature * #bin)</li>
-<li>训练开销：O(#instance * #feature * log(#bin) / #worker)</li>
-<li>能够进行无损的联邦学习</li>
-<li>GBDT算法对噪声不敏感</li>
-<li>通过结合集成学习保证了模型的泛化性</li>
-</ul>
-<h2 id="总结与展望"><a href="#总结与展望" class="headerlink" title="总结与展望"></a>总结与展望</h2><h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><ul>
-<li>主要工作：在官方环境中重写了secureBoost，实现了直方图算法，level-wise和leaf-wise两种树的生长方式以及特征选择等，另外也实现了</li>
-<li>实现了以一轮GBDT作为基决策树的随机森林</li>
-<li>没有对缺失值进行合适的处理，遗漏了secureBoost本身对缺失值处理的能力</li>
-</ul>
-<h3 id="展望"><a href="#展望" class="headerlink" title="展望"></a>展望</h3><ul>
-<li>考虑使用随机森林算法的列抽样来对缺失值进行处理</li>
-<li>实现在分布式环境上部署，探索学习更高效的算法实现</li>
-</ul>
-]]></content>
-      <categories>
-        <category>机器学习</category>
-        <category>联邦学习</category>
-      </categories>
-      <tags>
-        <tag>机器学习</tag>
-        <tag>联邦学习</tag>
-        <tag>协作学习</tag>
-        <tag>比赛经历</tag>
       </tags>
   </entry>
   <entry>
@@ -1341,8 +1329,7 @@
 <li>日志消息有时包括与其生成相关任务的进程id</li>
 <li>日志消息有时包含行号、消息级别、严重性指示符以及静态标识符等信息</li>
 </ul>
-<h1 id="增量聚类"><a href="#增量聚类" class="headerlink" title="增量聚类"></a>增量聚类</h1><p><strong>关于日志聚类</strong></p>
-<p>静态聚类：聚类单个日志行（会忽略行之间的顺序和依赖关系）</p>
+<h1 id="增量聚类"><a href="#增量聚类" class="headerlink" title="增量聚类"></a>增量聚类</h1><h2 id="关于日志聚类"><a href="#关于日志聚类" class="headerlink" title="关于日志聚类"></a>关于日志聚类</h2><p>静态聚类：聚类单个日志行（会忽略行之间的顺序和依赖关系）</p>
 <p>动态聚类：对日志序列进行模式提取（书中没有过多涉及，但是似乎目前研究的主要方向，DeepLog、LogSed等方法都属于动态聚类）</p>
 <p>期望通过聚类解决的异常类型：</p>
 <ul>
@@ -1353,8 +1340,7 @@
 <li>序列异常：模式中发生的日志事件序列偏离顺序</li>
 </ul>
 <p>其中，书中介绍的两种增量聚类方案（基于字符串度量的增量聚类和基于数值距离度量增量聚类）属于静态聚类，将类似的日志行归于同一个类簇</p>
-<p><strong>基于字符串度量的增量聚类</strong></p>
-<p>增量聚类能够实现在线的日志聚类，在实际场景中，日志往往是一条一条生成的，需要我们以日志流的形式进行快速处理</p>
+<h2 id="基于字符串度量的增量聚类"><a href="#基于字符串度量的增量聚类" class="headerlink" title="基于字符串度量的增量聚类"></a>基于字符串度量的增量聚类</h2><p>增量聚类能够实现在线的日志聚类，在实际场景中，日志往往是一条一条生成的，需要我们以日志流的形式进行快速处理</p>
 <p>日志的增量聚类方案会选择某一条日志作为类簇的中心，并将与该日志相似度在阈值之上的日志行加入该类簇</p>
 <p>那么，假设当前日志为一条日志，或者称为日志线，每一条日志便以如下流程进行聚类</p>
 <ul>
@@ -1377,22 +1363,18 @@
 <li><p>检测阶段（白名单）：如果未能找到足够相似的聚类中心，则认为是异常日志</p>
 </li>
 </ul>
-<p><strong>基于数值距离度量的增量聚类</strong></p>
-<p>将日志文本转换成一系列数值来实现基于欧式空间的聚类，简单的转换例子即对每个字符在日志线上出现的次数进行统计，将整个日志出现不同字符的数量作为空间的维数</p>
+<h2 id="基于数值距离度量的增量聚类"><a href="#基于数值距离度量的增量聚类" class="headerlink" title="基于数值距离度量的增量聚类"></a>基于数值距离度量的增量聚类</h2><p>将日志文本转换成一系列数值来实现基于欧式空间的聚类，简单的转换例子即对每个字符在日志线上出现的次数进行统计，将整个日志出现不同字符的数量作为空间的维数</p>
 <p><a href="https://zhuanlan.zhihu.com/p/77151308">PCA主成分分析</a>进行降维，具体PC维度取决于数据和原始维数</p>
 <p>与上一种方案不同，这里需要预先取一部分（多行）日志计算转移矩阵来保证PCA降维的效果</p>
-<p><strong>时序分析</strong></p>
-<p>根据在固定时间窗口内各个类簇的增长情况作为异常判断的一个方向（针对小簇问题，将离群点添加到一个新的类中进行异常检测），具体参见下面的时序异常检测部分</p>
+<h2 id="时序分析"><a href="#时序分析" class="headerlink" title="时序分析"></a>时序分析</h2><p>根据在固定时间窗口内各个类簇的增长情况作为异常判断的一个方向（针对小簇问题，将离群点添加到一个新的类中进行异常检测），具体参见下面的时序异常检测部分</p>
 <h1 id="日志模板生成"><a href="#日志模板生成" class="headerlink" title="日志模板生成"></a>日志模板生成</h1><p>目标：生成一个模板，能对相似日志的静态部分进行标记，其他部分使用通配符替换</p>
 <p>主要挑战：序列对齐</p>
-<p><strong>基于<a href="https://www.zhihu.com/question/39279003">词元</a>的模板生成器</strong></p>
-<ul>
+<h2 id="基于词元的模板生成器"><a href="#基于词元的模板生成器" class="headerlink" title="基于词元的模板生成器"></a>基于<a href="https://www.zhihu.com/question/39279003">词元</a>的模板生成器</h2><ul>
 <li>词元可能是一个单词，通过对日志中的单词进行分隔，找到对所有日志行都存在且出现顺序一致的单词组合作为模板</li>
 <li>当前主流的模板生成方案，更高性能，但依赖当前的日志数据，能够防止高度相似的子字符串对应的词元成为模板的一部分</li>
 <li>后面介绍的基于树的日志解释器生成算法采用的就是基于词元的方案</li>
 </ul>
-<p><strong>基于字符的模板生成器</strong></p>
-<ul>
+<h2 id="基于字符的模板生成器"><a href="#基于字符的模板生成器" class="headerlink" title="基于字符的模板生成器"></a>基于字符的模板生成器</h2><ul>
 <li>主要挑战：需要计算多行序列比对</li>
 <li>主要方案：先对两行生成模板，再逐行增量的调整模板</li>
 <li>基于字符的算法：merge、length、equalmerge</li>
@@ -1482,33 +1464,9 @@
         <category>日志分析</category>
       </categories>
       <tags>
-        <tag>AIOps</tag>
         <tag>日志分析</tag>
         <tag>算法学习</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>spark连接elasticsearch进行数据处理</title>
-    <url>/2021/11/22/spark%E8%BF%9E%E6%8E%A5elasticsearch%E8%BF%9B%E8%A1%8C%E6%95%B0%E6%8D%AE%E5%A4%84%E7%90%86/</url>
-    <content><![CDATA[<p>在数据处理时希望结合Spark和Elasticsearch这两大流行的工具，设想了将大量运维数据存储在Elasticsearch中通过Spark访问处理后再返回Elasticsearch，结合Kibana进行展示，或者使用Spark Streaming在入库Elasticsearch前进行预处理两种场景</p>
-<p>本文总结了Spark与Elasticsearch进行交互的几种模式及一些demo</p>
-<p><code>#TODO</code></p>
-<a id="more"></a>
-
-<p>方案1：elasticsearch部署在kubernetes环境下，本机使用local[*]方案访问用于简单测试</p>
-<figure class="highlight xml"><table><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.apache.spark<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spark-core_2.12<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">version</span>&gt;</span>3.2.0<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.elasticsearch<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>elasticsearch-spark-30_2.12<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">version</span>&gt;</span>7.15.2<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
-
-<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">WordCount</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">        SparkConf conf = <span class="keyword">new</span> SparkConf().setAppName(<span class="string">&quot;Elastic App&quot;</span>).setMaster(<span class="string">&quot;local[*]&quot;</span>);</span><br><span class="line">        conf.set(<span class="string">&quot;es.nodes&quot;</span>, <span class="string">&quot;10.108.23.161&quot;</span>);  <span class="comment">// CLUSTER_IP</span></span><br><span class="line">        conf.set(<span class="string">&quot;es.port&quot;</span>, <span class="string">&quot;9200&quot;</span>);</span><br><span class="line">        conf.set(<span class="string">&quot;es.net.http.auth.user&quot;</span>, <span class="string">&quot;elastic&quot;</span>);</span><br><span class="line">        conf.set(<span class="string">&quot;es.net.http.auth.pass&quot;</span>, <span class="string">&quot;nwT9nh83KTZw1RoMjxDo&quot;</span>);</span><br><span class="line">        conf.set(<span class="string">&quot;es.nodes.wan.only&quot;</span>, <span class="string">&quot;true&quot;</span>);</span><br><span class="line"></span><br><span class="line">        JavaSparkContext jsc = <span class="keyword">new</span> JavaSparkContext(conf);</span><br><span class="line">        jsc.setLogLevel(<span class="string">&quot;ERROR&quot;</span>);</span><br><span class="line"></span><br><span class="line">        JavaPairRDD&lt;String, Map&lt;String, Object&gt;&gt; esRDD = JavaEsSpark.esRDD(jsc, <span class="string">&quot;metricbeat-7.8.0-2021.11.22-000001&quot;</span>);  <span class="comment">// index</span></span><br><span class="line">        System.out.println(esRDD.first().toString());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p><code>#TODO</code></p>
-]]></content>
-      <categories>
-        <category>大数据</category>
-        <category>spark</category>
-      </categories>
-      <tags>
-        <tag>Spark</tag>
-        <tag>Elasticsearch</tag>
+        <tag>AIOps</tag>
       </tags>
   </entry>
   <entry>
@@ -1645,9 +1603,9 @@
         <category>比赛经历</category>
       </categories>
       <tags>
-        <tag>AIOps</tag>
         <tag>机器学习</tag>
         <tag>比赛经历</tag>
+        <tag>AIOps</tag>
         <tag>天池大赛</tag>
       </tags>
   </entry>
@@ -1847,11 +1805,10 @@
 ]]></content>
       <categories>
         <category>机器学习</category>
-        <category>GBDT</category>
       </categories>
       <tags>
-        <tag>机器学习</tag>
         <tag>联邦学习</tag>
+        <tag>机器学习</tag>
         <tag>协作学习</tag>
         <tag>决策树算法</tag>
       </tags>
@@ -1949,22 +1906,18 @@
 <p>参考上文构建EFK的YAML文件</p>
 <figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl apply -f samples/efk.yaml</span><br></pre></td></tr></table></figure>
 
-<ol>
-<li><p>执行命令产生访问日志：</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl exec -it $(kubectl get pod -l app=sleep -o jsonpath=&#x27;&#123;.items[0].metadata.name&#125;&#x27;) -c sleep -- curl -v httpbin:8000/status/418</span><br></pre></td></tr></table></figure>
-
+<p>执行命令产生访问日志：</p>
 <blockquote>
 <p>如果你已经按照本书部署了 <code>Bookinfo</code> 示例，你也可以直接通过浏览器访问 /productpage 页面也可以产生访问日志。</p>
 </blockquote>
-</li>
-<li><p>设置 Kibana 的端口转发：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl exec -it $(kubectl get pod -l app=sleep -o jsonpath=&#x27;&#123;.items[0].metadata.name&#125;&#x27;) -c sleep -- curl -v httpbin:8000/status/418</span><br></pre></td></tr></table></figure>
+
+<p>设置 Kibana 的端口转发：</p>
 <figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl -n logging port-forward $(kubectl -n logging get pod -l app=kibana -o jsonpath=&#x27;&#123;.items[0].metadata.name&#125;&#x27;) 5601:5601 &amp;</span><br></pre></td></tr></table></figure>
 
 <ul>
 <li>此命令将 Kibaba <a href="https://www.servicemesher.com/istio-handbook/GLOSSARY.html#pod">Pod</a> 的 <code>5601</code> 端口转发到 <code>localhost:5601</code> ，<code>&amp;</code> 代表后台运行</li>
 </ul>
-</li>
-</ol>
 <p>后续需要对 <code>Fluentd</code> 进行细致的配置。如果用于生产环境，可以前往 Kubernetes 官方 github 仓库找到完整的 <code>EFK</code> 配置来进行部署：</p>
 <p><a href="https://github.com/kubernetes/kubernetes/tree/master/cluster/addons/fluentd-elasticsearch">https://github.com/kubernetes/kubernetes/tree/master/cluster/addons/fluentd-elasticsearch</a></p>
 <h2 id="Jaeger配置"><a href="#Jaeger配置" class="headerlink" title="Jaeger配置"></a>Jaeger配置</h2><p><a href="https://www.servicemesher.com/istio-handbook/practice/jaeger.html">https://www.servicemesher.com/istio-handbook/practice/jaeger.html</a></p>
@@ -2043,9 +1996,9 @@
         <category>环境搭建</category>
       </categories>
       <tags>
-        <tag>AIOps</tag>
         <tag>ELK</tag>
         <tag>环境搭建</tag>
+        <tag>AIOps</tag>
         <tag>istio</tag>
         <tag>云原生</tag>
       </tags>
