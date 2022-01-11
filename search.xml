@@ -1,67 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>Blog搭建摘要</title>
-    <url>/2020/09/14/Blog%E6%90%AD%E5%BB%BA%E6%91%98%E8%A6%81/</url>
-    <content><![CDATA[<p>使用<a href="https://hexo.io/zh-cn/">hexo</a>进行blog搭建，在对blog搭建和next主题进行配置的过程中整理了一些有用的tips，并在下文进行简单的罗列~</p>
-<a id="more"></a>
-
-<h1 id="Tips"><a href="#Tips" class="headerlink" title="Tips"></a>Tips</h1><ul>
-<li><p>通过在文章中使用 <code>&lt;!-- more --&gt;</code> 手动可以对文章进行截断</p>
-</li>
-<li><p>在文章的 <a href="https://hexo.io/docs/front-matter.html">front-matter</a> 中添加 <code>description</code>，并提供文章摘录</p>
-</li>
-<li><p>自动形成摘要，在 <strong>主题配置文件</strong> 中添加：</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">auto_excerpt:</span><br><span class="line">  enable: true</span><br><span class="line">  length: 150</span><br></pre></td></tr></table></figure>
-
-</li>
-</ul>
-<hr>
-<p>使用<a href="https://github.com/timnew/hexo-console-rename">hexo-console-rename</a>对已生成的文章进行改名</p>
-<p>修改文章title，运行<code>hexo rename</code>命令即可将所有文章的title与文件名同步</p>
-<hr>
-<p>新建文章后自动使用typora打开新建的md文件</p>
-<p>在scipts文件夹中新建example.js，并键入如下命令</p>
-<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> spawn = <span class="built_in">require</span>(<span class="string">&#x27;hexo-util/lib/spawn&#x27;</span>);</span><br><span class="line"></span><br><span class="line">hexo.on(<span class="string">&#x27;new&#x27;</span>, <span class="function">(<span class="params">data</span>) =&gt;</span> &#123;</span><br><span class="line">  spawn(<span class="string">&#x27;typora&#x27;</span>, [hexo.base_dir, data.path]);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-
-<p>参考博客 <a href="https://leaferx.online/2018/03/17/hexo-auto-open-vscode/">HEXO小技巧在 hexo new 的时候自动用 VS Code 打开新建文章</a></p>
-<hr>
-<p>Hexo 不支持指定多个同级分类</p>
-<p>分类具有顺序性和层次性</p>
-<p>标签没有顺序和层次</p>
-<p>如果你需要为文章添加多个分类，可以尝试以下 list 中的方法</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">categories:</span><br><span class="line">- [Diary, PlayStation]</span><br><span class="line">- [Diary, Games]</span><br><span class="line">- [Life]</span><br></pre></td></tr></table></figure>
-
-<hr>
-<p>文章可以先以草稿draft形式存储，待编辑完成后发表</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new draft &lt;title&gt;</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo publish post &lt;title&gt;</span><br></pre></td></tr></table></figure>
-
-<p>草稿默认不会显示在页面中，您可在执行时加上 <code>--draft</code> 参数，或是把 <code>render_drafts</code> 参数设为 <code>true</code> 来预览草稿</p>
-<hr>
-<p>在文章中插入引言，可包含作者、来源和标题。</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#123;% blockquote [author[, source]] [link] [source_link_title] %&#125;</span><br><span class="line">content</span><br><span class="line">&#123;% endblockquote %&#125;</span><br></pre></td></tr></table></figure>
-
-<p>其他风格</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#123;% cq %&#125;  &#123;% endcq %&#125;</span><br></pre></td></tr></table></figure>
-
-<blockquote class="blockquote-center">
-            <i class="fa fa-quote-left"></i>
-            <p>content </p>
-
-            <i class="fa fa-quote-right"></i>
-          </blockquote>
-
-<p>其他对markdown呈现效果的优化方案：<a href="https://hexo.io/zh-cn/docs/tag-plugins">标签插件（Tag Plugins）</a></p>
-<hr>
-<p>参考主题配置文件的custom_file_path项，可以在source/_data中建立对应文件来调整前端界面</p>
-]]></content>
-      <tags>
-        <tag>Hexo</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>ELK环境搭建&amp;流量分析</title>
     <url>/2021/01/20/ELK%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA-%E6%B5%81%E9%87%8F%E5%88%86%E6%9E%90/</url>
     <content><![CDATA[<p>记录使用Prometheus或ELK来搭建一个最基础的流量监控平台的过程（针对原始流量和Zeek的日志文件），对Prometheus和ELK做了一个简单的调研和整理，然后对配置过程中部分关键步骤进行一个整理</p>
@@ -375,6 +314,67 @@
         <tag>Docker</tag>
         <tag>Zeek</tag>
         <tag>Kafka</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Blog搭建摘要</title>
+    <url>/2020/09/14/Blog%E6%90%AD%E5%BB%BA%E6%91%98%E8%A6%81/</url>
+    <content><![CDATA[<p>使用<a href="https://hexo.io/zh-cn/">hexo</a>进行blog搭建，在对blog搭建和next主题进行配置的过程中整理了一些有用的tips，并在下文进行简单的罗列~</p>
+<a id="more"></a>
+
+<h1 id="Tips"><a href="#Tips" class="headerlink" title="Tips"></a>Tips</h1><ul>
+<li><p>通过在文章中使用 <code>&lt;!-- more --&gt;</code> 手动可以对文章进行截断</p>
+</li>
+<li><p>在文章的 <a href="https://hexo.io/docs/front-matter.html">front-matter</a> 中添加 <code>description</code>，并提供文章摘录</p>
+</li>
+<li><p>自动形成摘要，在 <strong>主题配置文件</strong> 中添加：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">auto_excerpt:</span><br><span class="line">  enable: true</span><br><span class="line">  length: 150</span><br></pre></td></tr></table></figure>
+
+</li>
+</ul>
+<hr>
+<p>使用<a href="https://github.com/timnew/hexo-console-rename">hexo-console-rename</a>对已生成的文章进行改名</p>
+<p>修改文章title，运行<code>hexo rename</code>命令即可将所有文章的title与文件名同步</p>
+<hr>
+<p>新建文章后自动使用typora打开新建的md文件</p>
+<p>在scipts文件夹中新建example.js，并键入如下命令</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> spawn = <span class="built_in">require</span>(<span class="string">&#x27;hexo-util/lib/spawn&#x27;</span>);</span><br><span class="line"></span><br><span class="line">hexo.on(<span class="string">&#x27;new&#x27;</span>, <span class="function">(<span class="params">data</span>) =&gt;</span> &#123;</span><br><span class="line">  spawn(<span class="string">&#x27;typora&#x27;</span>, [hexo.base_dir, data.path]);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>参考博客 <a href="https://leaferx.online/2018/03/17/hexo-auto-open-vscode/">HEXO小技巧在 hexo new 的时候自动用 VS Code 打开新建文章</a></p>
+<hr>
+<p>Hexo 不支持指定多个同级分类</p>
+<p>分类具有顺序性和层次性</p>
+<p>标签没有顺序和层次</p>
+<p>如果你需要为文章添加多个分类，可以尝试以下 list 中的方法</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">categories:</span><br><span class="line">- [Diary, PlayStation]</span><br><span class="line">- [Diary, Games]</span><br><span class="line">- [Life]</span><br></pre></td></tr></table></figure>
+
+<hr>
+<p>文章可以先以草稿draft形式存储，待编辑完成后发表</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new draft &lt;title&gt;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo publish post &lt;title&gt;</span><br></pre></td></tr></table></figure>
+
+<p>草稿默认不会显示在页面中，您可在执行时加上 <code>--draft</code> 参数，或是把 <code>render_drafts</code> 参数设为 <code>true</code> 来预览草稿</p>
+<hr>
+<p>在文章中插入引言，可包含作者、来源和标题。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#123;% blockquote [author[, source]] [link] [source_link_title] %&#125;</span><br><span class="line">content</span><br><span class="line">&#123;% endblockquote %&#125;</span><br></pre></td></tr></table></figure>
+
+<p>其他风格</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#123;% cq %&#125;  &#123;% endcq %&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote class="blockquote-center">
+            <i class="fa fa-quote-left"></i>
+            <p>content </p>
+
+            <i class="fa fa-quote-right"></i>
+          </blockquote>
+
+<p>其他对markdown呈现效果的优化方案：<a href="https://hexo.io/zh-cn/docs/tag-plugins">标签插件（Tag Plugins）</a></p>
+<hr>
+<p>参考主题配置文件的custom_file_path项，可以在source/_data中建立对应文件来调整前端界面</p>
+]]></content>
+      <tags>
+        <tag>Hexo</tag>
       </tags>
   </entry>
   <entry>
@@ -778,79 +778,6 @@
       </tags>
   </entry>
   <entry>
-    <title>Spark日志分析算法实现</title>
-    <url>/2021/12/31/Spark%E6%97%A5%E5%BF%97%E5%88%86%E6%9E%90%E7%AE%97%E6%B3%95%E5%AE%9E%E7%8E%B0/</url>
-    <content><![CDATA[<p>在学习了Spark以及一些日志分析算法后，萌生了对一些算法在spark上进行<strong>并行化实现</strong>的想法</p>
-<p>实际操作时发现从spark的简单示例到真实将使用for循环实现的算法在spark使用map等操作来进行代替还是需要挺多技巧的，本文尝试从elasticsearch获取日志数据，通过对日志分析算法中的<strong>AECID-PG</strong>这一基于树的日志解释器生成算法进行spark实现来计算kubernetes环境下各个pod对应日志的树解释器</p>
-<p>其间参考了一些其他算法的spark实现进行学习，<a href="https://www.cnblogs.com/brooksj/p/spark-Apriori.html">Apriori实现</a>，<a href="https://www.infoq.cn/article/use-spark-to-achieve-naive-bayesian-algorithm">朴素贝叶斯算法</a>以及之前学习GBDT时参考的<a href="https://www.infoq.cn/article/use-spark-to-achieve-naive-bayesian-algorithm">FATE secureboost</a></p>
-<a id="more"></a>
-
-<h1 id="Spark数据处理思路"><a href="#Spark数据处理思路" class="headerlink" title="Spark数据处理思路"></a>Spark数据处理思路</h1><h2 id="Apriori-频繁项集挖掘并行化实现思路"><a href="#Apriori-频繁项集挖掘并行化实现思路" class="headerlink" title="Apriori 频繁项集挖掘并行化实现思路"></a>Apriori 频繁项集挖掘并行化实现思路</h2><p>常规Apriori算法计算频繁k项集需要从频繁1项集开始逐次递加项数，每次计算k+1项集时，需要根据频繁k项集通过扫描整个数据集来生成候选集并进行候选集的支持度计算，于是支持度最小的候选项便是频繁k+1项集</p>
-<p>可以看出常规算法在数据集较大时会在<strong>支持度计算部分</strong>消耗大量时间，因此要进行并行化改造的关键就在于对该部分设计并行化算法</p>
-<p><a href="https://www.cnblogs.com/brooksj/p/spark-Apriori.html">https://www.cnblogs.com/brooksj/p/spark-Apriori.html</a> 并行化设计的思路主要是考虑将对于支持度计数的过程使用wordcount来进行统计，通过<strong>flatmap</strong>操作生成候选集，然后通过<strong>map</strong>和<strong>reduceByKey</strong>进行支持度的统计</p>
-<h2 id="secureboost并行化实现思路"><a href="#secureboost并行化实现思路" class="headerlink" title="secureboost并行化实现思路"></a>secureboost并行化实现思路</h2><p>FATE项目的secureboost基于spark平台实现了联邦的GBDT算法，可以说是在spark上实现复杂算法的典型案例了（当然也是因为GBDT天然对并行化的支持）</p>
-<p>secureboost算法实现具体也可以参考我的另外一篇文章 GBDT协作学习实现，主要实现思路便是对所有样本计算梯度，整合成<strong>直方图</strong>的形式进行分裂收益的计算和最佳分裂点的选择</p>
-<h2 id="思路整理"><a href="#思路整理" class="headerlink" title="思路整理"></a>思路整理</h2><ul>
-<li>因为在进行spark的transformation时只能并行化的对RDD内数据进行处理，不能对共享进行写操作，因此也无法支持复杂的逻辑，这是spark进行分布式批量计算所必然的设计，所以在进行设计时一个重要的问题就是，对<strong>算法复杂逻辑</strong>和对<strong>大量数据进行处理</strong>时必须藉由并行化来保证时间开销的平衡</li>
-<li>算法在处理大量数据集时，限制主要在于从全部数据中进行相关值的计算，而进行算法的spark实现也是主要将这部分通过spark的transformer和action两种操作替代该部分的计算，而其他设计有限量数据的或者对提取到的类似梯度或统计量的数值进行处理的算法部分则没有必要额外使用spark来实现</li>
-<li>所以，一般思路便是，先对全部数据的RDD集通过transformation以及action操作得到一个概括性的数据结构，例如GBDT算法的直方图，基于这个<strong>概括性的数据结构</strong>来进行复杂的算法流程，计算结果再通过transformation分配给RDD的各个元素，至此可能完成了算法的一次循环</li>
-<li>另外，还需要考量在spark的工作流中合适的位置进行<strong>数据持久化</strong></li>
-</ul>
-<h1 id="算法实现"><a href="#算法实现" class="headerlink" title="算法实现"></a>算法实现</h1><p><a href="https://github.com/jacoeus/SparkLogPG">https://github.com/jacoeus/SparkLogPG</a></p>
-<p><strong>AECID-PG</strong>算法介绍参考另一篇博客日志分析算法学习，主要方法时将各行日志按词元token进行划分后根据词元密度，即前缀相同的日志中该词元出现的比例来判断该词元是否可变或者静态的，据此来建立一棵树，每个节点对应一个词元，每条路径对应一种日志模板</p>
-<p>于是，将该算法进行spark实现的主要问题在于：<strong>并行化计算词元密度</strong>、将词元数据与<strong>日志树关联</strong>以及对树的每一层要进行一次计算（action）导致的<strong>数据持久化问题</strong></p>
-<ul>
-<li>在计算词元密度时，需要考虑计算当前token在与其相同前缀的所有日志行中出现的比例（不能统计该token在当前层出现的数量），因此需要获取<strong>相同前缀</strong>的日志行数量和在该前缀下统计各token的数量。因此在进行词元计算时，我采用将<strong>前缀（路径节点id）和当前token</strong>作为RDD的key来进行countByKey的统计，同时在日志树对应的父节点保存该前缀的数量以便下层循环时取用，如此实现并行化次元密度的计算</li>
-<li>为了实现词元数据与日志树的关联，我采用将日志树节点通过id进行标识的方法，每次计算得到当前token对应的节点后，将节点id保存在RDD的键值(pre,roken_list)中前缀pre的最后一位来进入下一层的循环</li>
-<li>数据持久化方面因为在每一层的循环中都要做一次countByKey的action操作，如果不进行持久化的话在每次循环在countByKey会重复之前循环的transformation操作，但进行持久化的话每循环一次，仅为了一次action操作就需要进行持久化，频繁持久化可能也会影响效率，我这里是简单的采用持久化的方案，对每一层计算得到的RDD就进行持久化并释放上一层的持久化，更优的方案需要之后探索<code>#TODO</code></li>
-</ul>
-<h2 id="算法流程"><a href="#算法流程" class="headerlink" title="算法流程"></a>算法流程</h2><ul>
-<li>token2PF: mutable.Map[(ListBuffer[Int], String), (Int, Double, Long)] // (pre, token) -&gt; (parent_id, PF, count)</li>
-<li>pre2metrics: mutable.Map[ListBuffer[Int], ListBuffer[(String, Int, Double, Long)]] // pre -&gt; [(token1,parent_id,PF,count), …]</li>
-<li>token2node: mutable.Map[(ListBuffer[Int], String), Int] // (pre,token) -&gt; node_id</li>
-<li>id2node: mutable.Map[Int, ParserNode] // node_id -&gt; node</li>
-</ul>
-<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line"><span class="type">Input</span>:通过elasticsearch-spark库将elasticsearch日志数据以<span class="type">RDD</span>数据形式进行获取</span><br><span class="line"></span><br><span class="line">new_RDD = <span class="type">RDD</span>.map(日志清洗和建立token列表).cache()</span><br><span class="line"><span class="keyword">while</span>(没有待匹配的日志 || 层数达到预设的最大值)&#123;</span><br><span class="line">	<span class="type">RDD</span> = new_RDD</span><br><span class="line">    <span class="comment">// 将前缀（路径节点id）和当前token作为RDD的key来进行countByKey的统计，并行计算</span></span><br><span class="line">    next_token_count = <span class="type">RDD</span>.map((pre,token_list) =&gt; ((pre,curr_token),rest_token_list)).countByKey <span class="comment">// Spark操作</span></span><br><span class="line">    </span><br><span class="line">    token2PF &lt;- 根据next_token_count通过获取父节点的count信息，计算<span class="type">PF</span>并得到token到(parent_id,<span class="type">PF</span>,count)的映射</span><br><span class="line">    pre2metrics &lt;- 根据token2PF统计相同前缀下各token及其parent_id,<span class="type">PF</span>,count等指标</span><br><span class="line">    token_node_map &lt;- 遍历pre2metrics，根据指标分配节点并通过token_node_map记录&#123;</span><br><span class="line">        node_id &lt;- 自增</span><br><span class="line">        node &lt;- 参考<span class="type">AECID</span>-<span class="type">PG</span>算法建立当前层对应的节点，赋值包括(是否可变、token、count、node_id等)，并加入父节点的子节点列表</span><br><span class="line">        id2node += (node_id -&gt; node)</span><br><span class="line">        token_node_map += ((pre,token),node_id)</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    new_RDD = <span class="type">RDD</span>.filter(过滤没有加入日志树的日志行).map(根据token_node_map将新节点加入前缀).cache() <span class="comment">// Spark操作</span></span><br><span class="line">    <span class="type">RDD</span>.unpersist() <span class="comment">// 释放上一层持久化</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="结果示例"><a href="#结果示例" class="headerlink" title="结果示例"></a>结果示例</h2><p>在kubernetes取了apisix一个组件pod的日志进行日志树生成，这里取了前10层的日志树进行简单的可视化</p>
-<p><img src="2.png" alt="1"></p>
-]]></content>
-      <categories>
-        <category>AIOps</category>
-        <category>日志分析</category>
-      </categories>
-      <tags>
-        <tag>Spark</tag>
-        <tag>Elasticsearch</tag>
-        <tag>算法实现</tag>
-        <tag>日志分析</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>spark连接elasticsearch进行数据处理</title>
-    <url>/2021/11/22/spark%E8%BF%9E%E6%8E%A5elasticsearch%E8%BF%9B%E8%A1%8C%E6%95%B0%E6%8D%AE%E5%A4%84%E7%90%86/</url>
-    <content><![CDATA[<p>在数据处理时希望结合Spark和Elasticsearch这两大流行的工具，设想了将大量运维数据存储在Elasticsearch中通过Spark访问处理后再返回Elasticsearch，结合Kibana进行展示，或者使用Spark Streaming在入库Elasticsearch前进行预处理两种场景</p>
-<p>本文总结了Spark与Elasticsearch进行交互的几种模式及一些demo</p>
-<p><code>#TODO</code></p>
-<a id="more"></a>
-
-<p>方案1：elasticsearch部署在kubernetes环境下，本机使用local[*]方案访问用于简单测试</p>
-<figure class="highlight xml"><table><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.apache.spark<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spark-core_2.12<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">version</span>&gt;</span>3.2.0<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.elasticsearch<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>elasticsearch-spark-30_2.12<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">version</span>&gt;</span>7.15.2<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
-
-<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">WordCount</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">        SparkConf conf = <span class="keyword">new</span> SparkConf().setAppName(<span class="string">&quot;Elastic App&quot;</span>).setMaster(<span class="string">&quot;local[*]&quot;</span>);</span><br><span class="line">        conf.set(<span class="string">&quot;es.nodes&quot;</span>, <span class="string">&quot;10.108.23.161&quot;</span>);  <span class="comment">// CLUSTER_IP</span></span><br><span class="line">        conf.set(<span class="string">&quot;es.port&quot;</span>, <span class="string">&quot;9200&quot;</span>);</span><br><span class="line">        conf.set(<span class="string">&quot;es.net.http.auth.user&quot;</span>, <span class="string">&quot;elastic&quot;</span>);</span><br><span class="line">        conf.set(<span class="string">&quot;es.net.http.auth.pass&quot;</span>, <span class="string">&quot;nwT9nh83KTZw1RoMjxDo&quot;</span>);</span><br><span class="line">        conf.set(<span class="string">&quot;es.nodes.wan.only&quot;</span>, <span class="string">&quot;true&quot;</span>);</span><br><span class="line"></span><br><span class="line">        JavaSparkContext jsc = <span class="keyword">new</span> JavaSparkContext(conf);</span><br><span class="line">        jsc.setLogLevel(<span class="string">&quot;ERROR&quot;</span>);</span><br><span class="line"></span><br><span class="line">        JavaPairRDD&lt;String, Map&lt;String, Object&gt;&gt; esRDD = JavaEsSpark.esRDD(jsc, <span class="string">&quot;metricbeat-7.8.0-2021.11.22-000001&quot;</span>);  <span class="comment">// index</span></span><br><span class="line">        System.out.println(esRDD.first().toString());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p><code>#TODO</code></p>
-]]></content>
-      <categories>
-        <category>大数据</category>
-        <category>spark</category>
-      </categories>
-      <tags>
-        <tag>Spark</tag>
-        <tag>Elasticsearch</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>RobustPeriod算法框架学习</title>
     <url>/2021/11/22/RobustPeriod%E7%AE%97%E6%B3%95%E6%A1%86%E6%9E%B6%E5%AD%A6%E4%B9%A0/</url>
     <content><![CDATA[<p>在AIOps了解到RobustPeriod这一算法框架来对时序数据进行处理论文</p>
@@ -926,183 +853,8 @@
         <category>时序分析</category>
       </categories>
       <tags>
-        <tag>论文阅读</tag>
         <tag>异常检测</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>一些联邦学习方向的调研</title>
-    <url>/2021/01/29/%E4%B8%80%E4%BA%9B%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0%E6%96%B9%E5%90%91%E7%9A%84%E8%B0%83%E7%A0%94/</url>
-    <content><![CDATA[<p>试图探索联邦学习方向进行研究的方向，搜索了一些资料对联邦学习领域的一些问题或者研究方向进行了一个简单的调研和整理，主要分为联邦学习的<strong>通信加速</strong>和<strong>隐私保护</strong>问题</p>
- <a id="more"></a>
-
-<h1 id="联邦学习通信加速问题"><a href="#联邦学习通信加速问题" class="headerlink" title="联邦学习通信加速问题"></a>联邦学习通信加速问题</h1><p>From: 胡水海-联邦学习海量加密数据高效传输的探索</p>
-<h2 id="数据中心内场景"><a href="#数据中心内场景" class="headerlink" title="数据中心内场景"></a>数据中心内场景</h2><p>该主题主要面向高速网络时代如何加速联邦学习通信问题</p>
-<p><strong>点对点通信</strong>：一个方案是使用<strong>RDMA技术</strong>优化两点间通信，因为使用TCP协议吞吐量受限、延迟较大，通过RDMA内核旁路使用硬件加速传输层，甚至GPU-Direct-RDMA实现GPU与RMA之间的数据零拷贝，从而极大节省通信时间</p>
-<p><strong>多点通信</strong>：因为在传统参数聚合场景Parameter Server参数服务器位置容易出现链路瓶颈，而且某一跳阻塞会导致整个聚合任务的停滞。这里提出了使用<strong>动态参数聚合模型</strong>优化多点间通信，通过根据网络状态（物理拓扑、动态状态等）生成参数汇聚方案，避免参数传递集中在延迟严重的链路</p>
-<h2 id="跨区域场景"><a href="#跨区域场景" class="headerlink" title="跨区域场景"></a>跨区域场景</h2><p>针对高延迟、高丢包率网络环境下如何加速联邦学习通信提出了跨区域场景下的联邦学习，在该场景下，物理距离增加，跨区域通信时间在联邦学习中的时间占比越来越大，而且跨区域主干网具有高延迟、高丢包率等特征,丢包侦测与丢包恢复代价很大</p>
-<p>因此，一个思路是结合某些联邦学习算法的特点，例如目前模型训练大多采用随机梯度下降（SGD）方式通过多轮迭代进行,丢失一部分数据不影响训练算法找到模型收敛点，基于此便可以通过设计机器学习专用的网络传输协议 MLT 等方式在一定程度上免去丢包侦测与丢包恢复的时间</p>
-<p>另一个思路是对数据进行压缩，通过减少需要传输的数据量来减少传输的时间开销，也降低丢包的概率。一些研究基于此结合了概率数据结构的方法，对传递的参数信息提取Sketch，很大程度减少了数据了的同时保留数据的某些特性，例如 Count Sketch 可以在较小的空间内存储大量的模型更新信息，并在一定程度上不影响模型的最终训练效果，通过这种方式减少需要传输的数据量来减少传输的时间开销 。另外，Fetchsgd: Communication-efficient federated learning with sketching 和 Fedsketch: Communication-efficient and private federated learning via sketching 就是两种通过将 sketch 和联邦学习结合来加速联邦学习的实现</p>
-<h1 id="联邦学习隐私保护问题"><a href="#联邦学习隐私保护问题" class="headerlink" title="联邦学习隐私保护问题"></a>联邦学习隐私保护问题</h1><blockquote>
-<p>目标：实现隐私性的同时保证模型训练的效率和准确率</p>
-</blockquote>
-<ul>
-<li>sketches如何应用与联邦学习场景</li>
-<li>当前哪些sketches有利于保证隐私性和准确度</li>
-<li>如何利用当前sketches进一步提升隐私性</li>
-</ul>
-<h2 id="隐私性的定义"><a href="#隐私性的定义" class="headerlink" title="隐私性的定义"></a>隐私性的定义</h2><p>From: Enhancing the Privacy of Federated Learning with Sketching</p>
-<ul>
-<li>Level-0：无隐私性</li>
-<li>Level-1：原始数据保护<ul>
-<li>传统联邦学习</li>
-<li>模型更新信息（梯度）共享</li>
-</ul>
-</li>
-<li>Level-2：全局隐私<ul>
-<li>模型更新信息仅对汇聚节点（参数服务器）可见</li>
-</ul>
-</li>
-<li>Level-3：本地隐私<ul>
-<li>模型更新信息对所有其他节点不可见</li>
-</ul>
-</li>
-<li>Level-4：终极目标<ul>
-<li>包括用户信息、模型更新信息以及训练得到的模型对第三方都不可见</li>
-<li>对于所有参与者，整个系统是一个黑盒，仅持有对预测功能的接口</li>
-</ul>
-</li>
-</ul>
-<h2 id="保护数据隐私的多方计算方法"><a href="#保护数据隐私的多方计算方法" class="headerlink" title="保护数据隐私的多方计算方法"></a>保护数据隐私的多方计算方法</h2><h3 id="基于噪音的安全计算方法"><a href="#基于噪音的安全计算方法" class="headerlink" title="基于噪音的安全计算方法"></a>基于噪音的安全计算方法</h3><p>差分隐私，保护的是数据源中一点微小的改动导致的隐私泄露问题</p>
-<p>使用基于噪声的差分隐私方法的主要思想是，对计算过程用噪音干扰，让原始数据淹没在噪音中，而无法从得到的结果反推原始数据的细节</p>
-<p>比较常用的是加拉普拉斯噪音（Laplace noise）。由于拉普拉斯分布的数学性质正好与差分隐私的定义相契合</p>
-<p>该方法通常也要求数据满足一定的分布，这一点在现实中通常很难满足</p>
-<h3 id="非噪音的安全计算方法"><a href="#非噪音的安全计算方法" class="headerlink" title="非噪音的安全计算方法"></a>非噪音的安全计算方法</h3><p>混淆电路（Garbled Circuit）、同态加密（Homomorphic Encryption）和密钥分享（Secret Sharing）</p>
-<ul>
-<li>基于密码学的方法</li>
-<li>能够以准确值进行传输，但计算量和通讯开销会比较大</li>
-<li>联邦学习保障数据隐私的另一种一种常用方法是采用同态加密技术</li>
-</ul>
-<p><strong>同态加密</strong></p>
-<ul>
-<li>同态加密是一种依赖数学计算复杂性的的加密算法,能让密文能够进行某种代数运算得到的仍是加密的<br>结果而且结果与明文进行运算后再进行加密的结果一致。</li>
-<li>同态加密包括部分同态（只针对加法或乘法有同态性质，即加法同态、乘法同态等）、层次同态（只支持有限次运算）以及全同态等,相较于差分隐私的方法，同态加密的计算开销要大得多,目前大多解决方案仍是使用效率较高的部分同态</li>
-<li>一般使用的同态加密算法为 PHE（多见为加法同态加密算法)），例如在 FATE 项目中使用的 Paillier 即为加法同态加密算法，在联邦学习中，大多也采用加法的梯度聚合方式，各个数据孤岛在本地计算各自的模型更新信息使用同态加密的算法进行加密后发送给参数服务器,参数服务器通过对密文直接采用基于加法或乘法的聚合方式计算得到全局模型更新信息的密文形式，由于同态加密的特性，保证了此时解密得到的结果是正确的全局模型更新信息，对模型进行更新,至此完成一轮的联邦学习过程</li>
-</ul>
-<h2 id="差分隐私-Sketch"><a href="#差分隐私-Sketch" class="headerlink" title="差分隐私+Sketch"></a>差分隐私+Sketch</h2><p>$$<br>\forall{S} , Pr[M(D_1)\in S]\leq e^{\epsilon} * Pr[M(D_2)\in S]<br>$$</p>
-<p>上式表示对于相似的数据集D1和D2，两者通过随机化机制M处理后得到的结果属于同一个M的输出结果集合S的概率接近于1</p>
-<ul>
-<li>方案1： 直接在模型更新信息中加入噪声</li>
-<li>方案2： Laplace噪声+Count-Min和Count（From: Efficient private statistics with succinct sketches）</li>
-<li>方案3： Count-Min or Count（From: Enhancing the privacy of federated learning with sketching）<ul>
-<li>模型空间远大于sketch的大小，count sketch可以满足差分隐私的条件</li>
-<li>否则需要hash算法的不可逆性来在一定程度上保证数据隐私</li>
-</ul>
-</li>
-</ul>
-]]></content>
-      <categories>
-        <category>机器学习</category>
-        <category>联邦学习</category>
-      </categories>
-      <tags>
-        <tag>学习笔记</tag>
-        <tag>联邦学习</tag>
-        <tag>sketch</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>协作学习与网络安全大赛参赛总结</title>
-    <url>/2021/01/16/%E5%8D%8F%E4%BD%9C%E5%AD%A6%E4%B9%A0%E4%B8%8E%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8%E5%A4%A7%E8%B5%9B%E5%8F%82%E8%B5%9B%E6%80%BB%E7%BB%93/</url>
-    <content><![CDATA[<p>前段时间一直在参加第一届全国大学生协作学习与网络安全大赛，刚答辩结束，于是在此对比赛过程做一个总结，也对决赛其他队伍的优秀思路做个简单的整理</p>
-<p>相比于其他团队，我们的论文阅读更偏向于工程实现方面，参考论文也大多是将本地的GBDT算法无损的实现到联邦环境，但似乎联邦学习方面的研究课题更倾向于以深度学习为基础，也是我们调研不够充分，导致我们比赛时的很多思路以及调研受限于传统机器学习，无法很好响应协作学习的主题</p>
- <a id="more"></a>
-
-<h1 id="赛题的主要挑战"><a href="#赛题的主要挑战" class="headerlink" title="赛题的主要挑战"></a>赛题的主要挑战</h1><ul>
-<li>联邦环境 单PS+多Worker</li>
-<li>缺失值处理</li>
-<li>噪声处理</li>
-<li>数据倾斜 Non-IID</li>
-<li>测试集存在训练集没有的类</li>
-<li>隐私保护</li>
-</ul>
-<h1 id="相关思路整理"><a href="#相关思路整理" class="headerlink" title="相关思路整理"></a>相关思路整理</h1><p>对我们以及决赛其他队伍一些思路做一个简单的整理</p>
-<ul>
-<li>缺失值处理<ul>
-<li>超过19维直接删除</li>
-<li>随机森林</li>
-</ul>
-</li>
-<li>特征工程<ul>
-<li>特征编码（无用或高相关特征）</li>
-<li>LightGBM 互斥绑定</li>
-<li>归一化（基于GBDT的特征映射）</li>
-</ul>
-</li>
-<li>联邦学习安全：拜占庭问题（相似梯度聚合）</li>
-<li>一些深度学习的方案<ul>
-<li><code>#TODO</code></li>
-</ul>
-</li>
-</ul>
-<h1 id="比赛经历总结"><a href="#比赛经历总结" class="headerlink" title="比赛经历总结"></a>比赛经历总结</h1><ul>
-<li>有必要对多种方法进行尝试比对，在最后答辩或者展示的时候对效果进行评测</li>
-<li>当时认为GBDT对噪声不敏感，把缺失值只进行简单的处理，反而引入了噪声，事实上还是需要对缺失值进行合适的处理，10%的缺失值不进行合适的处理可能会完全影响预测的准确性</li>
-<li>手动实现secureBoost发现效率极不理想（比赛的时候因为这个头秃了好久），在构建直方图的时候时间复杂度达到O(#instance * #feature * #bin)，而LightGBM同样使用了直方图效率好像会快很多，一方面时使用了GOSS和特征的互斥绑定等优化算法，一方面可能也是数据结构的优化问题，这可以方面后续进行了解，另外，在多进程和多线程方面也可以加以考虑，比赛时因环境限制，两者对运行时间也没有明显的减少</li>
-<li>比赛时模拟环境限制，将secureBoost迁移到比赛环境时底层数据结构还是得重新设计，代码结构也做了一些修改，也是花了蛮多时间，后来加上了一些LightGBM的优化方案，整个过程也是对GBDT系列的算法实现有了较深的理解（然而实际部署联邦环境大部分都有现成的库了）</li>
-</ul>
-<h1 id="比赛总结"><a href="#比赛总结" class="headerlink" title="比赛总结"></a>比赛总结</h1><p>下面是我们队答辩PPT的简单文字稿，后来看了别人队感觉就很粗糙hhh</p>
-<h2 id="赛题理解"><a href="#赛题理解" class="headerlink" title="赛题理解"></a>赛题理解</h2><ul>
-<li>对DDOS流量进行多分类 =&gt; 决策树算法，适用于多分类情况，可解释性强，有助于后续分析</li>
-<li>模拟分布式环境，单PS &amp; 多Worker =&gt; 分布式</li>
-<li>数据集划分（每个Worker的数据集包含所有特征，但只有部分标签） =&gt; 横向联邦的secureBoost</li>
-</ul>
-<h3 id="解题思路"><a href="#解题思路" class="headerlink" title="解题思路"></a>解题思路</h3><p>使用适用于横向联邦的分布式GBDT算法对数据集进行多分类，并结合数据集特征进行优化</p>
-<h2 id="算法说明"><a href="#算法说明" class="headerlink" title="算法说明"></a>算法说明</h2><ul>
-<li>在具体实现上，参考了FATE secureBoost，XGBoost，LightGBM等工程实现项目，使用直方图算法来收集各个Worker的梯度信息，并据此找到决策树对应各个节点的分裂点</li>
-</ul>
-<img src="1.png" alt="图片1" style="zoom: 40%;" />
-
-<ul>
-<li><p>如上图所示，由Worker计算当前节点的训练数据的一阶和二阶梯度直方图，汇总到Server建立全局的直方图，据此可以计算得到节点的最佳分裂点</p>
-</li>
-<li><p>通过这种方法来建立决策树，并结合Boosting的集成学习方法实现了secureBoost算法</p>
-</li>
-<li><p>考虑到在模拟环境下使用全部数据集来进行建模时间消耗过大，不利于后续模型调整，我们权衡之下，基于secureBoost算法实现使用了如下的方案</p>
-</li>
-</ul>
-<img src="2.png" alt="图片2" style="zoom:50%;" />
-
-<ul>
-<li>仅使用部分数据集来进行建模，并使用对每个Worker的数据集进行进一步划分重组来集成投票的方式来提升性能</li>
-</ul>
-<h2 id="性能分析"><a href="#性能分析" class="headerlink" title="性能分析"></a>性能分析</h2><ul>
-<li>隐私性：通过结合同态加密技术，可以保障数据的隐私性</li>
-<li>通信开销：O(#feature * #bin)</li>
-<li>训练开销：O(#instance * #feature * log(#bin) / #worker)</li>
-<li>能够进行无损的联邦学习</li>
-<li>GBDT算法对噪声不敏感</li>
-<li>通过结合集成学习保证了模型的泛化性</li>
-</ul>
-<h2 id="总结与展望"><a href="#总结与展望" class="headerlink" title="总结与展望"></a>总结与展望</h2><h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><ul>
-<li>主要工作：在官方环境中重写了secureBoost，实现了直方图算法，level-wise和leaf-wise两种树的生长方式以及特征选择等，另外也实现了</li>
-<li>实现了以一轮GBDT作为基决策树的随机森林</li>
-<li>没有对缺失值进行合适的处理，遗漏了secureBoost本身对缺失值处理的能力</li>
-</ul>
-<h3 id="展望"><a href="#展望" class="headerlink" title="展望"></a>展望</h3><ul>
-<li>考虑使用随机森林算法的列抽样来对缺失值进行处理</li>
-<li>实现在分布式环境上部署，探索学习更高效的算法实现</li>
-</ul>
-]]></content>
-      <categories>
-        <category>机器学习</category>
-        <category>联邦学习</category>
-      </categories>
-      <tags>
-        <tag>联邦学习</tag>
-        <tag>机器学习</tag>
-        <tag>协作学习</tag>
-        <tag>比赛经历</tag>
+        <tag>论文阅读</tag>
       </tags>
   </entry>
   <entry>
@@ -1317,6 +1069,173 @@
       </tags>
   </entry>
   <entry>
+    <title>Spark日志分析算法实现</title>
+    <url>/2021/12/31/Spark%E6%97%A5%E5%BF%97%E5%88%86%E6%9E%90%E7%AE%97%E6%B3%95%E5%AE%9E%E7%8E%B0/</url>
+    <content><![CDATA[<p>在学习了Spark以及一些日志分析算法后，萌生了对一些算法在spark上进行<strong>并行化实现</strong>的想法</p>
+<p>实际操作时发现从spark的简单示例到真实将使用for循环实现的算法在spark使用map等操作来进行代替还是需要挺多技巧的，本文尝试从elasticsearch获取日志数据，通过对日志分析算法中的<strong>AECID-PG</strong>这一基于树的日志解释器生成算法进行spark实现来计算kubernetes环境下各个pod对应日志的树解释器</p>
+<p>其间参考了一些其他算法的spark实现进行学习，<a href="https://www.cnblogs.com/brooksj/p/spark-Apriori.html">Apriori实现</a>，<a href="https://www.infoq.cn/article/use-spark-to-achieve-naive-bayesian-algorithm">朴素贝叶斯算法</a>以及之前学习GBDT时参考的<a href="https://www.infoq.cn/article/use-spark-to-achieve-naive-bayesian-algorithm">FATE secureboost</a></p>
+<a id="more"></a>
+
+<h1 id="Spark数据处理思路"><a href="#Spark数据处理思路" class="headerlink" title="Spark数据处理思路"></a>Spark数据处理思路</h1><h2 id="Apriori-频繁项集挖掘并行化实现思路"><a href="#Apriori-频繁项集挖掘并行化实现思路" class="headerlink" title="Apriori 频繁项集挖掘并行化实现思路"></a>Apriori 频繁项集挖掘并行化实现思路</h2><p>常规Apriori算法计算频繁k项集需要从频繁1项集开始逐次递加项数，每次计算k+1项集时，需要根据频繁k项集通过扫描整个数据集来生成候选集并进行候选集的支持度计算，于是支持度最小的候选项便是频繁k+1项集</p>
+<p>可以看出常规算法在数据集较大时会在<strong>支持度计算部分</strong>消耗大量时间，因此要进行并行化改造的关键就在于对该部分设计并行化算法</p>
+<p><a href="https://www.cnblogs.com/brooksj/p/spark-Apriori.html">https://www.cnblogs.com/brooksj/p/spark-Apriori.html</a> 并行化设计的思路主要是考虑将对于支持度计数的过程使用wordcount来进行统计，通过<strong>flatmap</strong>操作生成候选集，然后通过<strong>map</strong>和<strong>reduceByKey</strong>进行支持度的统计</p>
+<h2 id="secureboost并行化实现思路"><a href="#secureboost并行化实现思路" class="headerlink" title="secureboost并行化实现思路"></a>secureboost并行化实现思路</h2><p>FATE项目的secureboost基于spark平台实现了联邦的GBDT算法，可以说是在spark上实现复杂算法的典型案例了（当然也是因为GBDT天然对并行化的支持）</p>
+<p>secureboost算法实现具体也可以参考我的另外一篇文章 GBDT协作学习实现，主要实现思路便是对所有样本计算梯度，整合成<strong>直方图</strong>的形式进行分裂收益的计算和最佳分裂点的选择</p>
+<h2 id="思路整理"><a href="#思路整理" class="headerlink" title="思路整理"></a>思路整理</h2><ul>
+<li>因为在进行spark的transformation时只能并行化的对RDD内数据进行处理，不能对共享进行写操作，因此也无法支持复杂的逻辑，这是spark进行分布式批量计算所必然的设计，所以在进行设计时一个重要的问题就是，对<strong>算法复杂逻辑</strong>和对<strong>大量数据进行处理</strong>时必须藉由并行化来保证时间开销的平衡</li>
+<li>算法在处理大量数据集时，限制主要在于从全部数据中进行相关值的计算，而进行算法的spark实现也是主要将这部分通过spark的transformer和action两种操作替代该部分的计算，而其他设计有限量数据的或者对提取到的类似梯度或统计量的数值进行处理的算法部分则没有必要额外使用spark来实现</li>
+<li>所以，一般思路便是，先对全部数据的RDD集通过transformation以及action操作得到一个概括性的数据结构，例如GBDT算法的直方图，基于这个<strong>概括性的数据结构</strong>来进行复杂的算法流程，计算结果再通过transformation分配给RDD的各个元素，至此可能完成了算法的一次循环</li>
+<li>另外，还需要考量在spark的工作流中合适的位置进行<strong>数据持久化</strong></li>
+</ul>
+<h1 id="算法实现"><a href="#算法实现" class="headerlink" title="算法实现"></a>算法实现</h1><p><a href="https://github.com/jacoeus/SparkLogPG">https://github.com/jacoeus/SparkLogPG</a></p>
+<p><strong>AECID-PG</strong>算法介绍参考另一篇博客日志分析算法学习，主要方法时将各行日志按词元token进行划分后根据词元密度，即前缀相同的日志中该词元出现的比例来判断该词元是否可变或者静态的，据此来建立一棵树，每个节点对应一个词元，每条路径对应一种日志模板</p>
+<p>于是，将该算法进行spark实现的主要问题在于：<strong>并行化计算词元密度</strong>、将词元数据与<strong>日志树关联</strong>以及对树的每一层要进行一次计算（action）导致的<strong>数据持久化问题</strong></p>
+<ul>
+<li>在计算词元密度时，需要考虑计算当前token在与其相同前缀的所有日志行中出现的比例（不能统计该token在当前层出现的数量），因此需要获取<strong>相同前缀</strong>的日志行数量和在该前缀下统计各token的数量。因此在进行词元计算时，我采用将<strong>前缀（路径节点id）和当前token</strong>作为RDD的key来进行countByKey的统计，同时在日志树对应的父节点保存该前缀的数量以便下层循环时取用，如此实现并行化次元密度的计算</li>
+<li>为了实现词元数据与日志树的关联，我采用将日志树节点通过id进行标识的方法，每次计算得到当前token对应的节点后，将节点id保存在RDD的键值(pre,roken_list)中前缀pre的最后一位来进入下一层的循环</li>
+<li>数据持久化方面因为在每一层的循环中都要做一次countByKey的action操作，如果不进行持久化的话在每次循环在countByKey会重复之前循环的transformation操作，但进行持久化的话每循环一次，仅为了一次action操作就需要进行持久化，频繁持久化可能也会影响效率，我这里是简单的采用持久化的方案，对每一层计算得到的RDD就进行持久化并释放上一层的持久化，更优的方案需要之后探索<code>#TODO</code></li>
+</ul>
+<h2 id="算法流程"><a href="#算法流程" class="headerlink" title="算法流程"></a>算法流程</h2><ul>
+<li>token2PF: mutable.Map[(ListBuffer[Int], String), (Int, Double, Long)] // (pre, token) -&gt; (parent_id, PF, count)</li>
+<li>pre2metrics: mutable.Map[ListBuffer[Int], ListBuffer[(String, Int, Double, Long)]] // pre -&gt; [(token1,parent_id,PF,count), …]</li>
+<li>token2node: mutable.Map[(ListBuffer[Int], String), Int] // (pre,token) -&gt; node_id</li>
+<li>id2node: mutable.Map[Int, ParserNode] // node_id -&gt; node</li>
+</ul>
+<figure class="highlight scala"><table><tr><td class="code"><pre><span class="line"><span class="type">Input</span>:通过elasticsearch-spark库将elasticsearch日志数据以<span class="type">RDD</span>数据形式进行获取</span><br><span class="line"></span><br><span class="line">new_RDD = <span class="type">RDD</span>.map(日志清洗和建立token列表).cache()</span><br><span class="line"><span class="keyword">while</span>(没有待匹配的日志 || 层数达到预设的最大值)&#123;</span><br><span class="line">	<span class="type">RDD</span> = new_RDD</span><br><span class="line">    <span class="comment">// 将前缀（路径节点id）和当前token作为RDD的key来进行countByKey的统计，并行计算</span></span><br><span class="line">    next_token_count = <span class="type">RDD</span>.map((pre,token_list) =&gt; ((pre,curr_token),rest_token_list)).countByKey <span class="comment">// Spark操作</span></span><br><span class="line">    </span><br><span class="line">    token2PF &lt;- 根据next_token_count通过获取父节点的count信息，计算<span class="type">PF</span>并得到token到(parent_id,<span class="type">PF</span>,count)的映射</span><br><span class="line">    pre2metrics &lt;- 根据token2PF统计相同前缀下各token及其parent_id,<span class="type">PF</span>,count等指标</span><br><span class="line">    token_node_map &lt;- 遍历pre2metrics，根据指标分配节点并通过token_node_map记录&#123;</span><br><span class="line">        node_id &lt;- 自增</span><br><span class="line">        node &lt;- 参考<span class="type">AECID</span>-<span class="type">PG</span>算法建立当前层对应的节点，赋值包括(是否可变、token、count、node_id等)，并加入父节点的子节点列表</span><br><span class="line">        id2node += (node_id -&gt; node)</span><br><span class="line">        token_node_map += ((pre,token),node_id)</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    new_RDD = <span class="type">RDD</span>.filter(过滤没有加入日志树的日志行).map(根据token_node_map将新节点加入前缀).cache() <span class="comment">// Spark操作</span></span><br><span class="line">    <span class="type">RDD</span>.unpersist() <span class="comment">// 释放上一层持久化</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="结果示例"><a href="#结果示例" class="headerlink" title="结果示例"></a>结果示例</h2><p>在kubernetes取了apisix一个组件pod的日志进行日志树生成，这里取了前10层的日志树进行简单的可视化</p>
+<p><img src="2.png" alt="1"></p>
+]]></content>
+      <categories>
+        <category>AIOps</category>
+        <category>日志分析</category>
+      </categories>
+      <tags>
+        <tag>Spark</tag>
+        <tag>Elasticsearch</tag>
+        <tag>算法实现</tag>
+        <tag>日志分析</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>spark连接elasticsearch进行数据处理</title>
+    <url>/2021/11/22/spark%E8%BF%9E%E6%8E%A5elasticsearch%E8%BF%9B%E8%A1%8C%E6%95%B0%E6%8D%AE%E5%A4%84%E7%90%86/</url>
+    <content><![CDATA[<p>在数据处理时希望结合Spark和Elasticsearch这两大流行的工具，设想了将大量运维数据存储在Elasticsearch中通过Spark访问处理后再返回Elasticsearch，结合Kibana进行展示，或者使用Spark Streaming在入库Elasticsearch前进行预处理两种场景</p>
+<p>本文总结了Spark与Elasticsearch进行交互的几种模式及一些demo</p>
+<p><code>#TODO</code></p>
+<a id="more"></a>
+
+<p>方案1：elasticsearch部署在kubernetes环境下，本机使用local[*]方案访问用于简单测试</p>
+<figure class="highlight xml"><table><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.apache.spark<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spark-core_2.12<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">version</span>&gt;</span>3.2.0<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.elasticsearch<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>elasticsearch-spark-30_2.12<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">version</span>&gt;</span>7.15.2<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">WordCount</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">        SparkConf conf = <span class="keyword">new</span> SparkConf().setAppName(<span class="string">&quot;Elastic App&quot;</span>).setMaster(<span class="string">&quot;local[*]&quot;</span>);</span><br><span class="line">        conf.set(<span class="string">&quot;es.nodes&quot;</span>, <span class="string">&quot;10.108.23.161&quot;</span>);  <span class="comment">// CLUSTER_IP</span></span><br><span class="line">        conf.set(<span class="string">&quot;es.port&quot;</span>, <span class="string">&quot;9200&quot;</span>);</span><br><span class="line">        conf.set(<span class="string">&quot;es.net.http.auth.user&quot;</span>, <span class="string">&quot;elastic&quot;</span>);</span><br><span class="line">        conf.set(<span class="string">&quot;es.net.http.auth.pass&quot;</span>, <span class="string">&quot;nwT9nh83KTZw1RoMjxDo&quot;</span>);</span><br><span class="line">        conf.set(<span class="string">&quot;es.nodes.wan.only&quot;</span>, <span class="string">&quot;true&quot;</span>);</span><br><span class="line"></span><br><span class="line">        JavaSparkContext jsc = <span class="keyword">new</span> JavaSparkContext(conf);</span><br><span class="line">        jsc.setLogLevel(<span class="string">&quot;ERROR&quot;</span>);</span><br><span class="line"></span><br><span class="line">        JavaPairRDD&lt;String, Map&lt;String, Object&gt;&gt; esRDD = JavaEsSpark.esRDD(jsc, <span class="string">&quot;metricbeat-7.8.0-2021.11.22-000001&quot;</span>);  <span class="comment">// index</span></span><br><span class="line">        System.out.println(esRDD.first().toString());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>#TODO</code></p>
+]]></content>
+      <categories>
+        <category>大数据</category>
+        <category>spark</category>
+      </categories>
+      <tags>
+        <tag>Spark</tag>
+        <tag>Elasticsearch</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>协作学习与网络安全大赛参赛总结</title>
+    <url>/2021/01/16/%E5%8D%8F%E4%BD%9C%E5%AD%A6%E4%B9%A0%E4%B8%8E%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8%E5%A4%A7%E8%B5%9B%E5%8F%82%E8%B5%9B%E6%80%BB%E7%BB%93/</url>
+    <content><![CDATA[<p>前段时间一直在参加第一届全国大学生协作学习与网络安全大赛，刚答辩结束，于是在此对比赛过程做一个总结，也对决赛其他队伍的优秀思路做个简单的整理</p>
+<p>相比于其他团队，我们的论文阅读更偏向于工程实现方面，参考论文也大多是将本地的GBDT算法无损的实现到联邦环境，但似乎联邦学习方面的研究课题更倾向于以深度学习为基础，也是我们调研不够充分，导致我们比赛时的很多思路以及调研受限于传统机器学习，无法很好响应协作学习的主题</p>
+ <a id="more"></a>
+
+<h1 id="赛题的主要挑战"><a href="#赛题的主要挑战" class="headerlink" title="赛题的主要挑战"></a>赛题的主要挑战</h1><ul>
+<li>联邦环境 单PS+多Worker</li>
+<li>缺失值处理</li>
+<li>噪声处理</li>
+<li>数据倾斜 Non-IID</li>
+<li>测试集存在训练集没有的类</li>
+<li>隐私保护</li>
+</ul>
+<h1 id="相关思路整理"><a href="#相关思路整理" class="headerlink" title="相关思路整理"></a>相关思路整理</h1><p>对我们以及决赛其他队伍一些思路做一个简单的整理</p>
+<ul>
+<li>缺失值处理<ul>
+<li>超过19维直接删除</li>
+<li>随机森林</li>
+</ul>
+</li>
+<li>特征工程<ul>
+<li>特征编码（无用或高相关特征）</li>
+<li>LightGBM 互斥绑定</li>
+<li>归一化（基于GBDT的特征映射）</li>
+</ul>
+</li>
+<li>联邦学习安全：拜占庭问题（相似梯度聚合）</li>
+<li>一些深度学习的方案<ul>
+<li><code>#TODO</code></li>
+</ul>
+</li>
+</ul>
+<h1 id="比赛经历总结"><a href="#比赛经历总结" class="headerlink" title="比赛经历总结"></a>比赛经历总结</h1><ul>
+<li>有必要对多种方法进行尝试比对，在最后答辩或者展示的时候对效果进行评测</li>
+<li>当时认为GBDT对噪声不敏感，把缺失值只进行简单的处理，反而引入了噪声，事实上还是需要对缺失值进行合适的处理，10%的缺失值不进行合适的处理可能会完全影响预测的准确性</li>
+<li>手动实现secureBoost发现效率极不理想（比赛的时候因为这个头秃了好久），在构建直方图的时候时间复杂度达到O(#instance * #feature * #bin)，而LightGBM同样使用了直方图效率好像会快很多，一方面时使用了GOSS和特征的互斥绑定等优化算法，一方面可能也是数据结构的优化问题，这可以方面后续进行了解，另外，在多进程和多线程方面也可以加以考虑，比赛时因环境限制，两者对运行时间也没有明显的减少</li>
+<li>比赛时模拟环境限制，将secureBoost迁移到比赛环境时底层数据结构还是得重新设计，代码结构也做了一些修改，也是花了蛮多时间，后来加上了一些LightGBM的优化方案，整个过程也是对GBDT系列的算法实现有了较深的理解（然而实际部署联邦环境大部分都有现成的库了）</li>
+</ul>
+<h1 id="比赛总结"><a href="#比赛总结" class="headerlink" title="比赛总结"></a>比赛总结</h1><p>下面是我们队答辩PPT的简单文字稿，后来看了别人队感觉就很粗糙hhh</p>
+<h2 id="赛题理解"><a href="#赛题理解" class="headerlink" title="赛题理解"></a>赛题理解</h2><ul>
+<li>对DDOS流量进行多分类 =&gt; 决策树算法，适用于多分类情况，可解释性强，有助于后续分析</li>
+<li>模拟分布式环境，单PS &amp; 多Worker =&gt; 分布式</li>
+<li>数据集划分（每个Worker的数据集包含所有特征，但只有部分标签） =&gt; 横向联邦的secureBoost</li>
+</ul>
+<h3 id="解题思路"><a href="#解题思路" class="headerlink" title="解题思路"></a>解题思路</h3><p>使用适用于横向联邦的分布式GBDT算法对数据集进行多分类，并结合数据集特征进行优化</p>
+<h2 id="算法说明"><a href="#算法说明" class="headerlink" title="算法说明"></a>算法说明</h2><ul>
+<li>在具体实现上，参考了FATE secureBoost，XGBoost，LightGBM等工程实现项目，使用直方图算法来收集各个Worker的梯度信息，并据此找到决策树对应各个节点的分裂点</li>
+</ul>
+<img src="1.png" alt="图片1" style="zoom: 40%;" />
+
+<ul>
+<li><p>如上图所示，由Worker计算当前节点的训练数据的一阶和二阶梯度直方图，汇总到Server建立全局的直方图，据此可以计算得到节点的最佳分裂点</p>
+</li>
+<li><p>通过这种方法来建立决策树，并结合Boosting的集成学习方法实现了secureBoost算法</p>
+</li>
+<li><p>考虑到在模拟环境下使用全部数据集来进行建模时间消耗过大，不利于后续模型调整，我们权衡之下，基于secureBoost算法实现使用了如下的方案</p>
+</li>
+</ul>
+<img src="2.png" alt="图片2" style="zoom:50%;" />
+
+<ul>
+<li>仅使用部分数据集来进行建模，并使用对每个Worker的数据集进行进一步划分重组来集成投票的方式来提升性能</li>
+</ul>
+<h2 id="性能分析"><a href="#性能分析" class="headerlink" title="性能分析"></a>性能分析</h2><ul>
+<li>隐私性：通过结合同态加密技术，可以保障数据的隐私性</li>
+<li>通信开销：O(#feature * #bin)</li>
+<li>训练开销：O(#instance * #feature * log(#bin) / #worker)</li>
+<li>能够进行无损的联邦学习</li>
+<li>GBDT算法对噪声不敏感</li>
+<li>通过结合集成学习保证了模型的泛化性</li>
+</ul>
+<h2 id="总结与展望"><a href="#总结与展望" class="headerlink" title="总结与展望"></a>总结与展望</h2><h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><ul>
+<li>主要工作：在官方环境中重写了secureBoost，实现了直方图算法，level-wise和leaf-wise两种树的生长方式以及特征选择等，另外也实现了</li>
+<li>实现了以一轮GBDT作为基决策树的随机森林</li>
+<li>没有对缺失值进行合适的处理，遗漏了secureBoost本身对缺失值处理的能力</li>
+</ul>
+<h3 id="展望"><a href="#展望" class="headerlink" title="展望"></a>展望</h3><ul>
+<li>考虑使用随机森林算法的列抽样来对缺失值进行处理</li>
+<li>实现在分布式环境上部署，探索学习更高效的算法实现</li>
+</ul>
+]]></content>
+      <categories>
+        <category>机器学习</category>
+        <category>联邦学习</category>
+      </categories>
+      <tags>
+        <tag>机器学习</tag>
+        <tag>协作学习</tag>
+        <tag>联邦学习</tag>
+        <tag>比赛经历</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>日志分析算法学习</title>
     <url>/2021/12/13/%E6%97%A5%E5%BF%97%E5%88%86%E6%9E%90%E7%AE%97%E6%B3%95%E5%AD%A6%E4%B9%A0/</url>
     <content><![CDATA[<p>希望对日志分析有个大致的了解，尝试学习了《Smart Log Data Analytics: Techniques for Advanced Security Analysis》一书，并就其中一些算法和思路进行整理，学习其中提到的 AECID 轻量级日志分析方案</p>
@@ -1464,9 +1383,9 @@
         <category>日志分析</category>
       </categories>
       <tags>
+        <tag>AIOps</tag>
         <tag>日志分析</tag>
         <tag>算法学习</tag>
-        <tag>AIOps</tag>
       </tags>
   </entry>
   <entry>
@@ -1603,10 +1522,281 @@
         <category>比赛经历</category>
       </categories>
       <tags>
+        <tag>AIOps</tag>
         <tag>机器学习</tag>
         <tag>比赛经历</tag>
-        <tag>AIOps</tag>
         <tag>天池大赛</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>一些联邦学习方向的调研</title>
+    <url>/2021/01/29/%E4%B8%80%E4%BA%9B%E8%81%94%E9%82%A6%E5%AD%A6%E4%B9%A0%E6%96%B9%E5%90%91%E7%9A%84%E8%B0%83%E7%A0%94/</url>
+    <content><![CDATA[<p>试图探索联邦学习方向进行研究的方向，搜索了一些资料对联邦学习领域的一些问题或者研究方向进行了一个简单的调研和整理，主要分为联邦学习的<strong>通信加速</strong>和<strong>隐私保护</strong>问题</p>
+ <a id="more"></a>
+
+<h1 id="联邦学习通信加速问题"><a href="#联邦学习通信加速问题" class="headerlink" title="联邦学习通信加速问题"></a>联邦学习通信加速问题</h1><p>From: 胡水海-联邦学习海量加密数据高效传输的探索</p>
+<h2 id="数据中心内场景"><a href="#数据中心内场景" class="headerlink" title="数据中心内场景"></a>数据中心内场景</h2><p>该主题主要面向高速网络时代如何加速联邦学习通信问题</p>
+<p><strong>点对点通信</strong>：一个方案是使用<strong>RDMA技术</strong>优化两点间通信，因为使用TCP协议吞吐量受限、延迟较大，通过RDMA内核旁路使用硬件加速传输层，甚至GPU-Direct-RDMA实现GPU与RMA之间的数据零拷贝，从而极大节省通信时间</p>
+<p><strong>多点通信</strong>：因为在传统参数聚合场景Parameter Server参数服务器位置容易出现链路瓶颈，而且某一跳阻塞会导致整个聚合任务的停滞。这里提出了使用<strong>动态参数聚合模型</strong>优化多点间通信，通过根据网络状态（物理拓扑、动态状态等）生成参数汇聚方案，避免参数传递集中在延迟严重的链路</p>
+<h2 id="跨区域场景"><a href="#跨区域场景" class="headerlink" title="跨区域场景"></a>跨区域场景</h2><p>针对高延迟、高丢包率网络环境下如何加速联邦学习通信提出了跨区域场景下的联邦学习，在该场景下，物理距离增加，跨区域通信时间在联邦学习中的时间占比越来越大，而且跨区域主干网具有高延迟、高丢包率等特征,丢包侦测与丢包恢复代价很大</p>
+<p>因此，一个思路是结合某些联邦学习算法的特点，例如目前模型训练大多采用随机梯度下降（SGD）方式通过多轮迭代进行,丢失一部分数据不影响训练算法找到模型收敛点，基于此便可以通过设计机器学习专用的网络传输协议 MLT 等方式在一定程度上免去丢包侦测与丢包恢复的时间</p>
+<p>另一个思路是对数据进行压缩，通过减少需要传输的数据量来减少传输的时间开销，也降低丢包的概率。一些研究基于此结合了概率数据结构的方法，对传递的参数信息提取Sketch，很大程度减少了数据了的同时保留数据的某些特性，例如 Count Sketch 可以在较小的空间内存储大量的模型更新信息，并在一定程度上不影响模型的最终训练效果，通过这种方式减少需要传输的数据量来减少传输的时间开销 。另外，Fetchsgd: Communication-efficient federated learning with sketching 和 Fedsketch: Communication-efficient and private federated learning via sketching 就是两种通过将 sketch 和联邦学习结合来加速联邦学习的实现</p>
+<h1 id="联邦学习隐私保护问题"><a href="#联邦学习隐私保护问题" class="headerlink" title="联邦学习隐私保护问题"></a>联邦学习隐私保护问题</h1><blockquote>
+<p>目标：实现隐私性的同时保证模型训练的效率和准确率</p>
+</blockquote>
+<ul>
+<li>sketches如何应用与联邦学习场景</li>
+<li>当前哪些sketches有利于保证隐私性和准确度</li>
+<li>如何利用当前sketches进一步提升隐私性</li>
+</ul>
+<h2 id="隐私性的定义"><a href="#隐私性的定义" class="headerlink" title="隐私性的定义"></a>隐私性的定义</h2><p>From: Enhancing the Privacy of Federated Learning with Sketching</p>
+<ul>
+<li>Level-0：无隐私性</li>
+<li>Level-1：原始数据保护<ul>
+<li>传统联邦学习</li>
+<li>模型更新信息（梯度）共享</li>
+</ul>
+</li>
+<li>Level-2：全局隐私<ul>
+<li>模型更新信息仅对汇聚节点（参数服务器）可见</li>
+</ul>
+</li>
+<li>Level-3：本地隐私<ul>
+<li>模型更新信息对所有其他节点不可见</li>
+</ul>
+</li>
+<li>Level-4：终极目标<ul>
+<li>包括用户信息、模型更新信息以及训练得到的模型对第三方都不可见</li>
+<li>对于所有参与者，整个系统是一个黑盒，仅持有对预测功能的接口</li>
+</ul>
+</li>
+</ul>
+<h2 id="保护数据隐私的多方计算方法"><a href="#保护数据隐私的多方计算方法" class="headerlink" title="保护数据隐私的多方计算方法"></a>保护数据隐私的多方计算方法</h2><h3 id="基于噪音的安全计算方法"><a href="#基于噪音的安全计算方法" class="headerlink" title="基于噪音的安全计算方法"></a>基于噪音的安全计算方法</h3><p>差分隐私，保护的是数据源中一点微小的改动导致的隐私泄露问题</p>
+<p>使用基于噪声的差分隐私方法的主要思想是，对计算过程用噪音干扰，让原始数据淹没在噪音中，而无法从得到的结果反推原始数据的细节</p>
+<p>比较常用的是加拉普拉斯噪音（Laplace noise）。由于拉普拉斯分布的数学性质正好与差分隐私的定义相契合</p>
+<p>该方法通常也要求数据满足一定的分布，这一点在现实中通常很难满足</p>
+<h3 id="非噪音的安全计算方法"><a href="#非噪音的安全计算方法" class="headerlink" title="非噪音的安全计算方法"></a>非噪音的安全计算方法</h3><p>混淆电路（Garbled Circuit）、同态加密（Homomorphic Encryption）和密钥分享（Secret Sharing）</p>
+<ul>
+<li>基于密码学的方法</li>
+<li>能够以准确值进行传输，但计算量和通讯开销会比较大</li>
+<li>联邦学习保障数据隐私的另一种一种常用方法是采用同态加密技术</li>
+</ul>
+<p><strong>同态加密</strong></p>
+<ul>
+<li>同态加密是一种依赖数学计算复杂性的的加密算法,能让密文能够进行某种代数运算得到的仍是加密的<br>结果而且结果与明文进行运算后再进行加密的结果一致。</li>
+<li>同态加密包括部分同态（只针对加法或乘法有同态性质，即加法同态、乘法同态等）、层次同态（只支持有限次运算）以及全同态等,相较于差分隐私的方法，同态加密的计算开销要大得多,目前大多解决方案仍是使用效率较高的部分同态</li>
+<li>一般使用的同态加密算法为 PHE（多见为加法同态加密算法)），例如在 FATE 项目中使用的 Paillier 即为加法同态加密算法，在联邦学习中，大多也采用加法的梯度聚合方式，各个数据孤岛在本地计算各自的模型更新信息使用同态加密的算法进行加密后发送给参数服务器,参数服务器通过对密文直接采用基于加法或乘法的聚合方式计算得到全局模型更新信息的密文形式，由于同态加密的特性，保证了此时解密得到的结果是正确的全局模型更新信息，对模型进行更新,至此完成一轮的联邦学习过程</li>
+</ul>
+<h2 id="差分隐私-Sketch"><a href="#差分隐私-Sketch" class="headerlink" title="差分隐私+Sketch"></a>差分隐私+Sketch</h2><p>$$<br>\forall{S} , Pr[M(D_1)\in S]\leq e^{\epsilon} * Pr[M(D_2)\in S]<br>$$</p>
+<p>上式表示对于相似的数据集D1和D2，两者通过随机化机制M处理后得到的结果属于同一个M的输出结果集合S的概率接近于1</p>
+<ul>
+<li>方案1： 直接在模型更新信息中加入噪声</li>
+<li>方案2： Laplace噪声+Count-Min和Count（From: Efficient private statistics with succinct sketches）</li>
+<li>方案3： Count-Min or Count（From: Enhancing the privacy of federated learning with sketching）<ul>
+<li>模型空间远大于sketch的大小，count sketch可以满足差分隐私的条件</li>
+<li>否则需要hash算法的不可逆性来在一定程度上保证数据隐私</li>
+</ul>
+</li>
+</ul>
+]]></content>
+      <categories>
+        <category>机器学习</category>
+        <category>联邦学习</category>
+      </categories>
+      <tags>
+        <tag>学习笔记</tag>
+        <tag>联邦学习</tag>
+        <tag>sketch</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Istio &amp; AIOps环境搭建</title>
+    <url>/2021/06/30/Istio-AIOps%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/</url>
+    <content><![CDATA[<p>在AIOps挑战赛学习了智能运维相关的内容，尝试在Service Mesh环境下模拟配置挑战赛环境</p>
+<p>使用minikube搭建微服务网络，通过Istio进行监控，分别通过Prometheus、Fluented以及Jaeger获取服务的指标、日志和调用链信息，并汇总到Elasticsearch用作后续分析</p>
+<p>后续发现使用全栈的Elastic解决方案能够不依赖istio实现轻松可靠的在Elasticseach中汇总指标、日志和性能追踪，于是又尝试了如下的解决方案<a href="https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-1/">https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-1/</a></p>
+<p>除此之外，<a href="https://juejin.cn/post/6847902217979052045">KubeSphere</a>汇总了包括运维数据获取等的一系列解决方案，可以非常方便地安装与管理用户最常用的云原生工具</p>
+<a id="more"></a>
+
+<h1 id="Istio-环境配置"><a href="#Istio-环境配置" class="headerlink" title="Istio 环境配置"></a>Istio 环境配置</h1><p>参考教程配置环境<a href="https://istio.io/latest/docs/setup/getting-started/">https://istio.io/latest/docs/setup/getting-started/</a></p>
+<h2 id="配置流程"><a href="#配置流程" class="headerlink" title="配置流程"></a>配置流程</h2><p>参见官网demo <a href="https://istio.io/latest/docs/setup/getting-started/">https://istio.io/latest/docs/setup/getting-started/</a></p>
+<p>安装minikube <a href="https://minikube.sigs.k8s.io/docs/start/#install-a-hypervisor">https://minikube.sigs.k8s.io/docs/start/#install-a-hypervisor</a></p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">minikube start</span><br><span class="line">kubectl get po -A</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">istioctl install --set profile=demo -y</span><br><span class="line">kubectl label namespace default istio-injection=enabled</span><br><span class="line">kubectl apply -f samples/bookinfo/platform/kube/bookinfo.yaml</span><br><span class="line">kubectl get services</span><br><span class="line">kubectl get pods //等待直到所有pods处于Running状态</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl exec &quot;$(kubectl get pod -l app=ratings -o jsonpath=&#x27;&#123;.items[0].metadata.name&#125;&#x27;)&quot; -c ratings -- curl -sS productpage:9080/productpage | grep -o &quot;&lt;title&gt;.*&lt;/title&gt;&quot;</span><br><span class="line">//命令行返回&lt;title&gt;Simple Bookstore App&lt;/title&gt;则当前配置过程正常</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">//创建一个Istio Ingress Gateway，该网关将路径映射到网格边缘处的路线</span><br><span class="line">kubectl apply -f samples/bookinfo/networking/bookinfo-gateway.yaml</span><br><span class="line">istioctl analyze</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">export INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath=&#x27;&#123;.spec.ports[?(@.name==&quot;http2&quot;)].nodePort&#125;&#x27;)</span><br><span class="line">export SECURE_INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath=&#x27;&#123;.spec.ports[?(@.name==&quot;https&quot;)].nodePort&#125;&#x27;)</span><br><span class="line">export INGRESS_HOST=$(minikube ip)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">minikube tunnel &#x2F;&#x2F;在新的终端窗口中运行以下命令，以启动将流量发送到Istio Ingress网关的Minikube隧道</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">export GATEWAY_URL=$INGRESS_HOST:$INGRESS_PORT</span><br><span class="line">echo &quot;http://$GATEWAY_URL/productpage&quot;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl apply -f samples/addons</span><br><span class="line">kubectl rollout status deployment/kiali -n istio-system</span><br><span class="line">istioctl dashboard kiali</span><br></pre></td></tr></table></figure>
+
+<h2 id="kubernets相关命令"><a href="#kubernets相关命令" class="headerlink" title="kubernets相关命令"></a>kubernets相关命令</h2><p>minikube是本地的Kubernetes，致力于使Kubernetes易于学习和开发</p>
+<p><a href="https://minikube.sigs.k8s.io/docs/start/#install-a-hypervisor">https://minikube.sigs.k8s.io/docs/start/#install-a-hypervisor</a></p>
+<p><a href="https://istio.io/latest/docs/setup/platform-setup/minikube/">https://istio.io/latest/docs/setup/platform-setup/minikube/</a></p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">minikube start --driver=docker</span><br><span class="line">minikube start --memory=16384 --cpus=4 --kubernetes-version=v1.20.2</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl get po -A</span><br><span class="line">minikube kubectl -- get po -A </span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">minikube pause</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">minikube stop</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">minikube delete --all</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl get po -A //查看所有pods，第一列为命名空間</span><br><span class="line">kubectl get pod -n istio-system //查看命名空间istio-system下的pods</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl get deployment -n istio-system</span><br><span class="line">kubectl delete deployment prometheus -n istio-system</span><br><span class="line">kubectl delete pod prometheus -n istio-system</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl delete pod prometheus -n istio-system //从命名空间istio-system删除prometheus</span><br><span class="line">kubectl rollout status deployment/prometheus -n istio-system //重新安装prometheus</span><br></pre></td></tr></table></figure>
+
+<h2 id="Istio相关命令"><a href="#Istio相关命令" class="headerlink" title="Istio相关命令"></a>Istio相关命令</h2><p><a href="https://www.servicemesher.com/istio-handbook/practice/setup-istio.html">https://www.servicemesher.com/istio-handbook/practice/setup-istio.html</a></p>
+<p><a href="https://istio.io/latest/docs/setup/install/istioctl/">https://istio.io/latest/docs/setup/install/istioctl/</a></p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">istioctl install</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">istioctl install --set profile=demo</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">istioctl x uninstall --purge</span><br></pre></td></tr></table></figure>
+
+<p>可选<code>--purge</code>标志将删除所有Istio资源，包括可能与其他Istio控制平面共享的群集范围的资源。</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">istioctl dashboard //查看可用的仪表盘</span><br></pre></td></tr></table></figure>
+
+<h1 id="运维环境搭建"><a href="#运维环境搭建" class="headerlink" title="运维环境搭建"></a>运维环境搭建</h1><p>将指标、日志以及调用链数据集中到elasticsearch以便后续分析</p>
+<p><a href="https://kubernetes.io/zh/docs/tasks/configure-pod-container/pull-image-private-registry/">https://kubernetes.io/zh/docs/tasks/configure-pod-container/pull-image-private-registry/</a></p>
+<p>环境搭建速度较慢时考虑使用本地镜像</p>
+<h2 id="Prometheus配置"><a href="#Prometheus配置" class="headerlink" title="Prometheus配置"></a>Prometheus配置</h2><p><a href="https://www.servicemesher.com/istio-handbook/practice/prometheus.html">https://www.servicemesher.com/istio-handbook/practice/prometheus.html</a></p>
+<p>istio的sample/addons目录提供了prometheus的yaml文件，之前通过<code>kubectl apply -f samples/addons</code>已安装，可以直接<code>istioctl dashboard prometheus</code>进行观察</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">//进入prometheus所在pod</span><br><span class="line">//pod名通过kubectl get po -A命令查找并替换</span><br><span class="line">kubectl exec -it prometheus-7cb88b5945-8jbkf -n istio-system sh</span><br></pre></td></tr></table></figure>
+
+<p>找到配置文件prometheus.yml并打开，我的在/etc/config/prometheus.yml并修改</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">//也可以通过修改 Prometheus 的 ConfigMap 对其配置进行如下修改</span><br><span class="line">kubectl edit configmap prometheus -n istio-system </span><br></pre></td></tr></table></figure>
+
+<p>修改完成后保存，需要给 Prometheus 加上 –web.enable-lifecycle 启动参数来支持热更新（可能默认支持）</p>
+<p>这些配置参数在prometheus.yaml中已经定义</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl edit deployment prometheus -n istio-system</span><br><span class="line"> ...</span><br><span class="line"> containers:</span><br><span class="line">      - args:</span><br><span class="line">        - --storage.tsdb.retention=6h</span><br><span class="line"></span><br><span class="line">        - --config.file=/etc/prometheus/prometheus.yml</span><br><span class="line"></span><br><span class="line">        - --web.enable-lifecycle</span><br><span class="line">          image: docker.io/prom/prometheus:v2.15.1</span><br><span class="line">          imagePullPolicy: IfNotPresent</span><br><span class="line"> ...</span><br></pre></td></tr></table></figure>
+
+<p>然后再调用 Prometheus 的 HTTP API 即可更新配置：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">curl -X POST http://&lt;Prometheus URL&gt;:9090/-/reload</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">istioctl dashboard prometheus</span><br></pre></td></tr></table></figure>
+
+<p><a href="https://www.elastic.co/cn/what-is/prometheus-monitoring">https://www.elastic.co/cn/what-is/prometheus-monitoring</a></p>
+<p>将prometheus数据导出到elasticsearch</p>
+<h2 id="EFK配置"><a href="#EFK配置" class="headerlink" title="EFK配置"></a>EFK配置</h2><p><a href="https://www.servicemesher.com/istio-handbook/practice/efk.html">https://www.servicemesher.com/istio-handbook/practice/efk.html</a></p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 参考efk.yaml</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="comment"># Logging Namespace. All below are a part of this namespace.</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Namespace</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">logging</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="comment"># Elasticsearch Service</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Service</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"> <span class="attr">name:</span> <span class="string">elasticsearch</span></span><br><span class="line"> <span class="attr">namespace:</span> <span class="string">logging</span></span><br><span class="line"> <span class="attr">labels:</span></span><br><span class="line">   <span class="attr">app:</span> <span class="string">elasticsearch</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line"> <span class="attr">ports:</span></span><br><span class="line"> <span class="bullet">-</span> <span class="attr">port:</span> <span class="number">9200</span></span><br><span class="line">   <span class="attr">protocol:</span> <span class="string">TCP</span></span><br><span class="line">   <span class="attr">targetPort:</span> <span class="string">db</span></span><br><span class="line"> <span class="attr">selector:</span></span><br><span class="line">   <span class="attr">app:</span> <span class="string">elasticsearch</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="comment"># Elasticsearch Deployment</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">apps/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Deployment</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"> <span class="attr">name:</span> <span class="string">elasticsearch</span></span><br><span class="line"> <span class="attr">namespace:</span> <span class="string">logging</span></span><br><span class="line"> <span class="attr">labels:</span></span><br><span class="line">   <span class="attr">app:</span> <span class="string">elasticsearch</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line"> <span class="attr">replicas:</span> <span class="number">1</span></span><br><span class="line"> <span class="attr">selector:</span></span><br><span class="line">   <span class="attr">matchLabels:</span></span><br><span class="line">     <span class="attr">app:</span> <span class="string">elasticsearch</span></span><br><span class="line"> <span class="attr">template:</span></span><br><span class="line">   <span class="attr">metadata:</span></span><br><span class="line">     <span class="attr">labels:</span></span><br><span class="line">       <span class="attr">app:</span> <span class="string">elasticsearch</span></span><br><span class="line">     <span class="attr">annotations:</span></span><br><span class="line">       <span class="attr">sidecar.istio.io/inject:</span> <span class="string">&quot;false&quot;</span></span><br><span class="line">   <span class="attr">spec:</span></span><br><span class="line">     <span class="attr">containers:</span></span><br><span class="line">     <span class="bullet">-</span> <span class="attr">image:</span> <span class="string">zhangguanzhang/docker.elastic.co.elasticsearch.elasticsearch-oss:6.1.1</span></span><br><span class="line">       <span class="attr">name:</span> <span class="string">elasticsearch</span></span><br><span class="line">       <span class="attr">resources:</span></span><br><span class="line">         <span class="comment"># need more cpu upon initialization, therefore burstable class</span></span><br><span class="line">         <span class="attr">limits:</span></span><br><span class="line">           <span class="attr">cpu:</span> <span class="string">1000m</span></span><br><span class="line">         <span class="attr">requests:</span></span><br><span class="line">           <span class="attr">cpu:</span> <span class="string">100m</span></span><br><span class="line">       <span class="attr">env:</span></span><br><span class="line">         <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">discovery.type</span></span><br><span class="line">           <span class="attr">value:</span> <span class="string">single-node</span></span><br><span class="line">       <span class="attr">ports:</span></span><br><span class="line">       <span class="bullet">-</span> <span class="attr">containerPort:</span> <span class="number">9200</span></span><br><span class="line">         <span class="attr">name:</span> <span class="string">db</span></span><br><span class="line">         <span class="attr">protocol:</span> <span class="string">TCP</span></span><br><span class="line">       <span class="bullet">-</span> <span class="attr">containerPort:</span> <span class="number">9300</span></span><br><span class="line">         <span class="attr">name:</span> <span class="string">transport</span></span><br><span class="line">         <span class="attr">protocol:</span> <span class="string">TCP</span></span><br><span class="line">       <span class="attr">volumeMounts:</span></span><br><span class="line">       <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">elasticsearch</span></span><br><span class="line">         <span class="attr">mountPath:</span> <span class="string">/data</span></span><br><span class="line">     <span class="attr">imagePullSecrets:</span></span><br><span class="line">     <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">regcred</span></span><br><span class="line">     <span class="attr">volumes:</span></span><br><span class="line">     <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">elasticsearch</span></span><br><span class="line">       <span class="attr">emptyDir:</span> &#123;&#125;</span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="comment"># Fluentd Service</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Service</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"> <span class="attr">name:</span> <span class="string">fluentd-es</span></span><br><span class="line"> <span class="attr">namespace:</span> <span class="string">logging</span></span><br><span class="line"> <span class="attr">labels:</span></span><br><span class="line">   <span class="attr">app:</span> <span class="string">fluentd-es</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line"> <span class="attr">ports:</span></span><br><span class="line"> <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">fluentd-tcp</span></span><br><span class="line">   <span class="attr">port:</span> <span class="number">24224</span></span><br><span class="line">   <span class="attr">protocol:</span> <span class="string">TCP</span></span><br><span class="line">   <span class="attr">targetPort:</span> <span class="number">24224</span></span><br><span class="line"> <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">fluentd-udp</span></span><br><span class="line">   <span class="attr">port:</span> <span class="number">24224</span></span><br><span class="line">   <span class="attr">protocol:</span> <span class="string">UDP</span></span><br><span class="line">   <span class="attr">targetPort:</span> <span class="number">24224</span></span><br><span class="line"> <span class="attr">selector:</span></span><br><span class="line">   <span class="attr">app:</span> <span class="string">fluentd-es</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="comment"># Fluentd ConfigMap, contains config files.</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">ConfigMap</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">data:</span></span><br><span class="line"> <span class="attr">forward.input.conf:</span> <span class="string">|-</span></span><br><span class="line">   <span class="comment"># Takes the messages sent over TCP</span></span><br><span class="line">   <span class="string">&lt;source&gt;</span></span><br><span class="line">     <span class="string">@id</span> <span class="string">fluentd-containers.log</span></span><br><span class="line">     <span class="string">@type</span> <span class="string">tail</span></span><br><span class="line">     <span class="string">path</span> <span class="string">/var/log/containers/*.log</span></span><br><span class="line">     <span class="string">pos_file</span> <span class="string">/var/log/es-containers.log.pos</span></span><br><span class="line">     <span class="string">time_format</span> <span class="string">%Y-%m-%dT%H:%M:%S.%NZ</span></span><br><span class="line">     <span class="string">tag</span> <span class="string">raw.kubernetes.*</span></span><br><span class="line">     <span class="string">format</span> <span class="string">json</span></span><br><span class="line">     <span class="string">read_from_head</span> <span class="literal">false</span></span><br><span class="line">   <span class="string">&lt;/source&gt;</span></span><br><span class="line">   <span class="string">&lt;filter</span> <span class="string">**&gt;</span></span><br><span class="line">     <span class="string">@id</span> <span class="string">filter_concat</span></span><br><span class="line">     <span class="string">@type</span> <span class="string">concat</span></span><br><span class="line">     <span class="string">key</span> <span class="string">message</span></span><br><span class="line">     <span class="string">multiline_end_regexp</span> <span class="string">/\n$/</span></span><br><span class="line">     <span class="string">separator</span> <span class="string">&quot;&quot;</span></span><br><span class="line">   <span class="string">&lt;/filter&gt;</span></span><br><span class="line">   <span class="string">&lt;filter</span> <span class="string">**&gt;</span></span><br><span class="line">     <span class="string">@type</span> <span class="string">parser</span></span><br><span class="line">     <span class="string">format</span> <span class="string">json</span> <span class="comment"># apache2, nginx, etc...</span></span><br><span class="line">     <span class="string">key_name</span> <span class="string">log</span></span><br><span class="line">     <span class="string">reserve_data</span> <span class="literal">false</span></span><br><span class="line">   <span class="string">&lt;/filter&gt;</span></span><br><span class="line"> <span class="attr">output.conf:</span> <span class="string">|-</span></span><br><span class="line">   <span class="string">&lt;match</span> <span class="string">**&gt;</span></span><br><span class="line">     <span class="string">type</span> <span class="string">elasticsearch</span></span><br><span class="line">     <span class="string">log_level</span> <span class="string">info</span></span><br><span class="line">     <span class="string">include_tag_key</span> <span class="literal">true</span></span><br><span class="line">     <span class="string">host</span> <span class="string">elasticsearch</span></span><br><span class="line">     <span class="string">port</span> <span class="number">9200</span></span><br><span class="line">     <span class="string">logstash_format</span> <span class="literal">true</span></span><br><span class="line">     <span class="comment"># Set the chunk limits.</span></span><br><span class="line">     <span class="string">buffer_chunk_limit</span> <span class="string">2M</span></span><br><span class="line">     <span class="string">buffer_queue_limit</span> <span class="number">8</span></span><br><span class="line">     <span class="string">flush_interval</span> <span class="string">5s</span></span><br><span class="line">     <span class="comment"># Never wait longer than 5 minutes between retries.</span></span><br><span class="line">     <span class="string">max_retry_wait</span> <span class="number">30</span></span><br><span class="line">     <span class="comment"># Disable the limit on the number of retries (retry forever).</span></span><br><span class="line">     <span class="string">disable_retry_limit</span></span><br><span class="line">     <span class="comment"># Use multiple threads for processing.</span></span><br><span class="line">     <span class="string">num_threads</span> <span class="number">2</span></span><br><span class="line">   <span class="string">&lt;/match&gt;</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"> <span class="attr">name:</span> <span class="string">fluentd-es-config</span></span><br><span class="line"> <span class="attr">namespace:</span> <span class="string">logging</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">apps/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">DaemonSet</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"> <span class="attr">name:</span> <span class="string">fluentd-es</span></span><br><span class="line"> <span class="attr">namespace:</span> <span class="string">logging</span></span><br><span class="line"> <span class="attr">labels:</span></span><br><span class="line">   <span class="attr">app:</span> <span class="string">fluentd-es</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line"> <span class="attr">selector:</span></span><br><span class="line">   <span class="attr">matchLabels:</span></span><br><span class="line">     <span class="attr">app:</span> <span class="string">fluentd-es</span></span><br><span class="line"> <span class="attr">template:</span></span><br><span class="line">   <span class="attr">metadata:</span></span><br><span class="line">     <span class="attr">labels:</span></span><br><span class="line">       <span class="attr">app:</span> <span class="string">fluentd-es</span></span><br><span class="line">     <span class="attr">annotations:</span></span><br><span class="line">       <span class="attr">sidecar.istio.io/inject:</span> <span class="string">&quot;false&quot;</span></span><br><span class="line">   <span class="attr">spec:</span></span><br><span class="line">     <span class="attr">containers:</span></span><br><span class="line">     <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">fluentd-es</span></span><br><span class="line">       <span class="attr">image:</span> <span class="string">quay.io/fluentd_elasticsearch/fluentd:v3.0.2</span></span><br><span class="line">       <span class="attr">env:</span></span><br><span class="line">       <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">FLUENTD_ARGS</span></span><br><span class="line">         <span class="attr">value:</span> <span class="string">--no-supervisor</span> <span class="string">-q</span></span><br><span class="line">       <span class="attr">resources:</span></span><br><span class="line">         <span class="attr">limits:</span></span><br><span class="line">           <span class="attr">memory:</span> <span class="string">500Mi</span></span><br><span class="line">         <span class="attr">requests:</span></span><br><span class="line">           <span class="attr">cpu:</span> <span class="string">100m</span></span><br><span class="line">           <span class="attr">memory:</span> <span class="string">200Mi</span></span><br><span class="line">       <span class="attr">volumeMounts:</span></span><br><span class="line">       <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">varlog</span></span><br><span class="line">         <span class="attr">mountPath:</span> <span class="string">/var/log</span></span><br><span class="line">       <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">varlibdockercontainers</span></span><br><span class="line">         <span class="attr">mountPath:</span> <span class="string">/var/lib/docker/containers</span></span><br><span class="line">         <span class="attr">readOnly:</span> <span class="literal">true</span></span><br><span class="line">       <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">config-volume</span></span><br><span class="line">         <span class="attr">mountPath:</span> <span class="string">/etc/fluent/config.d</span></span><br><span class="line">     <span class="attr">terminationGracePeriodSeconds:</span> <span class="number">30</span></span><br><span class="line">     <span class="attr">volumes:</span></span><br><span class="line">     <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">varlog</span></span><br><span class="line">       <span class="attr">hostPath:</span></span><br><span class="line">         <span class="attr">path:</span> <span class="string">/var/log</span></span><br><span class="line">     <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">varlibdockercontainers</span></span><br><span class="line">       <span class="attr">hostPath:</span></span><br><span class="line">         <span class="attr">path:</span> <span class="string">/var/lib/docker/containers</span></span><br><span class="line">     <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">config-volume</span></span><br><span class="line">       <span class="attr">configMap:</span></span><br><span class="line">         <span class="attr">name:</span> <span class="string">fluentd-es-config</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="comment"># Kibana Service</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Service</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"> <span class="attr">name:</span> <span class="string">kibana</span></span><br><span class="line"> <span class="attr">namespace:</span> <span class="string">logging</span></span><br><span class="line"> <span class="attr">labels:</span></span><br><span class="line">   <span class="attr">app:</span> <span class="string">kibana</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line"> <span class="attr">ports:</span></span><br><span class="line"> <span class="bullet">-</span> <span class="attr">port:</span> <span class="number">5601</span></span><br><span class="line">   <span class="attr">protocol:</span> <span class="string">TCP</span></span><br><span class="line">   <span class="attr">targetPort:</span> <span class="string">ui</span></span><br><span class="line"> <span class="attr">selector:</span></span><br><span class="line">   <span class="attr">app:</span> <span class="string">kibana</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="comment"># Kibana Deployment</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">apps/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Deployment</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"> <span class="attr">name:</span> <span class="string">kibana</span></span><br><span class="line"> <span class="attr">namespace:</span> <span class="string">logging</span></span><br><span class="line"> <span class="attr">labels:</span></span><br><span class="line">   <span class="attr">app:</span> <span class="string">kibana</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line"> <span class="attr">replicas:</span> <span class="number">1</span></span><br><span class="line"> <span class="attr">selector:</span></span><br><span class="line">   <span class="attr">matchLabels:</span></span><br><span class="line">     <span class="attr">app:</span> <span class="string">kibana</span></span><br><span class="line"> <span class="attr">template:</span></span><br><span class="line">   <span class="attr">metadata:</span></span><br><span class="line">     <span class="attr">labels:</span></span><br><span class="line">       <span class="attr">app:</span> <span class="string">kibana</span></span><br><span class="line">     <span class="attr">annotations:</span></span><br><span class="line">       <span class="attr">sidecar.istio.io/inject:</span> <span class="string">&quot;false&quot;</span></span><br><span class="line">   <span class="attr">spec:</span></span><br><span class="line">     <span class="attr">containers:</span></span><br><span class="line">     <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">kibana</span></span><br><span class="line">       <span class="attr">image:</span> <span class="string">zhangguanzhang/docker.elastic.co.kibana.kibana-oss:6.1.1</span></span><br><span class="line">       <span class="attr">resources:</span></span><br><span class="line">         <span class="comment"># need more cpu upon initialization, therefore burstable class</span></span><br><span class="line">         <span class="attr">limits:</span></span><br><span class="line">           <span class="attr">cpu:</span> <span class="string">1000m</span></span><br><span class="line">         <span class="attr">requests:</span></span><br><span class="line">           <span class="attr">cpu:</span> <span class="string">100m</span></span><br><span class="line">       <span class="attr">env:</span></span><br><span class="line">         <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">ELASTICSEARCH_URL</span></span><br><span class="line">           <span class="attr">value:</span> <span class="string">http://elasticsearch:9200</span></span><br><span class="line">       <span class="attr">ports:</span></span><br><span class="line">       <span class="bullet">-</span> <span class="attr">containerPort:</span> <span class="number">5601</span></span><br><span class="line">         <span class="attr">name:</span> <span class="string">ui</span></span><br><span class="line">         <span class="attr">protocol:</span> <span class="string">TCP</span></span><br><span class="line">     <span class="attr">imagePullSecrets:</span></span><br><span class="line">     <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">regcred</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">//具体设置参数的位置需要参考demo.yaml，1.10版本默认使用meshConfig.accessLogFile为/dev/stdout</span><br><span class="line">istioctl manifest apply --set profile=demo --set values.global.proxy.accessLogFile=&quot;/dev/stdout&quot;</span><br></pre></td></tr></table></figure>
+
+<p>以下通过部署 <code>sleep</code> 示例应用程序来测试日志采集过程</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl apply -f samples/sleep/sleep.yaml</span><br><span class="line">kubectl apply -f &lt;(istioctl kube-inject -f samples/sleep/sleep.yaml) //手动注入sidecar</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl logs -l app=sleep -c istio-proxy //查看应用日志</span><br></pre></td></tr></table></figure>
+
+<p><a href="https://www.servicemesher.com/istio-handbook/practice/efk.html">https://www.servicemesher.com/istio-handbook/practice/efk.html</a></p>
+<p>参考上文构建EFK的YAML文件</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl apply -f samples/efk.yaml</span><br></pre></td></tr></table></figure>
+
+<p>执行命令产生访问日志：</p>
+<blockquote>
+<p>如果你已经按照本书部署了 <code>Bookinfo</code> 示例，你也可以直接通过浏览器访问 /productpage 页面也可以产生访问日志。</p>
+</blockquote>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl exec -it $(kubectl get pod -l app=sleep -o jsonpath=&#x27;&#123;.items[0].metadata.name&#125;&#x27;) -c sleep -- curl -v httpbin:8000/status/418</span><br></pre></td></tr></table></figure>
+
+<p>设置 Kibana 的端口转发：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl -n logging port-forward $(kubectl -n logging get pod -l app=kibana -o jsonpath=&#x27;&#123;.items[0].metadata.name&#125;&#x27;) 5601:5601 &amp;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>此命令将 Kibaba <a href="https://www.servicemesher.com/istio-handbook/GLOSSARY.html#pod">Pod</a> 的 <code>5601</code> 端口转发到 <code>localhost:5601</code> ，<code>&amp;</code> 代表后台运行</li>
+</ul>
+<p>后续需要对 <code>Fluentd</code> 进行细致的配置。如果用于生产环境，可以前往 Kubernetes 官方 github 仓库找到完整的 <code>EFK</code> 配置来进行部署：</p>
+<p><a href="https://github.com/kubernetes/kubernetes/tree/master/cluster/addons/fluentd-elasticsearch">https://github.com/kubernetes/kubernetes/tree/master/cluster/addons/fluentd-elasticsearch</a></p>
+<h2 id="Jaeger配置"><a href="#Jaeger配置" class="headerlink" title="Jaeger配置"></a>Jaeger配置</h2><p><a href="https://www.servicemesher.com/istio-handbook/practice/jaeger.html">https://www.servicemesher.com/istio-handbook/practice/jaeger.html</a></p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl apply -f samples/addons/jaeger.yaml</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">istioctl dashboard jaeger</span><br></pre></td></tr></table></figure>
+
+<p>可以在jaeger.yaml配置文件中修改参数</p>
+<p>将调用链数据持久化存储 <a href="https://www.jaegertracing.io/docs/1.23/operator/#production-strategy">https://www.jaegertracing.io/docs/1.23/operator/#production-strategy</a></p>
+<p><code>#TODO</code> </p>
+<ul>
+<li><code>Jaeger Collector</code> 默认采用直接写入存储服务的方式，大规模的使用场景下建议使用 Kafka 作为中间缓存区。</li>
+</ul>
+<h1 id="Istio构架"><a href="#Istio构架" class="headerlink" title="Istio构架"></a>Istio构架</h1><p><a href="https://www.servicemesher.com/istio-handbook/concepts/basic.html">https://www.servicemesher.com/istio-handbook/concepts/basic.html</a></p>
+<p><a href="https://zhuanlan.zhihu.com/p/145544378">https://zhuanlan.zhihu.com/p/145544378</a></p>
+<blockquote>
+<p>服务网格是一个<strong>基础设施层</strong>，用于处理服务间通信。云原生应用有着复杂的服务拓扑，服务网格保证<strong>请求在这些拓扑中可靠地穿梭</strong>。在实际应用当中，服务网格通常是由一系列轻量级的<strong>网络代理</strong>组成的，它们与应用程序部署在一起，但<strong>对应用程序透明</strong>。</p>
+</blockquote>
+<p>Istio 服务网格在逻辑上分为控制平面和数据平面两部分。其中，控制平面 <strong>Pilot</strong> 负责管理和配置代理来路由流量，并配置 <strong>Mixer</strong> 以实施策略和收集遥测数据；数据平面由一组以 Sidecar 方式部署的智能代理（<strong>Envoy</strong>）组成，这些代理可以调节和控制微服务及 <strong>Mixer</strong> 之间所有的网络通信。</p>
+<p>控制平面的特点：</p>
+<ul>
+<li>不直接解析数据包</li>
+<li>与控制平面中的代理通信，下发策略和配置</li>
+<li>负责网络行为的可视化</li>
+<li>通常提供 API 或者命令行工具可用于配置版本化管理，便于持续集成和部署</li>
+</ul>
+<p>数据平面的特点：</p>
+<ul>
+<li>通常是按照无状态目标设计的，但实际上为了提高流量转发性能，需要缓存一些数据</li>
+<li>直接处理入站和出站数据包，转发、路由、健康检查、负载均衡、认证、鉴权、产生监控数据等</li>
+<li>对应用来说透明，即可以做到无感知部署</li>
+</ul>
+<p><strong>优点</strong></p>
+<ul>
+<li>屏蔽分布式系统通信的复杂性(负载均衡、服务发现、认证授权、监控追踪、流量控制等等)，服务只用关注业务逻辑；</li>
+<li>真正的语言无关，服务可以用任何语言编写，只需和Service Mesh通信即可；</li>
+<li>对应用透明，Service Mesh组件可以单独升级；</li>
+</ul>
+<p><strong>挑战</strong></p>
+<ul>
+<li>Service Mesh组件以代理模式计算并转发请求，一定程度上会降低通信系统性能，并增加系统资源开销；</li>
+<li>Service Mesh组件接管了网络流量，因此服务的整体稳定性依赖于Service Mesh，同时额外引入的大量Service Mesh服务实例的运维和管理也是一个挑战；</li>
+</ul>
+<h2 id="Kubernetes"><a href="#Kubernetes" class="headerlink" title="Kubernetes"></a>Kubernetes</h2><p><a href="https://jimmysong.io/kubernetes-handbook/concepts/">https://jimmysong.io/kubernetes-handbook/concepts/</a></p>
+<h1 id="微服务"><a href="#微服务" class="headerlink" title="微服务"></a>微服务</h1><p><a href="https://zhuanlan.zhihu.com/p/61901608">https://zhuanlan.zhihu.com/p/61901608</a></p>
+<ul>
+<li>不同服务间直接进行通信</li>
+<li>加入对<strong>网络传输问题</strong>的处理逻辑</li>
+<li>使用<strong>TCP协议</strong>处理网络传输问题</li>
+<li>第一代微服务：<strong>分布式系统</strong>发展带来的新需求（分布式系统的通用语义），如熔断策略、负载均衡、服务发现、认证和授权、quota限制、trace和监控等</li>
+<li>第二代微服务：<strong>面向微服务架构的开发框架</strong>出现</li>
+<li>第一代 Service Mesh：Linkerd，Envoy，NginxMesh为代表的<strong>代理模式（边车模式）</strong>将分布式服务的通信抽象为单独一层，在这一层中实现负载均衡、服务发现、认证授权、监控追踪、流量控制等分布式系统所需要的功能，作为一个和服务对等的代理服务，和服务部署在一起，接管服务的流量，通过代理之间的通信间接完成服务之间的通信请求，从而保证微服务语言无关的特性，解决版本兼容问题，同时避免开发者掌握管理复杂框架本身花费的时间精力</li>
+<li>第二代 Service Mesh：以 Istio 为代表，提供统一的上层运维入口，演化出了集中式的控制面板，所有的单机代理组件通过和控制面板交互进行<strong>网络拓扑策略的更新</strong>和<strong>单机数据的汇报</strong></li>
+</ul>
+<h1 id="使用-Elastic-技术栈构建-K8S-全栈监控"><a href="#使用-Elastic-技术栈构建-K8S-全栈监控" class="headerlink" title="使用 Elastic 技术栈构建 K8S 全栈监控"></a>使用 Elastic 技术栈构建 K8S 全栈监控</h1><p><a href="https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-1/">https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-1/</a></p>
+<p><a href="https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-2/">https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-2/</a></p>
+<p><a href="https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-3/">https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-3/</a></p>
+<p><a href="https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-4/">https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-4/</a></p>
+<p>在安装 ElasticSearch数据节点时，storageClass需要绑定现有的storageclass name</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl get sc # 获取storageclass</span><br></pre></td></tr></table></figure>
+
+<p><img src="2021-11-17_17-46.png" alt="2021-11-17_17-46"></p>
+<p>修改yaml文件，将storageClassName改为查询到的storageclass name</p>
+<p><img src="2021-11-17_17-48.png" alt="2021-11-17_17-48"></p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">Changed password for user apm_system</span><br><span class="line">PASSWORD apm_system = KDDHU4TJi9EuD87x1DBT</span><br><span class="line"></span><br><span class="line">Changed password for user kibana_system</span><br><span class="line">PASSWORD kibana_system = LsyKNl7OqhBCc9ChCXMm</span><br><span class="line"></span><br><span class="line">Changed password for user kibana</span><br><span class="line">PASSWORD kibana = LsyKNl7OqhBCc9ChCXMm</span><br><span class="line"></span><br><span class="line">Changed password for user logstash_system</span><br><span class="line">PASSWORD logstash_system = MTUGYEFhbtSN4wU2OvjR</span><br><span class="line"></span><br><span class="line">Changed password for user beats_system</span><br><span class="line">PASSWORD beats_system = wob24NOj3J0apT8Rc62T</span><br><span class="line"></span><br><span class="line">Changed password for user remote_monitoring_user</span><br><span class="line">PASSWORD remote_monitoring_user = 0geQaxGmygn90wjVMEfe</span><br><span class="line"></span><br><span class="line">Changed password for user elastic</span><br><span class="line">PASSWORD elastic = zjA9fYQfUgwgmJn4shv5</span><br></pre></td></tr></table></figure>
+
+<p>注意将elastic用户名和密码添加到Kubernetes的Secret 对象中一步需要将password改为之前生成的最后一个密码，即上面的zjA9fYQfUgwgmJn4shv5</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl logs -f -n elastic $(kubectl get pods -n elastic | grep kibana | sed -n 1p | awk &#x27;&#123;print $1&#125;&#x27;) | grep &quot;Status changed from yellow to green&quot;</span><br><span class="line"></span><br><span class="line">kubectl get svc kibana -n elastic</span><br></pre></td></tr></table></figure>
+
+<p>获取elastic service的CLUSTER-IP，通过CLUSTER-IP:5601访问Kibana可视化界面，登录使用elastic作为用户名和之前获取的zjA9fYQfUgwgmJn4shv5作为密码</p>
+<ul>
+<li>tips：pod创建出现ImagePullBackOff时，很可能时镜像拉不下来，可以考虑在dockerhub搜索对于的镜像，拉下来后使用<code>docker tag</code>命令修改标签，或者直接在yaml里直接改image对于的地址</li>
+</ul>
+]]></content>
+      <categories>
+        <category>环境搭建</category>
+      </categories>
+      <tags>
+        <tag>AIOps</tag>
+        <tag>ELK</tag>
+        <tag>环境搭建</tag>
+        <tag>istio</tag>
+        <tag>云原生</tag>
       </tags>
   </entry>
   <entry>
@@ -1807,200 +1997,10 @@
         <category>机器学习</category>
       </categories>
       <tags>
-        <tag>联邦学习</tag>
         <tag>机器学习</tag>
         <tag>协作学习</tag>
+        <tag>联邦学习</tag>
         <tag>决策树算法</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Istio &amp; AIOps环境搭建</title>
-    <url>/2021/06/30/Istio-AIOps%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/</url>
-    <content><![CDATA[<p>在AIOps挑战赛学习了智能运维相关的内容，尝试在Service Mesh环境下模拟配置挑战赛环境</p>
-<p>使用minikube搭建微服务网络，通过Istio进行监控，分别通过Prometheus、Fluented以及Jaeger获取服务的指标、日志和调用链信息，并汇总到Elasticsearch用作后续分析</p>
-<p>后续发现使用全栈的Elastic解决方案能够不依赖istio实现轻松可靠的在Elasticseach中汇总指标、日志和性能追踪，于是又尝试了如下的解决方案<a href="https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-1/">https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-1/</a></p>
-<p>除此之外，<a href="https://juejin.cn/post/6847902217979052045">KubeSphere</a>汇总了包括运维数据获取等的一系列解决方案，可以非常方便地安装与管理用户最常用的云原生工具</p>
-<a id="more"></a>
-
-<h1 id="Istio-环境配置"><a href="#Istio-环境配置" class="headerlink" title="Istio 环境配置"></a>Istio 环境配置</h1><p>参考教程配置环境<a href="https://istio.io/latest/docs/setup/getting-started/">https://istio.io/latest/docs/setup/getting-started/</a></p>
-<h2 id="配置流程"><a href="#配置流程" class="headerlink" title="配置流程"></a>配置流程</h2><p>参见官网demo <a href="https://istio.io/latest/docs/setup/getting-started/">https://istio.io/latest/docs/setup/getting-started/</a></p>
-<p>安装minikube <a href="https://minikube.sigs.k8s.io/docs/start/#install-a-hypervisor">https://minikube.sigs.k8s.io/docs/start/#install-a-hypervisor</a></p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">minikube start</span><br><span class="line">kubectl get po -A</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">istioctl install --set profile=demo -y</span><br><span class="line">kubectl label namespace default istio-injection=enabled</span><br><span class="line">kubectl apply -f samples/bookinfo/platform/kube/bookinfo.yaml</span><br><span class="line">kubectl get services</span><br><span class="line">kubectl get pods //等待直到所有pods处于Running状态</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl exec &quot;$(kubectl get pod -l app=ratings -o jsonpath=&#x27;&#123;.items[0].metadata.name&#125;&#x27;)&quot; -c ratings -- curl -sS productpage:9080/productpage | grep -o &quot;&lt;title&gt;.*&lt;/title&gt;&quot;</span><br><span class="line">//命令行返回&lt;title&gt;Simple Bookstore App&lt;/title&gt;则当前配置过程正常</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">//创建一个Istio Ingress Gateway，该网关将路径映射到网格边缘处的路线</span><br><span class="line">kubectl apply -f samples/bookinfo/networking/bookinfo-gateway.yaml</span><br><span class="line">istioctl analyze</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">export INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath=&#x27;&#123;.spec.ports[?(@.name==&quot;http2&quot;)].nodePort&#125;&#x27;)</span><br><span class="line">export SECURE_INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath=&#x27;&#123;.spec.ports[?(@.name==&quot;https&quot;)].nodePort&#125;&#x27;)</span><br><span class="line">export INGRESS_HOST=$(minikube ip)</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">minikube tunnel &#x2F;&#x2F;在新的终端窗口中运行以下命令，以启动将流量发送到Istio Ingress网关的Minikube隧道</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">export GATEWAY_URL=$INGRESS_HOST:$INGRESS_PORT</span><br><span class="line">echo &quot;http://$GATEWAY_URL/productpage&quot;</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl apply -f samples/addons</span><br><span class="line">kubectl rollout status deployment/kiali -n istio-system</span><br><span class="line">istioctl dashboard kiali</span><br></pre></td></tr></table></figure>
-
-<h2 id="kubernets相关命令"><a href="#kubernets相关命令" class="headerlink" title="kubernets相关命令"></a>kubernets相关命令</h2><p>minikube是本地的Kubernetes，致力于使Kubernetes易于学习和开发</p>
-<p><a href="https://minikube.sigs.k8s.io/docs/start/#install-a-hypervisor">https://minikube.sigs.k8s.io/docs/start/#install-a-hypervisor</a></p>
-<p><a href="https://istio.io/latest/docs/setup/platform-setup/minikube/">https://istio.io/latest/docs/setup/platform-setup/minikube/</a></p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">minikube start --driver=docker</span><br><span class="line">minikube start --memory=16384 --cpus=4 --kubernetes-version=v1.20.2</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl get po -A</span><br><span class="line">minikube kubectl -- get po -A </span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">minikube pause</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">minikube stop</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">minikube delete --all</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl get po -A //查看所有pods，第一列为命名空間</span><br><span class="line">kubectl get pod -n istio-system //查看命名空间istio-system下的pods</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl get deployment -n istio-system</span><br><span class="line">kubectl delete deployment prometheus -n istio-system</span><br><span class="line">kubectl delete pod prometheus -n istio-system</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl delete pod prometheus -n istio-system //从命名空间istio-system删除prometheus</span><br><span class="line">kubectl rollout status deployment/prometheus -n istio-system //重新安装prometheus</span><br></pre></td></tr></table></figure>
-
-<h2 id="Istio相关命令"><a href="#Istio相关命令" class="headerlink" title="Istio相关命令"></a>Istio相关命令</h2><p><a href="https://www.servicemesher.com/istio-handbook/practice/setup-istio.html">https://www.servicemesher.com/istio-handbook/practice/setup-istio.html</a></p>
-<p><a href="https://istio.io/latest/docs/setup/install/istioctl/">https://istio.io/latest/docs/setup/install/istioctl/</a></p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">istioctl install</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">istioctl install --set profile=demo</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">istioctl x uninstall --purge</span><br></pre></td></tr></table></figure>
-
-<p>可选<code>--purge</code>标志将删除所有Istio资源，包括可能与其他Istio控制平面共享的群集范围的资源。</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">istioctl dashboard //查看可用的仪表盘</span><br></pre></td></tr></table></figure>
-
-<h1 id="运维环境搭建"><a href="#运维环境搭建" class="headerlink" title="运维环境搭建"></a>运维环境搭建</h1><p>将指标、日志以及调用链数据集中到elasticsearch以便后续分析</p>
-<p><a href="https://kubernetes.io/zh/docs/tasks/configure-pod-container/pull-image-private-registry/">https://kubernetes.io/zh/docs/tasks/configure-pod-container/pull-image-private-registry/</a></p>
-<p>环境搭建速度较慢时考虑使用本地镜像</p>
-<h2 id="Prometheus配置"><a href="#Prometheus配置" class="headerlink" title="Prometheus配置"></a>Prometheus配置</h2><p><a href="https://www.servicemesher.com/istio-handbook/practice/prometheus.html">https://www.servicemesher.com/istio-handbook/practice/prometheus.html</a></p>
-<p>istio的sample/addons目录提供了prometheus的yaml文件，之前通过<code>kubectl apply -f samples/addons</code>已安装，可以直接<code>istioctl dashboard prometheus</code>进行观察</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">//进入prometheus所在pod</span><br><span class="line">//pod名通过kubectl get po -A命令查找并替换</span><br><span class="line">kubectl exec -it prometheus-7cb88b5945-8jbkf -n istio-system sh</span><br></pre></td></tr></table></figure>
-
-<p>找到配置文件prometheus.yml并打开，我的在/etc/config/prometheus.yml并修改</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">//也可以通过修改 Prometheus 的 ConfigMap 对其配置进行如下修改</span><br><span class="line">kubectl edit configmap prometheus -n istio-system </span><br></pre></td></tr></table></figure>
-
-<p>修改完成后保存，需要给 Prometheus 加上 –web.enable-lifecycle 启动参数来支持热更新（可能默认支持）</p>
-<p>这些配置参数在prometheus.yaml中已经定义</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl edit deployment prometheus -n istio-system</span><br><span class="line"> ...</span><br><span class="line"> containers:</span><br><span class="line">      - args:</span><br><span class="line">        - --storage.tsdb.retention=6h</span><br><span class="line"></span><br><span class="line">        - --config.file=/etc/prometheus/prometheus.yml</span><br><span class="line"></span><br><span class="line">        - --web.enable-lifecycle</span><br><span class="line">          image: docker.io/prom/prometheus:v2.15.1</span><br><span class="line">          imagePullPolicy: IfNotPresent</span><br><span class="line"> ...</span><br></pre></td></tr></table></figure>
-
-<p>然后再调用 Prometheus 的 HTTP API 即可更新配置：</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">curl -X POST http://&lt;Prometheus URL&gt;:9090/-/reload</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">istioctl dashboard prometheus</span><br></pre></td></tr></table></figure>
-
-<p><a href="https://www.elastic.co/cn/what-is/prometheus-monitoring">https://www.elastic.co/cn/what-is/prometheus-monitoring</a></p>
-<p>将prometheus数据导出到elasticsearch</p>
-<h2 id="EFK配置"><a href="#EFK配置" class="headerlink" title="EFK配置"></a>EFK配置</h2><p><a href="https://www.servicemesher.com/istio-handbook/practice/efk.html">https://www.servicemesher.com/istio-handbook/practice/efk.html</a></p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 参考efk.yaml</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="comment"># Logging Namespace. All below are a part of this namespace.</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Namespace</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">logging</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="comment"># Elasticsearch Service</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Service</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"> <span class="attr">name:</span> <span class="string">elasticsearch</span></span><br><span class="line"> <span class="attr">namespace:</span> <span class="string">logging</span></span><br><span class="line"> <span class="attr">labels:</span></span><br><span class="line">   <span class="attr">app:</span> <span class="string">elasticsearch</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line"> <span class="attr">ports:</span></span><br><span class="line"> <span class="bullet">-</span> <span class="attr">port:</span> <span class="number">9200</span></span><br><span class="line">   <span class="attr">protocol:</span> <span class="string">TCP</span></span><br><span class="line">   <span class="attr">targetPort:</span> <span class="string">db</span></span><br><span class="line"> <span class="attr">selector:</span></span><br><span class="line">   <span class="attr">app:</span> <span class="string">elasticsearch</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="comment"># Elasticsearch Deployment</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">apps/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Deployment</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"> <span class="attr">name:</span> <span class="string">elasticsearch</span></span><br><span class="line"> <span class="attr">namespace:</span> <span class="string">logging</span></span><br><span class="line"> <span class="attr">labels:</span></span><br><span class="line">   <span class="attr">app:</span> <span class="string">elasticsearch</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line"> <span class="attr">replicas:</span> <span class="number">1</span></span><br><span class="line"> <span class="attr">selector:</span></span><br><span class="line">   <span class="attr">matchLabels:</span></span><br><span class="line">     <span class="attr">app:</span> <span class="string">elasticsearch</span></span><br><span class="line"> <span class="attr">template:</span></span><br><span class="line">   <span class="attr">metadata:</span></span><br><span class="line">     <span class="attr">labels:</span></span><br><span class="line">       <span class="attr">app:</span> <span class="string">elasticsearch</span></span><br><span class="line">     <span class="attr">annotations:</span></span><br><span class="line">       <span class="attr">sidecar.istio.io/inject:</span> <span class="string">&quot;false&quot;</span></span><br><span class="line">   <span class="attr">spec:</span></span><br><span class="line">     <span class="attr">containers:</span></span><br><span class="line">     <span class="bullet">-</span> <span class="attr">image:</span> <span class="string">zhangguanzhang/docker.elastic.co.elasticsearch.elasticsearch-oss:6.1.1</span></span><br><span class="line">       <span class="attr">name:</span> <span class="string">elasticsearch</span></span><br><span class="line">       <span class="attr">resources:</span></span><br><span class="line">         <span class="comment"># need more cpu upon initialization, therefore burstable class</span></span><br><span class="line">         <span class="attr">limits:</span></span><br><span class="line">           <span class="attr">cpu:</span> <span class="string">1000m</span></span><br><span class="line">         <span class="attr">requests:</span></span><br><span class="line">           <span class="attr">cpu:</span> <span class="string">100m</span></span><br><span class="line">       <span class="attr">env:</span></span><br><span class="line">         <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">discovery.type</span></span><br><span class="line">           <span class="attr">value:</span> <span class="string">single-node</span></span><br><span class="line">       <span class="attr">ports:</span></span><br><span class="line">       <span class="bullet">-</span> <span class="attr">containerPort:</span> <span class="number">9200</span></span><br><span class="line">         <span class="attr">name:</span> <span class="string">db</span></span><br><span class="line">         <span class="attr">protocol:</span> <span class="string">TCP</span></span><br><span class="line">       <span class="bullet">-</span> <span class="attr">containerPort:</span> <span class="number">9300</span></span><br><span class="line">         <span class="attr">name:</span> <span class="string">transport</span></span><br><span class="line">         <span class="attr">protocol:</span> <span class="string">TCP</span></span><br><span class="line">       <span class="attr">volumeMounts:</span></span><br><span class="line">       <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">elasticsearch</span></span><br><span class="line">         <span class="attr">mountPath:</span> <span class="string">/data</span></span><br><span class="line">     <span class="attr">imagePullSecrets:</span></span><br><span class="line">     <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">regcred</span></span><br><span class="line">     <span class="attr">volumes:</span></span><br><span class="line">     <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">elasticsearch</span></span><br><span class="line">       <span class="attr">emptyDir:</span> &#123;&#125;</span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="comment"># Fluentd Service</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Service</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"> <span class="attr">name:</span> <span class="string">fluentd-es</span></span><br><span class="line"> <span class="attr">namespace:</span> <span class="string">logging</span></span><br><span class="line"> <span class="attr">labels:</span></span><br><span class="line">   <span class="attr">app:</span> <span class="string">fluentd-es</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line"> <span class="attr">ports:</span></span><br><span class="line"> <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">fluentd-tcp</span></span><br><span class="line">   <span class="attr">port:</span> <span class="number">24224</span></span><br><span class="line">   <span class="attr">protocol:</span> <span class="string">TCP</span></span><br><span class="line">   <span class="attr">targetPort:</span> <span class="number">24224</span></span><br><span class="line"> <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">fluentd-udp</span></span><br><span class="line">   <span class="attr">port:</span> <span class="number">24224</span></span><br><span class="line">   <span class="attr">protocol:</span> <span class="string">UDP</span></span><br><span class="line">   <span class="attr">targetPort:</span> <span class="number">24224</span></span><br><span class="line"> <span class="attr">selector:</span></span><br><span class="line">   <span class="attr">app:</span> <span class="string">fluentd-es</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="comment"># Fluentd ConfigMap, contains config files.</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">ConfigMap</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">data:</span></span><br><span class="line"> <span class="attr">forward.input.conf:</span> <span class="string">|-</span></span><br><span class="line">   <span class="comment"># Takes the messages sent over TCP</span></span><br><span class="line">   <span class="string">&lt;source&gt;</span></span><br><span class="line">     <span class="string">@id</span> <span class="string">fluentd-containers.log</span></span><br><span class="line">     <span class="string">@type</span> <span class="string">tail</span></span><br><span class="line">     <span class="string">path</span> <span class="string">/var/log/containers/*.log</span></span><br><span class="line">     <span class="string">pos_file</span> <span class="string">/var/log/es-containers.log.pos</span></span><br><span class="line">     <span class="string">time_format</span> <span class="string">%Y-%m-%dT%H:%M:%S.%NZ</span></span><br><span class="line">     <span class="string">tag</span> <span class="string">raw.kubernetes.*</span></span><br><span class="line">     <span class="string">format</span> <span class="string">json</span></span><br><span class="line">     <span class="string">read_from_head</span> <span class="literal">false</span></span><br><span class="line">   <span class="string">&lt;/source&gt;</span></span><br><span class="line">   <span class="string">&lt;filter</span> <span class="string">**&gt;</span></span><br><span class="line">     <span class="string">@id</span> <span class="string">filter_concat</span></span><br><span class="line">     <span class="string">@type</span> <span class="string">concat</span></span><br><span class="line">     <span class="string">key</span> <span class="string">message</span></span><br><span class="line">     <span class="string">multiline_end_regexp</span> <span class="string">/\n$/</span></span><br><span class="line">     <span class="string">separator</span> <span class="string">&quot;&quot;</span></span><br><span class="line">   <span class="string">&lt;/filter&gt;</span></span><br><span class="line">   <span class="string">&lt;filter</span> <span class="string">**&gt;</span></span><br><span class="line">     <span class="string">@type</span> <span class="string">parser</span></span><br><span class="line">     <span class="string">format</span> <span class="string">json</span> <span class="comment"># apache2, nginx, etc...</span></span><br><span class="line">     <span class="string">key_name</span> <span class="string">log</span></span><br><span class="line">     <span class="string">reserve_data</span> <span class="literal">false</span></span><br><span class="line">   <span class="string">&lt;/filter&gt;</span></span><br><span class="line"> <span class="attr">output.conf:</span> <span class="string">|-</span></span><br><span class="line">   <span class="string">&lt;match</span> <span class="string">**&gt;</span></span><br><span class="line">     <span class="string">type</span> <span class="string">elasticsearch</span></span><br><span class="line">     <span class="string">log_level</span> <span class="string">info</span></span><br><span class="line">     <span class="string">include_tag_key</span> <span class="literal">true</span></span><br><span class="line">     <span class="string">host</span> <span class="string">elasticsearch</span></span><br><span class="line">     <span class="string">port</span> <span class="number">9200</span></span><br><span class="line">     <span class="string">logstash_format</span> <span class="literal">true</span></span><br><span class="line">     <span class="comment"># Set the chunk limits.</span></span><br><span class="line">     <span class="string">buffer_chunk_limit</span> <span class="string">2M</span></span><br><span class="line">     <span class="string">buffer_queue_limit</span> <span class="number">8</span></span><br><span class="line">     <span class="string">flush_interval</span> <span class="string">5s</span></span><br><span class="line">     <span class="comment"># Never wait longer than 5 minutes between retries.</span></span><br><span class="line">     <span class="string">max_retry_wait</span> <span class="number">30</span></span><br><span class="line">     <span class="comment"># Disable the limit on the number of retries (retry forever).</span></span><br><span class="line">     <span class="string">disable_retry_limit</span></span><br><span class="line">     <span class="comment"># Use multiple threads for processing.</span></span><br><span class="line">     <span class="string">num_threads</span> <span class="number">2</span></span><br><span class="line">   <span class="string">&lt;/match&gt;</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"> <span class="attr">name:</span> <span class="string">fluentd-es-config</span></span><br><span class="line"> <span class="attr">namespace:</span> <span class="string">logging</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">apps/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">DaemonSet</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"> <span class="attr">name:</span> <span class="string">fluentd-es</span></span><br><span class="line"> <span class="attr">namespace:</span> <span class="string">logging</span></span><br><span class="line"> <span class="attr">labels:</span></span><br><span class="line">   <span class="attr">app:</span> <span class="string">fluentd-es</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line"> <span class="attr">selector:</span></span><br><span class="line">   <span class="attr">matchLabels:</span></span><br><span class="line">     <span class="attr">app:</span> <span class="string">fluentd-es</span></span><br><span class="line"> <span class="attr">template:</span></span><br><span class="line">   <span class="attr">metadata:</span></span><br><span class="line">     <span class="attr">labels:</span></span><br><span class="line">       <span class="attr">app:</span> <span class="string">fluentd-es</span></span><br><span class="line">     <span class="attr">annotations:</span></span><br><span class="line">       <span class="attr">sidecar.istio.io/inject:</span> <span class="string">&quot;false&quot;</span></span><br><span class="line">   <span class="attr">spec:</span></span><br><span class="line">     <span class="attr">containers:</span></span><br><span class="line">     <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">fluentd-es</span></span><br><span class="line">       <span class="attr">image:</span> <span class="string">quay.io/fluentd_elasticsearch/fluentd:v3.0.2</span></span><br><span class="line">       <span class="attr">env:</span></span><br><span class="line">       <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">FLUENTD_ARGS</span></span><br><span class="line">         <span class="attr">value:</span> <span class="string">--no-supervisor</span> <span class="string">-q</span></span><br><span class="line">       <span class="attr">resources:</span></span><br><span class="line">         <span class="attr">limits:</span></span><br><span class="line">           <span class="attr">memory:</span> <span class="string">500Mi</span></span><br><span class="line">         <span class="attr">requests:</span></span><br><span class="line">           <span class="attr">cpu:</span> <span class="string">100m</span></span><br><span class="line">           <span class="attr">memory:</span> <span class="string">200Mi</span></span><br><span class="line">       <span class="attr">volumeMounts:</span></span><br><span class="line">       <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">varlog</span></span><br><span class="line">         <span class="attr">mountPath:</span> <span class="string">/var/log</span></span><br><span class="line">       <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">varlibdockercontainers</span></span><br><span class="line">         <span class="attr">mountPath:</span> <span class="string">/var/lib/docker/containers</span></span><br><span class="line">         <span class="attr">readOnly:</span> <span class="literal">true</span></span><br><span class="line">       <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">config-volume</span></span><br><span class="line">         <span class="attr">mountPath:</span> <span class="string">/etc/fluent/config.d</span></span><br><span class="line">     <span class="attr">terminationGracePeriodSeconds:</span> <span class="number">30</span></span><br><span class="line">     <span class="attr">volumes:</span></span><br><span class="line">     <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">varlog</span></span><br><span class="line">       <span class="attr">hostPath:</span></span><br><span class="line">         <span class="attr">path:</span> <span class="string">/var/log</span></span><br><span class="line">     <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">varlibdockercontainers</span></span><br><span class="line">       <span class="attr">hostPath:</span></span><br><span class="line">         <span class="attr">path:</span> <span class="string">/var/lib/docker/containers</span></span><br><span class="line">     <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">config-volume</span></span><br><span class="line">       <span class="attr">configMap:</span></span><br><span class="line">         <span class="attr">name:</span> <span class="string">fluentd-es-config</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="comment"># Kibana Service</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Service</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"> <span class="attr">name:</span> <span class="string">kibana</span></span><br><span class="line"> <span class="attr">namespace:</span> <span class="string">logging</span></span><br><span class="line"> <span class="attr">labels:</span></span><br><span class="line">   <span class="attr">app:</span> <span class="string">kibana</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line"> <span class="attr">ports:</span></span><br><span class="line"> <span class="bullet">-</span> <span class="attr">port:</span> <span class="number">5601</span></span><br><span class="line">   <span class="attr">protocol:</span> <span class="string">TCP</span></span><br><span class="line">   <span class="attr">targetPort:</span> <span class="string">ui</span></span><br><span class="line"> <span class="attr">selector:</span></span><br><span class="line">   <span class="attr">app:</span> <span class="string">kibana</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="comment"># Kibana Deployment</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">apps/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Deployment</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"> <span class="attr">name:</span> <span class="string">kibana</span></span><br><span class="line"> <span class="attr">namespace:</span> <span class="string">logging</span></span><br><span class="line"> <span class="attr">labels:</span></span><br><span class="line">   <span class="attr">app:</span> <span class="string">kibana</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line"> <span class="attr">replicas:</span> <span class="number">1</span></span><br><span class="line"> <span class="attr">selector:</span></span><br><span class="line">   <span class="attr">matchLabels:</span></span><br><span class="line">     <span class="attr">app:</span> <span class="string">kibana</span></span><br><span class="line"> <span class="attr">template:</span></span><br><span class="line">   <span class="attr">metadata:</span></span><br><span class="line">     <span class="attr">labels:</span></span><br><span class="line">       <span class="attr">app:</span> <span class="string">kibana</span></span><br><span class="line">     <span class="attr">annotations:</span></span><br><span class="line">       <span class="attr">sidecar.istio.io/inject:</span> <span class="string">&quot;false&quot;</span></span><br><span class="line">   <span class="attr">spec:</span></span><br><span class="line">     <span class="attr">containers:</span></span><br><span class="line">     <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">kibana</span></span><br><span class="line">       <span class="attr">image:</span> <span class="string">zhangguanzhang/docker.elastic.co.kibana.kibana-oss:6.1.1</span></span><br><span class="line">       <span class="attr">resources:</span></span><br><span class="line">         <span class="comment"># need more cpu upon initialization, therefore burstable class</span></span><br><span class="line">         <span class="attr">limits:</span></span><br><span class="line">           <span class="attr">cpu:</span> <span class="string">1000m</span></span><br><span class="line">         <span class="attr">requests:</span></span><br><span class="line">           <span class="attr">cpu:</span> <span class="string">100m</span></span><br><span class="line">       <span class="attr">env:</span></span><br><span class="line">         <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">ELASTICSEARCH_URL</span></span><br><span class="line">           <span class="attr">value:</span> <span class="string">http://elasticsearch:9200</span></span><br><span class="line">       <span class="attr">ports:</span></span><br><span class="line">       <span class="bullet">-</span> <span class="attr">containerPort:</span> <span class="number">5601</span></span><br><span class="line">         <span class="attr">name:</span> <span class="string">ui</span></span><br><span class="line">         <span class="attr">protocol:</span> <span class="string">TCP</span></span><br><span class="line">     <span class="attr">imagePullSecrets:</span></span><br><span class="line">     <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">regcred</span></span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">//具体设置参数的位置需要参考demo.yaml，1.10版本默认使用meshConfig.accessLogFile为/dev/stdout</span><br><span class="line">istioctl manifest apply --set profile=demo --set values.global.proxy.accessLogFile=&quot;/dev/stdout&quot;</span><br></pre></td></tr></table></figure>
-
-<p>以下通过部署 <code>sleep</code> 示例应用程序来测试日志采集过程</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl apply -f samples/sleep/sleep.yaml</span><br><span class="line">kubectl apply -f &lt;(istioctl kube-inject -f samples/sleep/sleep.yaml) //手动注入sidecar</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl logs -l app=sleep -c istio-proxy //查看应用日志</span><br></pre></td></tr></table></figure>
-
-<p><a href="https://www.servicemesher.com/istio-handbook/practice/efk.html">https://www.servicemesher.com/istio-handbook/practice/efk.html</a></p>
-<p>参考上文构建EFK的YAML文件</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl apply -f samples/efk.yaml</span><br></pre></td></tr></table></figure>
-
-<p>执行命令产生访问日志：</p>
-<blockquote>
-<p>如果你已经按照本书部署了 <code>Bookinfo</code> 示例，你也可以直接通过浏览器访问 /productpage 页面也可以产生访问日志。</p>
-</blockquote>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl exec -it $(kubectl get pod -l app=sleep -o jsonpath=&#x27;&#123;.items[0].metadata.name&#125;&#x27;) -c sleep -- curl -v httpbin:8000/status/418</span><br></pre></td></tr></table></figure>
-
-<p>设置 Kibana 的端口转发：</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl -n logging port-forward $(kubectl -n logging get pod -l app=kibana -o jsonpath=&#x27;&#123;.items[0].metadata.name&#125;&#x27;) 5601:5601 &amp;</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>此命令将 Kibaba <a href="https://www.servicemesher.com/istio-handbook/GLOSSARY.html#pod">Pod</a> 的 <code>5601</code> 端口转发到 <code>localhost:5601</code> ，<code>&amp;</code> 代表后台运行</li>
-</ul>
-<p>后续需要对 <code>Fluentd</code> 进行细致的配置。如果用于生产环境，可以前往 Kubernetes 官方 github 仓库找到完整的 <code>EFK</code> 配置来进行部署：</p>
-<p><a href="https://github.com/kubernetes/kubernetes/tree/master/cluster/addons/fluentd-elasticsearch">https://github.com/kubernetes/kubernetes/tree/master/cluster/addons/fluentd-elasticsearch</a></p>
-<h2 id="Jaeger配置"><a href="#Jaeger配置" class="headerlink" title="Jaeger配置"></a>Jaeger配置</h2><p><a href="https://www.servicemesher.com/istio-handbook/practice/jaeger.html">https://www.servicemesher.com/istio-handbook/practice/jaeger.html</a></p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl apply -f samples/addons/jaeger.yaml</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">istioctl dashboard jaeger</span><br></pre></td></tr></table></figure>
-
-<p>可以在jaeger.yaml配置文件中修改参数</p>
-<p>将调用链数据持久化存储 <a href="https://www.jaegertracing.io/docs/1.23/operator/#production-strategy">https://www.jaegertracing.io/docs/1.23/operator/#production-strategy</a></p>
-<p><code>#TODO</code> </p>
-<ul>
-<li><code>Jaeger Collector</code> 默认采用直接写入存储服务的方式，大规模的使用场景下建议使用 Kafka 作为中间缓存区。</li>
-</ul>
-<h1 id="Istio构架"><a href="#Istio构架" class="headerlink" title="Istio构架"></a>Istio构架</h1><p><a href="https://www.servicemesher.com/istio-handbook/concepts/basic.html">https://www.servicemesher.com/istio-handbook/concepts/basic.html</a></p>
-<p><a href="https://zhuanlan.zhihu.com/p/145544378">https://zhuanlan.zhihu.com/p/145544378</a></p>
-<blockquote>
-<p>服务网格是一个<strong>基础设施层</strong>，用于处理服务间通信。云原生应用有着复杂的服务拓扑，服务网格保证<strong>请求在这些拓扑中可靠地穿梭</strong>。在实际应用当中，服务网格通常是由一系列轻量级的<strong>网络代理</strong>组成的，它们与应用程序部署在一起，但<strong>对应用程序透明</strong>。</p>
-</blockquote>
-<p>Istio 服务网格在逻辑上分为控制平面和数据平面两部分。其中，控制平面 <strong>Pilot</strong> 负责管理和配置代理来路由流量，并配置 <strong>Mixer</strong> 以实施策略和收集遥测数据；数据平面由一组以 Sidecar 方式部署的智能代理（<strong>Envoy</strong>）组成，这些代理可以调节和控制微服务及 <strong>Mixer</strong> 之间所有的网络通信。</p>
-<p>控制平面的特点：</p>
-<ul>
-<li>不直接解析数据包</li>
-<li>与控制平面中的代理通信，下发策略和配置</li>
-<li>负责网络行为的可视化</li>
-<li>通常提供 API 或者命令行工具可用于配置版本化管理，便于持续集成和部署</li>
-</ul>
-<p>数据平面的特点：</p>
-<ul>
-<li>通常是按照无状态目标设计的，但实际上为了提高流量转发性能，需要缓存一些数据</li>
-<li>直接处理入站和出站数据包，转发、路由、健康检查、负载均衡、认证、鉴权、产生监控数据等</li>
-<li>对应用来说透明，即可以做到无感知部署</li>
-</ul>
-<p><strong>优点</strong></p>
-<ul>
-<li>屏蔽分布式系统通信的复杂性(负载均衡、服务发现、认证授权、监控追踪、流量控制等等)，服务只用关注业务逻辑；</li>
-<li>真正的语言无关，服务可以用任何语言编写，只需和Service Mesh通信即可；</li>
-<li>对应用透明，Service Mesh组件可以单独升级；</li>
-</ul>
-<p><strong>挑战</strong></p>
-<ul>
-<li>Service Mesh组件以代理模式计算并转发请求，一定程度上会降低通信系统性能，并增加系统资源开销；</li>
-<li>Service Mesh组件接管了网络流量，因此服务的整体稳定性依赖于Service Mesh，同时额外引入的大量Service Mesh服务实例的运维和管理也是一个挑战；</li>
-</ul>
-<h2 id="Kubernetes"><a href="#Kubernetes" class="headerlink" title="Kubernetes"></a>Kubernetes</h2><p><a href="https://jimmysong.io/kubernetes-handbook/concepts/">https://jimmysong.io/kubernetes-handbook/concepts/</a></p>
-<h1 id="微服务"><a href="#微服务" class="headerlink" title="微服务"></a>微服务</h1><p><a href="https://zhuanlan.zhihu.com/p/61901608">https://zhuanlan.zhihu.com/p/61901608</a></p>
-<ul>
-<li>不同服务间直接进行通信</li>
-<li>加入对<strong>网络传输问题</strong>的处理逻辑</li>
-<li>使用<strong>TCP协议</strong>处理网络传输问题</li>
-<li>第一代微服务：<strong>分布式系统</strong>发展带来的新需求（分布式系统的通用语义），如熔断策略、负载均衡、服务发现、认证和授权、quota限制、trace和监控等</li>
-<li>第二代微服务：<strong>面向微服务架构的开发框架</strong>出现</li>
-<li>第一代 Service Mesh：Linkerd，Envoy，NginxMesh为代表的<strong>代理模式（边车模式）</strong>将分布式服务的通信抽象为单独一层，在这一层中实现负载均衡、服务发现、认证授权、监控追踪、流量控制等分布式系统所需要的功能，作为一个和服务对等的代理服务，和服务部署在一起，接管服务的流量，通过代理之间的通信间接完成服务之间的通信请求，从而保证微服务语言无关的特性，解决版本兼容问题，同时避免开发者掌握管理复杂框架本身花费的时间精力</li>
-<li>第二代 Service Mesh：以 Istio 为代表，提供统一的上层运维入口，演化出了集中式的控制面板，所有的单机代理组件通过和控制面板交互进行<strong>网络拓扑策略的更新</strong>和<strong>单机数据的汇报</strong></li>
-</ul>
-<h1 id="使用-Elastic-技术栈构建-K8S-全栈监控"><a href="#使用-Elastic-技术栈构建-K8S-全栈监控" class="headerlink" title="使用 Elastic 技术栈构建 K8S 全栈监控"></a>使用 Elastic 技术栈构建 K8S 全栈监控</h1><p><a href="https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-1/">https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-1/</a></p>
-<p><a href="https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-2/">https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-2/</a></p>
-<p><a href="https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-3/">https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-3/</a></p>
-<p><a href="https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-4/">https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-4/</a></p>
-<p>在安装 ElasticSearch数据节点时，storageClass需要绑定现有的storageclass name</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl get sc # 获取storageclass</span><br></pre></td></tr></table></figure>
-
-<p><img src="2021-11-17_17-46.png" alt="2021-11-17_17-46"></p>
-<p>修改yaml文件，将storageClassName改为查询到的storageclass name</p>
-<p><img src="2021-11-17_17-48.png" alt="2021-11-17_17-48"></p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">Changed password for user apm_system</span><br><span class="line">PASSWORD apm_system = KDDHU4TJi9EuD87x1DBT</span><br><span class="line"></span><br><span class="line">Changed password for user kibana_system</span><br><span class="line">PASSWORD kibana_system = LsyKNl7OqhBCc9ChCXMm</span><br><span class="line"></span><br><span class="line">Changed password for user kibana</span><br><span class="line">PASSWORD kibana = LsyKNl7OqhBCc9ChCXMm</span><br><span class="line"></span><br><span class="line">Changed password for user logstash_system</span><br><span class="line">PASSWORD logstash_system = MTUGYEFhbtSN4wU2OvjR</span><br><span class="line"></span><br><span class="line">Changed password for user beats_system</span><br><span class="line">PASSWORD beats_system = wob24NOj3J0apT8Rc62T</span><br><span class="line"></span><br><span class="line">Changed password for user remote_monitoring_user</span><br><span class="line">PASSWORD remote_monitoring_user = 0geQaxGmygn90wjVMEfe</span><br><span class="line"></span><br><span class="line">Changed password for user elastic</span><br><span class="line">PASSWORD elastic = zjA9fYQfUgwgmJn4shv5</span><br></pre></td></tr></table></figure>
-
-<p>注意将elastic用户名和密码添加到Kubernetes的Secret 对象中一步需要将password改为之前生成的最后一个密码，即上面的zjA9fYQfUgwgmJn4shv5</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl logs -f -n elastic $(kubectl get pods -n elastic | grep kibana | sed -n 1p | awk &#x27;&#123;print $1&#125;&#x27;) | grep &quot;Status changed from yellow to green&quot;</span><br><span class="line"></span><br><span class="line">kubectl get svc kibana -n elastic</span><br></pre></td></tr></table></figure>
-
-<p>获取elastic service的CLUSTER-IP，通过CLUSTER-IP:5601访问Kibana可视化界面，登录使用elastic作为用户名和之前获取的zjA9fYQfUgwgmJn4shv5作为密码</p>
-<ul>
-<li>tips：pod创建出现ImagePullBackOff时，很可能时镜像拉不下来，可以考虑在dockerhub搜索对于的镜像，拉下来后使用<code>docker tag</code>命令修改标签，或者直接在yaml里直接改image对于的地址</li>
-</ul>
-]]></content>
-      <categories>
-        <category>环境搭建</category>
-      </categories>
-      <tags>
-        <tag>ELK</tag>
-        <tag>环境搭建</tag>
-        <tag>AIOps</tag>
-        <tag>istio</tag>
-        <tag>云原生</tag>
       </tags>
   </entry>
 </search>
