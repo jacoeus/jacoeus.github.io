@@ -600,6 +600,195 @@
       </tags>
   </entry>
   <entry>
+    <title>Istio &amp; AIOps环境搭建</title>
+    <url>/2021/06/30/Istio-AIOps%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/</url>
+    <content><![CDATA[<p>在AIOps挑战赛学习了智能运维相关的内容，尝试在Service Mesh环境下模拟配置挑战赛环境</p>
+<p>使用minikube搭建微服务网络，通过Istio进行监控，分别通过Prometheus、Fluented以及Jaeger获取服务的指标、日志和调用链信息，并汇总到Elasticsearch用作后续分析</p>
+<p>后续发现使用全栈的Elastic解决方案能够不依赖istio实现轻松可靠的在Elasticseach中汇总指标、日志和性能追踪，于是又尝试了如下的解决方案<a href="https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-1/">https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-1/</a></p>
+<p>除此之外，<a href="https://juejin.cn/post/6847902217979052045">KubeSphere</a>汇总了包括运维数据获取等的一系列解决方案，可以非常方便地安装与管理用户最常用的云原生工具</p>
+<a id="more"></a>
+
+<h1 id="Istio-环境配置"><a href="#Istio-环境配置" class="headerlink" title="Istio 环境配置"></a>Istio 环境配置</h1><p>参考教程配置环境<a href="https://istio.io/latest/docs/setup/getting-started/">https://istio.io/latest/docs/setup/getting-started/</a></p>
+<h2 id="配置流程"><a href="#配置流程" class="headerlink" title="配置流程"></a>配置流程</h2><p>参见官网demo <a href="https://istio.io/latest/docs/setup/getting-started/">https://istio.io/latest/docs/setup/getting-started/</a></p>
+<p>安装minikube <a href="https://minikube.sigs.k8s.io/docs/start/#install-a-hypervisor">https://minikube.sigs.k8s.io/docs/start/#install-a-hypervisor</a></p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">minikube start</span><br><span class="line">kubectl get po -A</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">istioctl install --set profile=demo -y</span><br><span class="line">kubectl label namespace default istio-injection=enabled</span><br><span class="line">kubectl apply -f samples/bookinfo/platform/kube/bookinfo.yaml</span><br><span class="line">kubectl get services</span><br><span class="line">kubectl get pods //等待直到所有pods处于Running状态</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl exec &quot;$(kubectl get pod -l app=ratings -o jsonpath=&#x27;&#123;.items[0].metadata.name&#125;&#x27;)&quot; -c ratings -- curl -sS productpage:9080/productpage | grep -o &quot;&lt;title&gt;.*&lt;/title&gt;&quot;</span><br><span class="line">//命令行返回&lt;title&gt;Simple Bookstore App&lt;/title&gt;则当前配置过程正常</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">//创建一个Istio Ingress Gateway，该网关将路径映射到网格边缘处的路线</span><br><span class="line">kubectl apply -f samples/bookinfo/networking/bookinfo-gateway.yaml</span><br><span class="line">istioctl analyze</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">export INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath=&#x27;&#123;.spec.ports[?(@.name==&quot;http2&quot;)].nodePort&#125;&#x27;)</span><br><span class="line">export SECURE_INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath=&#x27;&#123;.spec.ports[?(@.name==&quot;https&quot;)].nodePort&#125;&#x27;)</span><br><span class="line">export INGRESS_HOST=$(minikube ip)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">minikube tunnel &#x2F;&#x2F;在新的终端窗口中运行以下命令，以启动将流量发送到Istio Ingress网关的Minikube隧道</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">export GATEWAY_URL=$INGRESS_HOST:$INGRESS_PORT</span><br><span class="line">echo &quot;http://$GATEWAY_URL/productpage&quot;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl apply -f samples/addons</span><br><span class="line">kubectl rollout status deployment/kiali -n istio-system</span><br><span class="line">istioctl dashboard kiali</span><br></pre></td></tr></table></figure>
+
+<h2 id="kubernets相关命令"><a href="#kubernets相关命令" class="headerlink" title="kubernets相关命令"></a>kubernets相关命令</h2><p>minikube是本地的Kubernetes，致力于使Kubernetes易于学习和开发</p>
+<p><a href="https://minikube.sigs.k8s.io/docs/start/#install-a-hypervisor">https://minikube.sigs.k8s.io/docs/start/#install-a-hypervisor</a></p>
+<p><a href="https://istio.io/latest/docs/setup/platform-setup/minikube/">https://istio.io/latest/docs/setup/platform-setup/minikube/</a></p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">minikube start --driver=docker</span><br><span class="line">minikube start --memory=16384 --cpus=4 --kubernetes-version=v1.20.2</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl get po -A</span><br><span class="line">minikube kubectl -- get po -A </span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">minikube pause</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">minikube stop</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">minikube delete --all</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl get po -A //查看所有pods，第一列为命名空間</span><br><span class="line">kubectl get pod -n istio-system //查看命名空间istio-system下的pods</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl get deployment -n istio-system</span><br><span class="line">kubectl delete deployment prometheus -n istio-system</span><br><span class="line">kubectl delete pod prometheus -n istio-system</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl delete pod prometheus -n istio-system //从命名空间istio-system删除prometheus</span><br><span class="line">kubectl rollout status deployment/prometheus -n istio-system //重新安装prometheus</span><br></pre></td></tr></table></figure>
+
+<h2 id="Istio相关命令"><a href="#Istio相关命令" class="headerlink" title="Istio相关命令"></a>Istio相关命令</h2><p><a href="https://www.servicemesher.com/istio-handbook/practice/setup-istio.html">https://www.servicemesher.com/istio-handbook/practice/setup-istio.html</a></p>
+<p><a href="https://istio.io/latest/docs/setup/install/istioctl/">https://istio.io/latest/docs/setup/install/istioctl/</a></p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">istioctl install</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">istioctl install --set profile=demo</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">istioctl x uninstall --purge</span><br></pre></td></tr></table></figure>
+
+<p>可选<code>--purge</code>标志将删除所有Istio资源，包括可能与其他Istio控制平面共享的群集范围的资源。</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">istioctl dashboard //查看可用的仪表盘</span><br></pre></td></tr></table></figure>
+
+<h1 id="运维环境搭建"><a href="#运维环境搭建" class="headerlink" title="运维环境搭建"></a>运维环境搭建</h1><p>将指标、日志以及调用链数据集中到elasticsearch以便后续分析</p>
+<p><a href="https://kubernetes.io/zh/docs/tasks/configure-pod-container/pull-image-private-registry/">https://kubernetes.io/zh/docs/tasks/configure-pod-container/pull-image-private-registry/</a></p>
+<p>环境搭建速度较慢时考虑使用本地镜像</p>
+<h2 id="Prometheus配置"><a href="#Prometheus配置" class="headerlink" title="Prometheus配置"></a>Prometheus配置</h2><p><a href="https://www.servicemesher.com/istio-handbook/practice/prometheus.html">https://www.servicemesher.com/istio-handbook/practice/prometheus.html</a></p>
+<p>istio的sample/addons目录提供了prometheus的yaml文件，之前通过<code>kubectl apply -f samples/addons</code>已安装，可以直接<code>istioctl dashboard prometheus</code>进行观察</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">//进入prometheus所在pod</span><br><span class="line">//pod名通过kubectl get po -A命令查找并替换</span><br><span class="line">kubectl exec -it prometheus-7cb88b5945-8jbkf -n istio-system sh</span><br></pre></td></tr></table></figure>
+
+<p>找到配置文件prometheus.yml并打开，我的在/etc/config/prometheus.yml并修改</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">//也可以通过修改 Prometheus 的 ConfigMap 对其配置进行如下修改</span><br><span class="line">kubectl edit configmap prometheus -n istio-system </span><br></pre></td></tr></table></figure>
+
+<p>修改完成后保存，需要给 Prometheus 加上 –web.enable-lifecycle 启动参数来支持热更新（可能默认支持）</p>
+<p>这些配置参数在prometheus.yaml中已经定义</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl edit deployment prometheus -n istio-system</span><br><span class="line"> ...</span><br><span class="line"> containers:</span><br><span class="line">      - args:</span><br><span class="line">        - --storage.tsdb.retention=6h</span><br><span class="line"></span><br><span class="line">        - --config.file=/etc/prometheus/prometheus.yml</span><br><span class="line"></span><br><span class="line">        - --web.enable-lifecycle</span><br><span class="line">          image: docker.io/prom/prometheus:v2.15.1</span><br><span class="line">          imagePullPolicy: IfNotPresent</span><br><span class="line"> ...</span><br></pre></td></tr></table></figure>
+
+<p>然后再调用 Prometheus 的 HTTP API 即可更新配置：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">curl -X POST http://&lt;Prometheus URL&gt;:9090/-/reload</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">istioctl dashboard prometheus</span><br></pre></td></tr></table></figure>
+
+<p><a href="https://www.elastic.co/cn/what-is/prometheus-monitoring">https://www.elastic.co/cn/what-is/prometheus-monitoring</a></p>
+<p>将prometheus数据导出到elasticsearch</p>
+<h2 id="EFK配置"><a href="#EFK配置" class="headerlink" title="EFK配置"></a>EFK配置</h2><p><a href="https://www.servicemesher.com/istio-handbook/practice/efk.html">https://www.servicemesher.com/istio-handbook/practice/efk.html</a></p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">//具体设置参数的位置需要参考demo.yaml，1.10版本默认使用meshConfig.accessLogFile为/dev/stdout</span><br><span class="line">istioctl manifest apply --set profile=demo --set values.global.proxy.accessLogFile=&quot;/dev/stdout&quot;</span><br></pre></td></tr></table></figure>
+
+<p>以下通过部署 <code>sleep</code> 示例应用程序来测试日志采集过程</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl apply -f samples/sleep/sleep.yaml</span><br><span class="line">kubectl apply -f &lt;(istioctl kube-inject -f samples/sleep/sleep.yaml) //手动注入sidecar</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl logs -l app=sleep -c istio-proxy //查看应用日志</span><br></pre></td></tr></table></figure>
+
+<p><a href="https://www.servicemesher.com/istio-handbook/practice/efk.html">https://www.servicemesher.com/istio-handbook/practice/efk.html</a></p>
+<p>参考上文构建EFK的YAML文件</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl apply -f samples/efk.yaml</span><br></pre></td></tr></table></figure>
+
+<p>执行命令产生访问日志：</p>
+<blockquote>
+<p>如果你已经按照本书部署了 <code>Bookinfo</code> 示例，你也可以直接通过浏览器访问 /productpage 页面也可以产生访问日志。</p>
+</blockquote>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl exec -it $(kubectl get pod -l app=sleep -o jsonpath=&#x27;&#123;.items[0].metadata.name&#125;&#x27;) -c sleep -- curl -v httpbin:8000/status/418</span><br></pre></td></tr></table></figure>
+
+<p>设置 Kibana 的端口转发：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl -n logging port-forward $(kubectl -n logging get pod -l app=kibana -o jsonpath=&#x27;&#123;.items[0].metadata.name&#125;&#x27;) 5601:5601 &amp;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>此命令将 Kibaba <a href="https://www.servicemesher.com/istio-handbook/GLOSSARY.html#pod">Pod</a> 的 <code>5601</code> 端口转发到 <code>localhost:5601</code> ，<code>&amp;</code> 代表后台运行</li>
+</ul>
+<p>后续需要对 <code>Fluentd</code> 进行细致的配置。如果用于生产环境，可以前往 Kubernetes 官方 github 仓库找到完整的 <code>EFK</code> 配置来进行部署：</p>
+<p><a href="https://github.com/kubernetes/kubernetes/tree/master/cluster/addons/fluentd-elasticsearch">https://github.com/kubernetes/kubernetes/tree/master/cluster/addons/fluentd-elasticsearch</a></p>
+<h2 id="Jaeger配置"><a href="#Jaeger配置" class="headerlink" title="Jaeger配置"></a>Jaeger配置</h2><p><a href="https://www.servicemesher.com/istio-handbook/practice/jaeger.html">https://www.servicemesher.com/istio-handbook/practice/jaeger.html</a></p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl apply -f samples/addons/jaeger.yaml</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">istioctl dashboard jaeger</span><br></pre></td></tr></table></figure>
+
+<p>可以在jaeger.yaml配置文件中修改参数</p>
+<p>将调用链数据持久化存储 <a href="https://www.jaegertracing.io/docs/1.23/operator/#production-strategy">https://www.jaegertracing.io/docs/1.23/operator/#production-strategy</a></p>
+<p><code>#TODO</code> </p>
+<ul>
+<li><code>Jaeger Collector</code> 默认采用直接写入存储服务的方式，大规模的使用场景下建议使用 Kafka 作为中间缓存区。</li>
+</ul>
+<h1 id="Istio构架"><a href="#Istio构架" class="headerlink" title="Istio构架"></a>Istio构架</h1><p><a href="https://www.servicemesher.com/istio-handbook/concepts/basic.html">https://www.servicemesher.com/istio-handbook/concepts/basic.html</a></p>
+<p><a href="https://zhuanlan.zhihu.com/p/145544378">https://zhuanlan.zhihu.com/p/145544378</a></p>
+<blockquote>
+<p>服务网格是一个<strong>基础设施层</strong>，用于处理服务间通信。云原生应用有着复杂的服务拓扑，服务网格保证<strong>请求在这些拓扑中可靠地穿梭</strong>。在实际应用当中，服务网格通常是由一系列轻量级的<strong>网络代理</strong>组成的，它们与应用程序部署在一起，但<strong>对应用程序透明</strong>。</p>
+</blockquote>
+<p>Istio 服务网格在逻辑上分为控制平面和数据平面两部分。其中，控制平面 <strong>Pilot</strong> 负责管理和配置代理来路由流量，并配置 <strong>Mixer</strong> 以实施策略和收集遥测数据；数据平面由一组以 Sidecar 方式部署的智能代理（<strong>Envoy</strong>）组成，这些代理可以调节和控制微服务及 <strong>Mixer</strong> 之间所有的网络通信。</p>
+<p>控制平面的特点：</p>
+<ul>
+<li>不直接解析数据包</li>
+<li>与控制平面中的代理通信，下发策略和配置</li>
+<li>负责网络行为的可视化</li>
+<li>通常提供 API 或者命令行工具可用于配置版本化管理，便于持续集成和部署</li>
+</ul>
+<p>数据平面的特点：</p>
+<ul>
+<li>通常是按照无状态目标设计的，但实际上为了提高流量转发性能，需要缓存一些数据</li>
+<li>直接处理入站和出站数据包，转发、路由、健康检查、负载均衡、认证、鉴权、产生监控数据等</li>
+<li>对应用来说透明，即可以做到无感知部署</li>
+</ul>
+<p><strong>优点</strong></p>
+<ul>
+<li>屏蔽分布式系统通信的复杂性(负载均衡、服务发现、认证授权、监控追踪、流量控制等等)，服务只用关注业务逻辑；</li>
+<li>真正的语言无关，服务可以用任何语言编写，只需和Service Mesh通信即可；</li>
+<li>对应用透明，Service Mesh组件可以单独升级；</li>
+</ul>
+<p><strong>挑战</strong></p>
+<ul>
+<li>Service Mesh组件以代理模式计算并转发请求，一定程度上会降低通信系统性能，并增加系统资源开销；</li>
+<li>Service Mesh组件接管了网络流量，因此服务的整体稳定性依赖于Service Mesh，同时额外引入的大量Service Mesh服务实例的运维和管理也是一个挑战；</li>
+</ul>
+<h2 id="Kubernetes"><a href="#Kubernetes" class="headerlink" title="Kubernetes"></a>Kubernetes</h2><p><a href="https://jimmysong.io/kubernetes-handbook/concepts/">https://jimmysong.io/kubernetes-handbook/concepts/</a></p>
+<h1 id="微服务"><a href="#微服务" class="headerlink" title="微服务"></a>微服务</h1><p><a href="https://zhuanlan.zhihu.com/p/61901608">https://zhuanlan.zhihu.com/p/61901608</a></p>
+<ul>
+<li>不同服务间直接进行通信</li>
+<li>加入对<strong>网络传输问题</strong>的处理逻辑</li>
+<li>使用<strong>TCP协议</strong>处理网络传输问题</li>
+<li>第一代微服务：<strong>分布式系统</strong>发展带来的新需求（分布式系统的通用语义），如熔断策略、负载均衡、服务发现、认证和授权、quota限制、trace和监控等</li>
+<li>第二代微服务：<strong>面向微服务架构的开发框架</strong>出现</li>
+<li>第一代 Service Mesh：Linkerd，Envoy，NginxMesh为代表的<strong>代理模式（边车模式）</strong>将分布式服务的通信抽象为单独一层，在这一层中实现负载均衡、服务发现、认证授权、监控追踪、流量控制等分布式系统所需要的功能，作为一个和服务对等的代理服务，和服务部署在一起，接管服务的流量，通过代理之间的通信间接完成服务之间的通信请求，从而保证微服务语言无关的特性，解决版本兼容问题，同时避免开发者掌握管理复杂框架本身花费的时间精力</li>
+<li>第二代 Service Mesh：以 Istio 为代表，提供统一的上层运维入口，演化出了集中式的控制面板，所有的单机代理组件通过和控制面板交互进行<strong>网络拓扑策略的更新</strong>和<strong>单机数据的汇报</strong></li>
+</ul>
+<h1 id="使用-Elastic-技术栈构建-K8S-全栈监控"><a href="#使用-Elastic-技术栈构建-K8S-全栈监控" class="headerlink" title="使用 Elastic 技术栈构建 K8S 全栈监控"></a>使用 Elastic 技术栈构建 K8S 全栈监控</h1><p><a href="https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-1/">https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-1/</a></p>
+<p><a href="https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-2/">https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-2/</a></p>
+<p><a href="https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-3/">https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-3/</a></p>
+<p><a href="https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-4/">https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-4/</a></p>
+<p>在安装 ElasticSearch数据节点时，storageClass需要绑定现有的storageclass name</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl get sc # 获取storageclass</span><br></pre></td></tr></table></figure>
+
+<p><img src="2021-11-17_17-46.png" alt="2021-11-17_17-46"></p>
+<p>修改yaml文件，将storageClassName改为查询到的storageclass name</p>
+<p><img src="2021-11-17_17-48.png" alt="2021-11-17_17-48"></p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">Changed password for user apm_system</span><br><span class="line">PASSWORD apm_system = KDDHU4TJi9EuD87x1DBT</span><br><span class="line"></span><br><span class="line">Changed password for user kibana_system</span><br><span class="line">PASSWORD kibana_system = LsyKNl7OqhBCc9ChCXMm</span><br><span class="line"></span><br><span class="line">Changed password for user kibana</span><br><span class="line">PASSWORD kibana = LsyKNl7OqhBCc9ChCXMm</span><br><span class="line"></span><br><span class="line">Changed password for user logstash_system</span><br><span class="line">PASSWORD logstash_system = MTUGYEFhbtSN4wU2OvjR</span><br><span class="line"></span><br><span class="line">Changed password for user beats_system</span><br><span class="line">PASSWORD beats_system = wob24NOj3J0apT8Rc62T</span><br><span class="line"></span><br><span class="line">Changed password for user remote_monitoring_user</span><br><span class="line">PASSWORD remote_monitoring_user = 0geQaxGmygn90wjVMEfe</span><br><span class="line"></span><br><span class="line">Changed password for user elastic</span><br><span class="line">PASSWORD elastic = zjA9fYQfUgwgmJn4shv5</span><br></pre></td></tr></table></figure>
+
+<p>注意将elastic用户名和密码添加到Kubernetes的Secret 对象中一步需要将password改为之前生成的最后一个密码，即上面的zjA9fYQfUgwgmJn4shv5</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl logs -f -n elastic $(kubectl get pods -n elastic | grep kibana | sed -n 1p | awk &#x27;&#123;print $1&#125;&#x27;) | grep &quot;Status changed from yellow to green&quot;</span><br><span class="line"></span><br><span class="line">kubectl get svc kibana -n elastic</span><br></pre></td></tr></table></figure>
+
+<p>获取elastic service的CLUSTER-IP，通过CLUSTER-IP:5601访问Kibana可视化界面，登录使用elastic作为用户名和之前获取的zjA9fYQfUgwgmJn4shv5作为密码</p>
+<ul>
+<li>tips：pod创建出现ImagePullBackOff时，很可能时镜像拉不下来，可以考虑在dockerhub搜索对于的镜像，拉下来后使用<code>docker tag</code>命令修改标签，或者直接在yaml里直接改image对于的地址</li>
+</ul>
+]]></content>
+      <categories>
+        <category>AIOps</category>
+        <category>环境搭建</category>
+      </categories>
+      <tags>
+        <tag>AIOps</tag>
+        <tag>ELK</tag>
+        <tag>环境搭建</tag>
+        <tag>istio</tag>
+        <tag>云原生</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>JustEnoughScalaforSpark笔记</title>
     <url>/2021/11/25/JustEnoughScalaforSpark%E7%AC%94%E8%AE%B0/</url>
     <content><![CDATA[<p>作为学习Spark的过程，感觉即便考虑使用Java进行编程，对Scala有个一定的理解还是有必要的，也能方便阅读其他人的代码，然后发现一个名字挺有诱惑力的项目<a href="https://github.com/deanwampler/JustEnoughScalaForSpark">https://github.com/deanwampler/JustEnoughScalaForSpark</a> ，遂上手看了一下，记些笔记供以后查阅</p>
@@ -912,30 +1101,6 @@
       </tags>
   </entry>
   <entry>
-    <title>spark连接elasticsearch进行数据处理</title>
-    <url>/2021/11/22/spark%E8%BF%9E%E6%8E%A5elasticsearch%E8%BF%9B%E8%A1%8C%E6%95%B0%E6%8D%AE%E5%A4%84%E7%90%86/</url>
-    <content><![CDATA[<p>在数据处理时希望结合Spark和Elasticsearch这两大流行的工具，设想了将大量运维数据存储在Elasticsearch中通过Spark访问处理后再返回Elasticsearch，结合Kibana进行展示，或者使用Spark Streaming在入库Elasticsearch前进行预处理两种场景</p>
-<p>本文总结了Spark与Elasticsearch进行交互的几种模式及一些demo</p>
-<p><code>#TODO</code></p>
-<a id="more"></a>
-
-<p>方案1：elasticsearch部署在kubernetes环境下，本机使用local[*]方案访问用于简单测试</p>
-<figure class="highlight xml"><table><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.apache.spark<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spark-core_2.12<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">version</span>&gt;</span>3.2.0<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.elasticsearch<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>elasticsearch-spark-30_2.12<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">version</span>&gt;</span>7.15.2<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
-
-<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">WordCount</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">        SparkConf conf = <span class="keyword">new</span> SparkConf().setAppName(<span class="string">&quot;Elastic App&quot;</span>).setMaster(<span class="string">&quot;local[*]&quot;</span>);</span><br><span class="line">        conf.set(<span class="string">&quot;es.nodes&quot;</span>, <span class="string">&quot;10.108.23.161&quot;</span>);  <span class="comment">// CLUSTER_IP</span></span><br><span class="line">        conf.set(<span class="string">&quot;es.port&quot;</span>, <span class="string">&quot;9200&quot;</span>);</span><br><span class="line">        conf.set(<span class="string">&quot;es.net.http.auth.user&quot;</span>, <span class="string">&quot;elastic&quot;</span>);</span><br><span class="line">        conf.set(<span class="string">&quot;es.net.http.auth.pass&quot;</span>, <span class="string">&quot;nwT9nh83KTZw1RoMjxDo&quot;</span>);</span><br><span class="line">        conf.set(<span class="string">&quot;es.nodes.wan.only&quot;</span>, <span class="string">&quot;true&quot;</span>);</span><br><span class="line"></span><br><span class="line">        JavaSparkContext jsc = <span class="keyword">new</span> JavaSparkContext(conf);</span><br><span class="line">        jsc.setLogLevel(<span class="string">&quot;ERROR&quot;</span>);</span><br><span class="line"></span><br><span class="line">        JavaPairRDD&lt;String, Map&lt;String, Object&gt;&gt; esRDD = JavaEsSpark.esRDD(jsc, <span class="string">&quot;metricbeat-7.8.0-2021.11.22-000001&quot;</span>);  <span class="comment">// index</span></span><br><span class="line">        System.out.println(esRDD.first().toString());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p><code>#TODO</code></p>
-]]></content>
-      <categories>
-        <category>Bigdata</category>
-        <category>Database</category>
-      </categories>
-      <tags>
-        <tag>Spark</tag>
-        <tag>Elasticsearch</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>TimescaleDB学习</title>
     <url>/2020/09/16/TimescaleDB%E5%AD%A6%E4%B9%A0/</url>
     <content><![CDATA[<p><a href="https://docs.timescale.com/latest/main">TimescaleDB</a>是基于关系数据库PostgreSQL的一个<strong>开源时序数据库</strong></p>
@@ -1147,192 +1312,27 @@
       </tags>
   </entry>
   <entry>
-    <title>Istio &amp; AIOps环境搭建</title>
-    <url>/2021/06/30/Istio-AIOps%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/</url>
-    <content><![CDATA[<p>在AIOps挑战赛学习了智能运维相关的内容，尝试在Service Mesh环境下模拟配置挑战赛环境</p>
-<p>使用minikube搭建微服务网络，通过Istio进行监控，分别通过Prometheus、Fluented以及Jaeger获取服务的指标、日志和调用链信息，并汇总到Elasticsearch用作后续分析</p>
-<p>后续发现使用全栈的Elastic解决方案能够不依赖istio实现轻松可靠的在Elasticseach中汇总指标、日志和性能追踪，于是又尝试了如下的解决方案<a href="https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-1/">https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-1/</a></p>
-<p>除此之外，<a href="https://juejin.cn/post/6847902217979052045">KubeSphere</a>汇总了包括运维数据获取等的一系列解决方案，可以非常方便地安装与管理用户最常用的云原生工具</p>
+    <title>spark连接elasticsearch进行数据处理</title>
+    <url>/2021/11/22/spark%E8%BF%9E%E6%8E%A5elasticsearch%E8%BF%9B%E8%A1%8C%E6%95%B0%E6%8D%AE%E5%A4%84%E7%90%86/</url>
+    <content><![CDATA[<p>在数据处理时希望结合Spark和Elasticsearch这两大流行的工具，设想了将大量运维数据存储在Elasticsearch中通过Spark访问处理后再返回Elasticsearch，结合Kibana进行展示，或者使用Spark Streaming在入库Elasticsearch前进行预处理两种场景</p>
+<p>本文总结了Spark与Elasticsearch进行交互的几种模式及一些demo</p>
+<p><code>#TODO</code></p>
 <a id="more"></a>
 
-<h1 id="Istio-环境配置"><a href="#Istio-环境配置" class="headerlink" title="Istio 环境配置"></a>Istio 环境配置</h1><p>参考教程配置环境<a href="https://istio.io/latest/docs/setup/getting-started/">https://istio.io/latest/docs/setup/getting-started/</a></p>
-<h2 id="配置流程"><a href="#配置流程" class="headerlink" title="配置流程"></a>配置流程</h2><p>参见官网demo <a href="https://istio.io/latest/docs/setup/getting-started/">https://istio.io/latest/docs/setup/getting-started/</a></p>
-<p>安装minikube <a href="https://minikube.sigs.k8s.io/docs/start/#install-a-hypervisor">https://minikube.sigs.k8s.io/docs/start/#install-a-hypervisor</a></p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">minikube start</span><br><span class="line">kubectl get po -A</span><br></pre></td></tr></table></figure>
+<p>方案1：elasticsearch部署在kubernetes环境下，本机使用local[*]方案访问用于简单测试</p>
+<figure class="highlight xml"><table><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.apache.spark<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spark-core_2.12<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">version</span>&gt;</span>3.2.0<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.elasticsearch<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>elasticsearch-spark-30_2.12<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">version</span>&gt;</span>7.15.2<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
 
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">istioctl install --set profile=demo -y</span><br><span class="line">kubectl label namespace default istio-injection=enabled</span><br><span class="line">kubectl apply -f samples/bookinfo/platform/kube/bookinfo.yaml</span><br><span class="line">kubectl get services</span><br><span class="line">kubectl get pods //等待直到所有pods处于Running状态</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">WordCount</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">        SparkConf conf = <span class="keyword">new</span> SparkConf().setAppName(<span class="string">&quot;Elastic App&quot;</span>).setMaster(<span class="string">&quot;local[*]&quot;</span>);</span><br><span class="line">        conf.set(<span class="string">&quot;es.nodes&quot;</span>, <span class="string">&quot;10.108.23.161&quot;</span>);  <span class="comment">// CLUSTER_IP</span></span><br><span class="line">        conf.set(<span class="string">&quot;es.port&quot;</span>, <span class="string">&quot;9200&quot;</span>);</span><br><span class="line">        conf.set(<span class="string">&quot;es.net.http.auth.user&quot;</span>, <span class="string">&quot;elastic&quot;</span>);</span><br><span class="line">        conf.set(<span class="string">&quot;es.net.http.auth.pass&quot;</span>, <span class="string">&quot;nwT9nh83KTZw1RoMjxDo&quot;</span>);</span><br><span class="line">        conf.set(<span class="string">&quot;es.nodes.wan.only&quot;</span>, <span class="string">&quot;true&quot;</span>);</span><br><span class="line"></span><br><span class="line">        JavaSparkContext jsc = <span class="keyword">new</span> JavaSparkContext(conf);</span><br><span class="line">        jsc.setLogLevel(<span class="string">&quot;ERROR&quot;</span>);</span><br><span class="line"></span><br><span class="line">        JavaPairRDD&lt;String, Map&lt;String, Object&gt;&gt; esRDD = JavaEsSpark.esRDD(jsc, <span class="string">&quot;metricbeat-7.8.0-2021.11.22-000001&quot;</span>);  <span class="comment">// index</span></span><br><span class="line">        System.out.println(esRDD.first().toString());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl exec &quot;$(kubectl get pod -l app=ratings -o jsonpath=&#x27;&#123;.items[0].metadata.name&#125;&#x27;)&quot; -c ratings -- curl -sS productpage:9080/productpage | grep -o &quot;&lt;title&gt;.*&lt;/title&gt;&quot;</span><br><span class="line">//命令行返回&lt;title&gt;Simple Bookstore App&lt;/title&gt;则当前配置过程正常</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">//创建一个Istio Ingress Gateway，该网关将路径映射到网格边缘处的路线</span><br><span class="line">kubectl apply -f samples/bookinfo/networking/bookinfo-gateway.yaml</span><br><span class="line">istioctl analyze</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">export INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath=&#x27;&#123;.spec.ports[?(@.name==&quot;http2&quot;)].nodePort&#125;&#x27;)</span><br><span class="line">export SECURE_INGRESS_PORT=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath=&#x27;&#123;.spec.ports[?(@.name==&quot;https&quot;)].nodePort&#125;&#x27;)</span><br><span class="line">export INGRESS_HOST=$(minikube ip)</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">minikube tunnel &#x2F;&#x2F;在新的终端窗口中运行以下命令，以启动将流量发送到Istio Ingress网关的Minikube隧道</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">export GATEWAY_URL=$INGRESS_HOST:$INGRESS_PORT</span><br><span class="line">echo &quot;http://$GATEWAY_URL/productpage&quot;</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl apply -f samples/addons</span><br><span class="line">kubectl rollout status deployment/kiali -n istio-system</span><br><span class="line">istioctl dashboard kiali</span><br></pre></td></tr></table></figure>
-
-<h2 id="kubernets相关命令"><a href="#kubernets相关命令" class="headerlink" title="kubernets相关命令"></a>kubernets相关命令</h2><p>minikube是本地的Kubernetes，致力于使Kubernetes易于学习和开发</p>
-<p><a href="https://minikube.sigs.k8s.io/docs/start/#install-a-hypervisor">https://minikube.sigs.k8s.io/docs/start/#install-a-hypervisor</a></p>
-<p><a href="https://istio.io/latest/docs/setup/platform-setup/minikube/">https://istio.io/latest/docs/setup/platform-setup/minikube/</a></p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">minikube start --driver=docker</span><br><span class="line">minikube start --memory=16384 --cpus=4 --kubernetes-version=v1.20.2</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl get po -A</span><br><span class="line">minikube kubectl -- get po -A </span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">minikube pause</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">minikube stop</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">minikube delete --all</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl get po -A //查看所有pods，第一列为命名空間</span><br><span class="line">kubectl get pod -n istio-system //查看命名空间istio-system下的pods</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl get deployment -n istio-system</span><br><span class="line">kubectl delete deployment prometheus -n istio-system</span><br><span class="line">kubectl delete pod prometheus -n istio-system</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl delete pod prometheus -n istio-system //从命名空间istio-system删除prometheus</span><br><span class="line">kubectl rollout status deployment/prometheus -n istio-system //重新安装prometheus</span><br></pre></td></tr></table></figure>
-
-<h2 id="Istio相关命令"><a href="#Istio相关命令" class="headerlink" title="Istio相关命令"></a>Istio相关命令</h2><p><a href="https://www.servicemesher.com/istio-handbook/practice/setup-istio.html">https://www.servicemesher.com/istio-handbook/practice/setup-istio.html</a></p>
-<p><a href="https://istio.io/latest/docs/setup/install/istioctl/">https://istio.io/latest/docs/setup/install/istioctl/</a></p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">istioctl install</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">istioctl install --set profile=demo</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">istioctl x uninstall --purge</span><br></pre></td></tr></table></figure>
-
-<p>可选<code>--purge</code>标志将删除所有Istio资源，包括可能与其他Istio控制平面共享的群集范围的资源。</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">istioctl dashboard //查看可用的仪表盘</span><br></pre></td></tr></table></figure>
-
-<h1 id="运维环境搭建"><a href="#运维环境搭建" class="headerlink" title="运维环境搭建"></a>运维环境搭建</h1><p>将指标、日志以及调用链数据集中到elasticsearch以便后续分析</p>
-<p><a href="https://kubernetes.io/zh/docs/tasks/configure-pod-container/pull-image-private-registry/">https://kubernetes.io/zh/docs/tasks/configure-pod-container/pull-image-private-registry/</a></p>
-<p>环境搭建速度较慢时考虑使用本地镜像</p>
-<h2 id="Prometheus配置"><a href="#Prometheus配置" class="headerlink" title="Prometheus配置"></a>Prometheus配置</h2><p><a href="https://www.servicemesher.com/istio-handbook/practice/prometheus.html">https://www.servicemesher.com/istio-handbook/practice/prometheus.html</a></p>
-<p>istio的sample/addons目录提供了prometheus的yaml文件，之前通过<code>kubectl apply -f samples/addons</code>已安装，可以直接<code>istioctl dashboard prometheus</code>进行观察</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">//进入prometheus所在pod</span><br><span class="line">//pod名通过kubectl get po -A命令查找并替换</span><br><span class="line">kubectl exec -it prometheus-7cb88b5945-8jbkf -n istio-system sh</span><br></pre></td></tr></table></figure>
-
-<p>找到配置文件prometheus.yml并打开，我的在/etc/config/prometheus.yml并修改</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">//也可以通过修改 Prometheus 的 ConfigMap 对其配置进行如下修改</span><br><span class="line">kubectl edit configmap prometheus -n istio-system </span><br></pre></td></tr></table></figure>
-
-<p>修改完成后保存，需要给 Prometheus 加上 –web.enable-lifecycle 启动参数来支持热更新（可能默认支持）</p>
-<p>这些配置参数在prometheus.yaml中已经定义</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl edit deployment prometheus -n istio-system</span><br><span class="line"> ...</span><br><span class="line"> containers:</span><br><span class="line">      - args:</span><br><span class="line">        - --storage.tsdb.retention=6h</span><br><span class="line"></span><br><span class="line">        - --config.file=/etc/prometheus/prometheus.yml</span><br><span class="line"></span><br><span class="line">        - --web.enable-lifecycle</span><br><span class="line">          image: docker.io/prom/prometheus:v2.15.1</span><br><span class="line">          imagePullPolicy: IfNotPresent</span><br><span class="line"> ...</span><br></pre></td></tr></table></figure>
-
-<p>然后再调用 Prometheus 的 HTTP API 即可更新配置：</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">curl -X POST http://&lt;Prometheus URL&gt;:9090/-/reload</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">istioctl dashboard prometheus</span><br></pre></td></tr></table></figure>
-
-<p><a href="https://www.elastic.co/cn/what-is/prometheus-monitoring">https://www.elastic.co/cn/what-is/prometheus-monitoring</a></p>
-<p>将prometheus数据导出到elasticsearch</p>
-<h2 id="EFK配置"><a href="#EFK配置" class="headerlink" title="EFK配置"></a>EFK配置</h2><p><a href="https://www.servicemesher.com/istio-handbook/practice/efk.html">https://www.servicemesher.com/istio-handbook/practice/efk.html</a></p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">//具体设置参数的位置需要参考demo.yaml，1.10版本默认使用meshConfig.accessLogFile为/dev/stdout</span><br><span class="line">istioctl manifest apply --set profile=demo --set values.global.proxy.accessLogFile=&quot;/dev/stdout&quot;</span><br></pre></td></tr></table></figure>
-
-<p>以下通过部署 <code>sleep</code> 示例应用程序来测试日志采集过程</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl apply -f samples/sleep/sleep.yaml</span><br><span class="line">kubectl apply -f &lt;(istioctl kube-inject -f samples/sleep/sleep.yaml) //手动注入sidecar</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl logs -l app=sleep -c istio-proxy //查看应用日志</span><br></pre></td></tr></table></figure>
-
-<p><a href="https://www.servicemesher.com/istio-handbook/practice/efk.html">https://www.servicemesher.com/istio-handbook/practice/efk.html</a></p>
-<p>参考上文构建EFK的YAML文件</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl apply -f samples/efk.yaml</span><br></pre></td></tr></table></figure>
-
-<p>执行命令产生访问日志：</p>
-<blockquote>
-<p>如果你已经按照本书部署了 <code>Bookinfo</code> 示例，你也可以直接通过浏览器访问 /productpage 页面也可以产生访问日志。</p>
-</blockquote>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl exec -it $(kubectl get pod -l app=sleep -o jsonpath=&#x27;&#123;.items[0].metadata.name&#125;&#x27;) -c sleep -- curl -v httpbin:8000/status/418</span><br></pre></td></tr></table></figure>
-
-<p>设置 Kibana 的端口转发：</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl -n logging port-forward $(kubectl -n logging get pod -l app=kibana -o jsonpath=&#x27;&#123;.items[0].metadata.name&#125;&#x27;) 5601:5601 &amp;</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>此命令将 Kibaba <a href="https://www.servicemesher.com/istio-handbook/GLOSSARY.html#pod">Pod</a> 的 <code>5601</code> 端口转发到 <code>localhost:5601</code> ，<code>&amp;</code> 代表后台运行</li>
-</ul>
-<p>后续需要对 <code>Fluentd</code> 进行细致的配置。如果用于生产环境，可以前往 Kubernetes 官方 github 仓库找到完整的 <code>EFK</code> 配置来进行部署：</p>
-<p><a href="https://github.com/kubernetes/kubernetes/tree/master/cluster/addons/fluentd-elasticsearch">https://github.com/kubernetes/kubernetes/tree/master/cluster/addons/fluentd-elasticsearch</a></p>
-<h2 id="Jaeger配置"><a href="#Jaeger配置" class="headerlink" title="Jaeger配置"></a>Jaeger配置</h2><p><a href="https://www.servicemesher.com/istio-handbook/practice/jaeger.html">https://www.servicemesher.com/istio-handbook/practice/jaeger.html</a></p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl apply -f samples/addons/jaeger.yaml</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">istioctl dashboard jaeger</span><br></pre></td></tr></table></figure>
-
-<p>可以在jaeger.yaml配置文件中修改参数</p>
-<p>将调用链数据持久化存储 <a href="https://www.jaegertracing.io/docs/1.23/operator/#production-strategy">https://www.jaegertracing.io/docs/1.23/operator/#production-strategy</a></p>
-<p><code>#TODO</code> </p>
-<ul>
-<li><code>Jaeger Collector</code> 默认采用直接写入存储服务的方式，大规模的使用场景下建议使用 Kafka 作为中间缓存区。</li>
-</ul>
-<h1 id="Istio构架"><a href="#Istio构架" class="headerlink" title="Istio构架"></a>Istio构架</h1><p><a href="https://www.servicemesher.com/istio-handbook/concepts/basic.html">https://www.servicemesher.com/istio-handbook/concepts/basic.html</a></p>
-<p><a href="https://zhuanlan.zhihu.com/p/145544378">https://zhuanlan.zhihu.com/p/145544378</a></p>
-<blockquote>
-<p>服务网格是一个<strong>基础设施层</strong>，用于处理服务间通信。云原生应用有着复杂的服务拓扑，服务网格保证<strong>请求在这些拓扑中可靠地穿梭</strong>。在实际应用当中，服务网格通常是由一系列轻量级的<strong>网络代理</strong>组成的，它们与应用程序部署在一起，但<strong>对应用程序透明</strong>。</p>
-</blockquote>
-<p>Istio 服务网格在逻辑上分为控制平面和数据平面两部分。其中，控制平面 <strong>Pilot</strong> 负责管理和配置代理来路由流量，并配置 <strong>Mixer</strong> 以实施策略和收集遥测数据；数据平面由一组以 Sidecar 方式部署的智能代理（<strong>Envoy</strong>）组成，这些代理可以调节和控制微服务及 <strong>Mixer</strong> 之间所有的网络通信。</p>
-<p>控制平面的特点：</p>
-<ul>
-<li>不直接解析数据包</li>
-<li>与控制平面中的代理通信，下发策略和配置</li>
-<li>负责网络行为的可视化</li>
-<li>通常提供 API 或者命令行工具可用于配置版本化管理，便于持续集成和部署</li>
-</ul>
-<p>数据平面的特点：</p>
-<ul>
-<li>通常是按照无状态目标设计的，但实际上为了提高流量转发性能，需要缓存一些数据</li>
-<li>直接处理入站和出站数据包，转发、路由、健康检查、负载均衡、认证、鉴权、产生监控数据等</li>
-<li>对应用来说透明，即可以做到无感知部署</li>
-</ul>
-<p><strong>优点</strong></p>
-<ul>
-<li>屏蔽分布式系统通信的复杂性(负载均衡、服务发现、认证授权、监控追踪、流量控制等等)，服务只用关注业务逻辑；</li>
-<li>真正的语言无关，服务可以用任何语言编写，只需和Service Mesh通信即可；</li>
-<li>对应用透明，Service Mesh组件可以单独升级；</li>
-</ul>
-<p><strong>挑战</strong></p>
-<ul>
-<li>Service Mesh组件以代理模式计算并转发请求，一定程度上会降低通信系统性能，并增加系统资源开销；</li>
-<li>Service Mesh组件接管了网络流量，因此服务的整体稳定性依赖于Service Mesh，同时额外引入的大量Service Mesh服务实例的运维和管理也是一个挑战；</li>
-</ul>
-<h2 id="Kubernetes"><a href="#Kubernetes" class="headerlink" title="Kubernetes"></a>Kubernetes</h2><p><a href="https://jimmysong.io/kubernetes-handbook/concepts/">https://jimmysong.io/kubernetes-handbook/concepts/</a></p>
-<h1 id="微服务"><a href="#微服务" class="headerlink" title="微服务"></a>微服务</h1><p><a href="https://zhuanlan.zhihu.com/p/61901608">https://zhuanlan.zhihu.com/p/61901608</a></p>
-<ul>
-<li>不同服务间直接进行通信</li>
-<li>加入对<strong>网络传输问题</strong>的处理逻辑</li>
-<li>使用<strong>TCP协议</strong>处理网络传输问题</li>
-<li>第一代微服务：<strong>分布式系统</strong>发展带来的新需求（分布式系统的通用语义），如熔断策略、负载均衡、服务发现、认证和授权、quota限制、trace和监控等</li>
-<li>第二代微服务：<strong>面向微服务架构的开发框架</strong>出现</li>
-<li>第一代 Service Mesh：Linkerd，Envoy，NginxMesh为代表的<strong>代理模式（边车模式）</strong>将分布式服务的通信抽象为单独一层，在这一层中实现负载均衡、服务发现、认证授权、监控追踪、流量控制等分布式系统所需要的功能，作为一个和服务对等的代理服务，和服务部署在一起，接管服务的流量，通过代理之间的通信间接完成服务之间的通信请求，从而保证微服务语言无关的特性，解决版本兼容问题，同时避免开发者掌握管理复杂框架本身花费的时间精力</li>
-<li>第二代 Service Mesh：以 Istio 为代表，提供统一的上层运维入口，演化出了集中式的控制面板，所有的单机代理组件通过和控制面板交互进行<strong>网络拓扑策略的更新</strong>和<strong>单机数据的汇报</strong></li>
-</ul>
-<h1 id="使用-Elastic-技术栈构建-K8S-全栈监控"><a href="#使用-Elastic-技术栈构建-K8S-全栈监控" class="headerlink" title="使用 Elastic 技术栈构建 K8S 全栈监控"></a>使用 Elastic 技术栈构建 K8S 全栈监控</h1><p><a href="https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-1/">https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-1/</a></p>
-<p><a href="https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-2/">https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-2/</a></p>
-<p><a href="https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-3/">https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-3/</a></p>
-<p><a href="https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-4/">https://www.qikqiak.com/post/k8s-monitor-use-elastic-stack-4/</a></p>
-<p>在安装 ElasticSearch数据节点时，storageClass需要绑定现有的storageclass name</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl get sc # 获取storageclass</span><br></pre></td></tr></table></figure>
-
-<p><img src="2021-11-17_17-46.png" alt="2021-11-17_17-46"></p>
-<p>修改yaml文件，将storageClassName改为查询到的storageclass name</p>
-<p><img src="2021-11-17_17-48.png" alt="2021-11-17_17-48"></p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">Changed password for user apm_system</span><br><span class="line">PASSWORD apm_system = KDDHU4TJi9EuD87x1DBT</span><br><span class="line"></span><br><span class="line">Changed password for user kibana_system</span><br><span class="line">PASSWORD kibana_system = LsyKNl7OqhBCc9ChCXMm</span><br><span class="line"></span><br><span class="line">Changed password for user kibana</span><br><span class="line">PASSWORD kibana = LsyKNl7OqhBCc9ChCXMm</span><br><span class="line"></span><br><span class="line">Changed password for user logstash_system</span><br><span class="line">PASSWORD logstash_system = MTUGYEFhbtSN4wU2OvjR</span><br><span class="line"></span><br><span class="line">Changed password for user beats_system</span><br><span class="line">PASSWORD beats_system = wob24NOj3J0apT8Rc62T</span><br><span class="line"></span><br><span class="line">Changed password for user remote_monitoring_user</span><br><span class="line">PASSWORD remote_monitoring_user = 0geQaxGmygn90wjVMEfe</span><br><span class="line"></span><br><span class="line">Changed password for user elastic</span><br><span class="line">PASSWORD elastic = zjA9fYQfUgwgmJn4shv5</span><br></pre></td></tr></table></figure>
-
-<p>注意将elastic用户名和密码添加到Kubernetes的Secret 对象中一步需要将password改为之前生成的最后一个密码，即上面的zjA9fYQfUgwgmJn4shv5</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl logs -f -n elastic $(kubectl get pods -n elastic | grep kibana | sed -n 1p | awk &#x27;&#123;print $1&#125;&#x27;) | grep &quot;Status changed from yellow to green&quot;</span><br><span class="line"></span><br><span class="line">kubectl get svc kibana -n elastic</span><br></pre></td></tr></table></figure>
-
-<p>获取elastic service的CLUSTER-IP，通过CLUSTER-IP:5601访问Kibana可视化界面，登录使用elastic作为用户名和之前获取的zjA9fYQfUgwgmJn4shv5作为密码</p>
-<ul>
-<li>tips：pod创建出现ImagePullBackOff时，很可能时镜像拉不下来，可以考虑在dockerhub搜索对于的镜像，拉下来后使用<code>docker tag</code>命令修改标签，或者直接在yaml里直接改image对于的地址</li>
-</ul>
+<p><code>#TODO</code></p>
 ]]></content>
       <categories>
-        <category>AIOps</category>
-        <category>环境搭建</category>
+        <category>Database</category>
+        <category>Bigdata</category>
       </categories>
       <tags>
-        <tag>AIOps</tag>
-        <tag>ELK</tag>
-        <tag>环境搭建</tag>
-        <tag>istio</tag>
-        <tag>云原生</tag>
+        <tag>Spark</tag>
+        <tag>Elasticsearch</tag>
       </tags>
   </entry>
   <entry>
@@ -1413,147 +1413,6 @@
         <tag>学习笔记</tag>
         <tag>联邦学习</tag>
         <tag>sketch</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>阿里云ECS开发者大赛算法赛道参赛总结</title>
-    <url>/2021/11/25/%E9%98%BF%E9%87%8C%E4%BA%91ECS%E5%BC%80%E5%8F%91%E8%80%85%E5%A4%A7%E8%B5%9B%E7%AE%97%E6%B3%95%E8%B5%9B%E9%81%93%E5%8F%82%E8%B5%9B%E6%80%BB%E7%BB%93/</url>
-    <content><![CDATA[<p><a href="https://tianchi.aliyun.com/competition/entrance/531906/introduction">云上开发，高效智能–阿里云ECS Cloudbuild开发者大赛算法挑战赛道</a>是在天池平台进行的以阿里云弹性计算服务为背景的故障预测算法设计比赛，主要是对多个数据文件进行处理后训练模型在线预测样本是否会在2天内宕机</p>
-<p>这次比赛也是我第一次参加天池相关比赛，事实上在算法方面也缺乏积累，过程中进行了挺多的尝试和学习，最终虽然有幸以复赛第3进入决赛，但是因为算法方面相较其他组做的就很普通，决赛就答了个第六\捂脸</p>
-<p>在比赛记录部分整理了比赛过程中进行的主要尝试，希望能对其他同学有所帮助</p>
-<p><a href="https://tianchi.aliyun.com/forum/postDetail?spm=5176.12586969.1002.9.38cb5bd9ZBI54Q&amp;postId=294919">https://tianchi.aliyun.com/forum/postDetail?spm=5176.12586969.1002.9.38cb5bd9ZBI54Q&amp;postId=294919</a></p>
- <a id="more"></a>
-
-<h1 id="赛题分析"><a href="#赛题分析" class="headerlink" title="赛题分析"></a>赛题分析</h1><p>赛题背景：以阿里云弹性计算服务（ECS）为背景，要求设计故障预测算法对内存系统异常引起的服务器宕机进行预测来避免服务器异常导致的业务受损，保证上层客户应用的可用性与稳定性</p>
-<p>数据：服务器配置信息、服务器异常日志数据（57种异常）、服务器的宕机记录以及标签样本信息</p>
-<p>要求：基于上述数据，预测服务器在未来2天内是否会发生宕机</p>
-<p>评价指标：F1_score作为评价指标</p>
-<h2 id="问题难点"><a href="#问题难点" class="headerlink" title="问题难点"></a>问题难点</h2><ul>
-<li><p>整合服务器配置信息、服务器异常日志数据、服务器的宕机记录以及标签样本信息提取有效特征</p>
-</li>
-<li><p>需要对57种异常提取特征</p>
-</li>
-<li><p>服务器异常日志较大，需要兼顾数据处理的时间开销</p>
-</li>
-<li><p>标签样本极不平衡</p>
-</li>
-</ul>
-<h2 id="数据集分析"><a href="#数据集分析" class="headerlink" title="数据集分析"></a>数据集分析</h2><ul>
-<li><p>异常停止发生到宕机普遍存在一段空白期，宕机时间中54/206的空白期大于两天，89/206空白期小于一小时 =&gt; 空白期会影响回归预测宕机时间的效果</p>
-</li>
-<li><p>发现存在33/206的宕机事件异常只集中在宕机前5~6天，60/206的宕机时间中异常集中在宕机前1小时内=&gt;认为存在多种宕机表现，可以进行多分类（判断黑样本有限，多分类很难达到预期效果）</p>
-</li>
-<li><p>单个异常的出现不存在明显规律，在不同场景下，可能周期性出现或者随机出现=&gt;很难对某个异常针对其特点（周期性、周期持续时间等）设计特征</p>
-</li>
-<li><p>发现存在仅异常12导致宕机的情况=&gt;认为异常12对宕机存在显著的关联性</p>
-</li>
-</ul>
-<h2 id="基本思路"><a href="#基本思路" class="headerlink" title="基本思路"></a>基本思路</h2><ul>
-<li>基于给出的标签样本对异常统一提取特征并进行不平衡的二分类，并对存在异常12的样本额外训练模型</li>
-</ul>
-<h1 id="特征工程"><a href="#特征工程" class="headerlink" title="特征工程"></a>特征工程</h1><ul>
-<li><p>分析宕机发生的原因，同时发生多种异常、异常发生的数量/频率达到一定程度、异常持续发生</p>
-</li>
-<li><p>服务器配置特征+不同粒度窗口下异常出现的均值 + 异常出现的峰值（对所有异常整体和单个异常分别考查）</p>
-</li>
-<li><p>标记类别特征，其他特征进行归一化（直接除以最大值）</p>
-</li>
-<li><p>特征选择尝试lightgbm feature_importance和欠采样+树模型，选择前者</p>
-</li>
-</ul>
-<h1 id="模型构建"><a href="#模型构建" class="headerlink" title="模型构建"></a>模型构建</h1><ul>
-<li><p>尝试了lightgbm和imbalanced-learn（选择lightgbm）</p>
-</li>
-<li><p>对出现异常12的样本进行建模，异常12模型在本地测试时假阴性低，使用减权的方式排除被预测为False的样本，结合lightgbm五折交叉验证训练来保证稳定性，对所有样本进行训练，预测时选出超过一定阈值的样本标记为黑样本</p>
-</li>
-<li><p>本地模型验证：</p>
-<ul>
-<li><p>train_test_split来分割训练集测试集容易过拟合（使用某个服务器样本来预测该服务器的样本成绩会虚高）</p>
-</li>
-<li><p>随机选择部分服务器的所有样本作为测试集（同时保证测试集中黑白样本比例），来保证模型的泛化性</p>
-</li>
-</ul>
-</li>
-</ul>
-<h1 id="总结-amp-改进"><a href="#总结-amp-改进" class="headerlink" title="总结&amp;改进"></a>总结&amp;改进</h1><ul>
-<li><p>复赛成绩0.45，排名第3  </p>
-</li>
-<li><p>根据数据集分析构建模型，包括主二分类模型和针对异常12的模型，且异常12的模型特征复用了主模型的特征</p>
-</li>
-<li><p>多次本地测试和线上运行成绩稳定，具有良好的泛化性</p>
-</li>
-<li><p>使用PostgreSQL对异常日志数据进行存储，可以使用扩展TimescaleDB来高效提取复杂的时序特征</p>
-</li>
-<li><p>在实际环境中，考虑根据宕机信息设计训练集，对不同宕机情况预先进行多分类（尤其针对类似异常集中在宕机时间前5天附近的情况）</p>
-</li>
-<li><p>尝试过程中发现在训练集利用样本时间后的部分异常信息来进行训练能达到较好的效果（样本时间前5min之后发生异常作为训练集特征，样本时间前5min内发生异常作为测试集特征） ，可解释性有待探究</p>
-</li>
-</ul>
-<h1 id="比赛记录"><a href="#比赛记录" class="headerlink" title="比赛记录"></a>比赛记录</h1><p>因为缺少参加机器学习相关比赛经验，过程中乱七八糟也做了挺多尝试，这边进行了一些记录</p>
-<ul>
-<li><p>赛题要求：比赛需要我们基于服务器的异常日志数据，来预测服务器在未来是否会发生宕机。提供了包括服务器配置信息、服务器异常日志数据、服务器的宕机记录以及一些预先打好标签的样本</p>
-</li>
-<li><p>基本思路：在找到异常日志数据中每个样本的服务器在采样时间点之前一段时间的异常日志信息，基于这些异常日志信息建立每个样本的特征，例如短时间内是否发生某个异常、某个异常发生的起止时间或者某个异常的出现次数等</p>
-</li>
-<li><p>主要难点：服务器异常日志数据量过大，16.7G大小的csv</p>
-</li>
-<li><p>尝试1：使用chunk分块进行读取处理，遍历一遍的时间开销便已经无法承受了</p>
-</li>
-<li><p>尝试2：考虑到服务器异常日志数据是有序排列的，于是希望能利用这个特点来快速定位到同一服务器的所有异常信息，为此标记了所有服务器异常信息在csv中的始末位置，但pandas似乎没有提供直接读取csv指定行数的方法，读取靠后的异常信息仍需要遍历几乎整个csv</p>
-</li>
-<li><p>尝试3：将原先的大csv按服务器不同分成小csv，从而能直接读取需要服务器的异常信息，然而很尴尬，始一开始运行分解csv的程序不久，笔记本存储空间就不够用了</p>
-</li>
-<li><p>尝试4：考虑到目标是进行快速的搜索，而需要处理的文件无法存放在内存，于是开始尝试使用数据库来。选择了PostgreSQL数据库来存储异常日志信息，因为只是进行搜索，为了提取特征更灵活就把服务器ip、异常事件、异常名称和自增id一起作为主键了，建表并导入数据</p>
-</li>
-<li><p>尝试5：利用数据库，于是可以通过遍历所有样本，将每个样本的服务器ip和采样时间加入到sql语句中在数据库查询并返回异常信息到一个Dataframe进行处理，来提取特征。但这样的时间开销还是很大，怀疑是有的服务器异常信息较多，从数据库传输异常信息到Dataframe进行处理仍然有很大的时间开销</p>
-</li>
-<li><p>尝试6：于是尝试在数据库中就完成特征提取，进行一些尝试并分别考察他们的时间开销，包括COUNT和GROUP BY的方法来获取每种异常的出现次数、EXISTS获取某种异常在短时间内是否发生、LIMIT 1和LIMIT 1 ORDER BY desc方法或者MIN、MAX结合GROUP BY方法来取到采样时间两天内每种异常出现的起止时间等，但直到最后的时间开销依旧不理想，猜测是某些服务器异常信息太多，采用WHERE语句限制时间和异常名称后将其异常信息加载到内存并进行操作的时间开销还是很大</p>
-</li>
-<li><p>尝试7：感觉使用数据库的时间开销始终较大，开始重新考虑数据处理方式。于是考虑在仅依赖于Pandas的情况下，如何对异常信息只是读取一次来进行特征提取。结合对异常信息的理解，通过分块读取异常信息进行简化，仅保留每个服务器每种异常的起止时间。将异常信息、服务器信息和样本信息按服务器名称连接起来，于是可以利用服务器的异常起止时间和样本采样时间构建特征。相较数据库的方案，可能无法获得一定时间内异常发生的次数，但仍可以粗略的得到异常持续的时间和采样前一段时间内是否发生异常等特征，且时间开销被极大压缩，能够在一分钟左右完成初赛测试集的预测。后来意识到这种方案涉及到穿越数据，但经过尝试在复赛测试集不存在穿越数据的情况下仅利用采样前5分钟之后是否发生异常这一特征和服务器信息就达到了0.4+的成绩，认为通过利用训练集样本时间之后的一些信息能够丰富数据，遂将该方案作为保留方案</p>
-</li>
-<li><p>尝试9：认为判断服务器是否会宕机是比两天内是否发生宕机更好的分类方案，可以通过分类算法先找出会发生宕机的服务器，再对其发生宕机的时间使用回归算法进行预测，取发生宕机时间小于两天的作为结果。但简单的进行尝试发现效果并不理想</p>
-</li>
-<li><p>尝试10：之前一直忽略了对给出数据进行分析的步骤，为了加深对数据的理解，观察了宕机服务器在宕机之前各服务器发生的异常、异常发生的起止时间及异常发生的时间间隔等。发现1：存在部分宕机发生前一些异常会间隔稳定的时间进行报错，而大部分异常报错时间比较随机，怀疑一些异常周期性的出现持续时间较长会导致异常。发现2：异常不再发生到宕机会间隔不同时间，大致分为，宕机5天前集中出现异常然后无异常至宕机发生（这种情况下如果卡在宕机前两天便很难进行预测）；宕机前40分钟左右开始，前5分钟左右异常不再出现；若干天前开始，6小时左右不再发生；一天前开始，最近1小时左右结束这几种情况。另外，存在部分宕机发生前一些异常会间隔稳定的时间进行报错，而大部分异常报错时间比较随机，怀疑一些异常周期性的出现持续时间较长会导致异常。发现3：存在部分单独异常12导致宕机的情况</p>
-</li>
-<li><p>尝试11：分析宕机发生的原因，同时发生多种异常or异常发生的数量/频率达到一定程度or单个异常持续时间较长，据此建立特征。结合方向1可以根据异常是否有周期性选择持续时间或频率作为对于该异常的特征。直觉来讲，随机报错的异常发生频率变高更容易导致宕机，间隔报错的异常持续一段时间可能导致宕机，多种异常同时出现容易导致宕机（待验证）</p>
-</li>
-<li><p>尝试12：简单的尝试取5min，1h，1day三个时间窗口中各种异常出现的次数作为特征，直接利用这些特征存在严重的过拟合现象。通过对不平衡数据集进行特征选择、调参和使用KFold对5折得到五个模型预测结果取均值等操作尝试提升泛化性</p>
-</li>
-<li><p>尝试13：重新考察数据，根据训练样本观察样本时间前异常发生的情况，部分样本存在例如样本时间前5min内异常较少而在更早的某个5min中大量出现，于是考虑在使用某个大的时间窗口中固定时间间隔异常出现数量的峰值作为特征，考虑到特征提取的效率，使用了前1h中每分钟出现异常的峰值作为特征，结合尝试12</p>
-</li>
-<li><p>尝试14：在尝试6的基础上优化查询方案，将每次查询结果具体到对应特征，每收集1000条样本的查询结果进行整合后写入用于最终训练的csv</p>
-</li>
-<li><p>尝试15：为了保证模型泛化性，进行特征工程方面的学习优化，根据经验找出类别特征，并对其他特征进行归一化。考虑到大部分特征选择方案不适用于不平衡场景，使用多次欠拟合结合树模型的方法进行特征选择，不过效果似乎没有直接使用lightgbm的feature_importance好</p>
-</li>
-<li><p>模型训练方面：官方给了已经打上标签的样本信息和服务器宕机信息供模型训练</p>
-</li>
-<li><p>基本方案：对训练集的样本信息加入提取的特征进行训练，考虑到数据集有不平衡的特性，尝试了lightgbm的is_unbalance参数和imbalanced-ensemble的一些算法</p>
-</li>
-<li><p>改进思路1：预测目标是是否会在两天内发生宕机，可以考虑回归算法预测宕机时间</p>
-</li>
-<li><p>改进思路2：充分利用服务器宕机信息，关注不可预测的服务器宕机和会发生宕机的服务器</p>
-</li>
-<li><p>改进思路3：认为判断服务器是否会宕机是比两天内是否发生宕机更好的分类方案，可以通过分类算法先找出会发生宕机的服务器，再对其发生宕机的时间使用回归算法进行预测，取发生宕机时间小于两天的作为结果</p>
-</li>
-<li><p>实现方案1：考虑是否会宕机可能是一个更有效的分类点，并且能降低数据集的不平衡性。于是，先筛除不可预测的样本，按照宕机信息将样本分为会发生宕机和不会发生宕机的情况，进行二分类的训练，在另一边将样本按照将要发生宕机的时间进行回归训练。将预测样本投入两个模型，满足会宕机且回归预测结果小于两天的预测样本作为结果输出。在判断结果时也可以按照白样本可能的数量适当调整作为二分类预测结果判断的阈值</p>
-</li>
-<li><p>实现方案2：结合数据处理时的发现，根据提供的服务器宕机信息将宕机按是否会宕机、异常最后出现到宕机的空白期长短进行多分类，再结合每个分类回归预测其</p>
-</li>
-<li><p>实现方案3：基于给出的标签样本对异常统一提取特征并进行不平衡的二分类，并对存在异常12的样本额外训练模型</p>
-</li>
-<li><p>方案1在前期的测试中表现不好（可能当时也还没能构建合理的测试方案），方案2黑样本不足，进一步进行多分类认为效果不好，于是最终使用了方案3</p>
-</li>
-</ul>
-]]></content>
-      <categories>
-        <category>比赛经历</category>
-        <category>机器学习</category>
-      </categories>
-      <tags>
-        <tag>AIOps</tag>
-        <tag>机器学习</tag>
-        <tag>天池大赛</tag>
-        <tag>比赛经历</tag>
       </tags>
   </entry>
   <entry>
@@ -1646,8 +1505,8 @@
       <tags>
         <tag>机器学习</tag>
         <tag>联邦学习</tag>
-        <tag>比赛经历</tag>
         <tag>协作学习</tag>
+        <tag>比赛经历</tag>
       </tags>
   </entry>
   <entry>
@@ -1801,6 +1660,147 @@
         <tag>AIOps</tag>
         <tag>日志分析</tag>
         <tag>算法学习</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>阿里云ECS开发者大赛算法赛道参赛总结</title>
+    <url>/2021/11/25/%E9%98%BF%E9%87%8C%E4%BA%91ECS%E5%BC%80%E5%8F%91%E8%80%85%E5%A4%A7%E8%B5%9B%E7%AE%97%E6%B3%95%E8%B5%9B%E9%81%93%E5%8F%82%E8%B5%9B%E6%80%BB%E7%BB%93/</url>
+    <content><![CDATA[<p><a href="https://tianchi.aliyun.com/competition/entrance/531906/introduction">云上开发，高效智能–阿里云ECS Cloudbuild开发者大赛算法挑战赛道</a>是在天池平台进行的以阿里云弹性计算服务为背景的故障预测算法设计比赛，主要是对多个数据文件进行处理后训练模型在线预测样本是否会在2天内宕机</p>
+<p>这次比赛也是我第一次参加天池相关比赛，事实上在算法方面也缺乏积累，过程中进行了挺多的尝试和学习，最终虽然有幸以复赛第3进入决赛，但是因为算法方面相较其他组做的就很普通，决赛就答了个第六\捂脸</p>
+<p>在比赛记录部分整理了比赛过程中进行的主要尝试，希望能对其他同学有所帮助</p>
+<p><a href="https://tianchi.aliyun.com/forum/postDetail?spm=5176.12586969.1002.9.38cb5bd9ZBI54Q&amp;postId=294919">https://tianchi.aliyun.com/forum/postDetail?spm=5176.12586969.1002.9.38cb5bd9ZBI54Q&amp;postId=294919</a></p>
+ <a id="more"></a>
+
+<h1 id="赛题分析"><a href="#赛题分析" class="headerlink" title="赛题分析"></a>赛题分析</h1><p>赛题背景：以阿里云弹性计算服务（ECS）为背景，要求设计故障预测算法对内存系统异常引起的服务器宕机进行预测来避免服务器异常导致的业务受损，保证上层客户应用的可用性与稳定性</p>
+<p>数据：服务器配置信息、服务器异常日志数据（57种异常）、服务器的宕机记录以及标签样本信息</p>
+<p>要求：基于上述数据，预测服务器在未来2天内是否会发生宕机</p>
+<p>评价指标：F1_score作为评价指标</p>
+<h2 id="问题难点"><a href="#问题难点" class="headerlink" title="问题难点"></a>问题难点</h2><ul>
+<li><p>整合服务器配置信息、服务器异常日志数据、服务器的宕机记录以及标签样本信息提取有效特征</p>
+</li>
+<li><p>需要对57种异常提取特征</p>
+</li>
+<li><p>服务器异常日志较大，需要兼顾数据处理的时间开销</p>
+</li>
+<li><p>标签样本极不平衡</p>
+</li>
+</ul>
+<h2 id="数据集分析"><a href="#数据集分析" class="headerlink" title="数据集分析"></a>数据集分析</h2><ul>
+<li><p>异常停止发生到宕机普遍存在一段空白期，宕机时间中54/206的空白期大于两天，89/206空白期小于一小时 =&gt; 空白期会影响回归预测宕机时间的效果</p>
+</li>
+<li><p>发现存在33/206的宕机事件异常只集中在宕机前5~6天，60/206的宕机时间中异常集中在宕机前1小时内=&gt;认为存在多种宕机表现，可以进行多分类（判断黑样本有限，多分类很难达到预期效果）</p>
+</li>
+<li><p>单个异常的出现不存在明显规律，在不同场景下，可能周期性出现或者随机出现=&gt;很难对某个异常针对其特点（周期性、周期持续时间等）设计特征</p>
+</li>
+<li><p>发现存在仅异常12导致宕机的情况=&gt;认为异常12对宕机存在显著的关联性</p>
+</li>
+</ul>
+<h2 id="基本思路"><a href="#基本思路" class="headerlink" title="基本思路"></a>基本思路</h2><ul>
+<li>基于给出的标签样本对异常统一提取特征并进行不平衡的二分类，并对存在异常12的样本额外训练模型</li>
+</ul>
+<h1 id="特征工程"><a href="#特征工程" class="headerlink" title="特征工程"></a>特征工程</h1><ul>
+<li><p>分析宕机发生的原因，同时发生多种异常、异常发生的数量/频率达到一定程度、异常持续发生</p>
+</li>
+<li><p>服务器配置特征+不同粒度窗口下异常出现的均值 + 异常出现的峰值（对所有异常整体和单个异常分别考查）</p>
+</li>
+<li><p>标记类别特征，其他特征进行归一化（直接除以最大值）</p>
+</li>
+<li><p>特征选择尝试lightgbm feature_importance和欠采样+树模型，选择前者</p>
+</li>
+</ul>
+<h1 id="模型构建"><a href="#模型构建" class="headerlink" title="模型构建"></a>模型构建</h1><ul>
+<li><p>尝试了lightgbm和imbalanced-learn（选择lightgbm）</p>
+</li>
+<li><p>对出现异常12的样本进行建模，异常12模型在本地测试时假阴性低，使用减权的方式排除被预测为False的样本，结合lightgbm五折交叉验证训练来保证稳定性，对所有样本进行训练，预测时选出超过一定阈值的样本标记为黑样本</p>
+</li>
+<li><p>本地模型验证：</p>
+<ul>
+<li><p>train_test_split来分割训练集测试集容易过拟合（使用某个服务器样本来预测该服务器的样本成绩会虚高）</p>
+</li>
+<li><p>随机选择部分服务器的所有样本作为测试集（同时保证测试集中黑白样本比例），来保证模型的泛化性</p>
+</li>
+</ul>
+</li>
+</ul>
+<h1 id="总结-amp-改进"><a href="#总结-amp-改进" class="headerlink" title="总结&amp;改进"></a>总结&amp;改进</h1><ul>
+<li><p>复赛成绩0.45，排名第3  </p>
+</li>
+<li><p>根据数据集分析构建模型，包括主二分类模型和针对异常12的模型，且异常12的模型特征复用了主模型的特征</p>
+</li>
+<li><p>多次本地测试和线上运行成绩稳定，具有良好的泛化性</p>
+</li>
+<li><p>使用PostgreSQL对异常日志数据进行存储，可以使用扩展TimescaleDB来高效提取复杂的时序特征</p>
+</li>
+<li><p>在实际环境中，考虑根据宕机信息设计训练集，对不同宕机情况预先进行多分类（尤其针对类似异常集中在宕机时间前5天附近的情况）</p>
+</li>
+<li><p>尝试过程中发现在训练集利用样本时间后的部分异常信息来进行训练能达到较好的效果（样本时间前5min之后发生异常作为训练集特征，样本时间前5min内发生异常作为测试集特征） ，可解释性有待探究</p>
+</li>
+</ul>
+<h1 id="比赛记录"><a href="#比赛记录" class="headerlink" title="比赛记录"></a>比赛记录</h1><p>因为缺少参加机器学习相关比赛经验，过程中乱七八糟也做了挺多尝试，这边进行了一些记录</p>
+<ul>
+<li><p>赛题要求：比赛需要我们基于服务器的异常日志数据，来预测服务器在未来是否会发生宕机。提供了包括服务器配置信息、服务器异常日志数据、服务器的宕机记录以及一些预先打好标签的样本</p>
+</li>
+<li><p>基本思路：在找到异常日志数据中每个样本的服务器在采样时间点之前一段时间的异常日志信息，基于这些异常日志信息建立每个样本的特征，例如短时间内是否发生某个异常、某个异常发生的起止时间或者某个异常的出现次数等</p>
+</li>
+<li><p>主要难点：服务器异常日志数据量过大，16.7G大小的csv</p>
+</li>
+<li><p>尝试1：使用chunk分块进行读取处理，遍历一遍的时间开销便已经无法承受了</p>
+</li>
+<li><p>尝试2：考虑到服务器异常日志数据是有序排列的，于是希望能利用这个特点来快速定位到同一服务器的所有异常信息，为此标记了所有服务器异常信息在csv中的始末位置，但pandas似乎没有提供直接读取csv指定行数的方法，读取靠后的异常信息仍需要遍历几乎整个csv</p>
+</li>
+<li><p>尝试3：将原先的大csv按服务器不同分成小csv，从而能直接读取需要服务器的异常信息，然而很尴尬，始一开始运行分解csv的程序不久，笔记本存储空间就不够用了</p>
+</li>
+<li><p>尝试4：考虑到目标是进行快速的搜索，而需要处理的文件无法存放在内存，于是开始尝试使用数据库来。选择了PostgreSQL数据库来存储异常日志信息，因为只是进行搜索，为了提取特征更灵活就把服务器ip、异常事件、异常名称和自增id一起作为主键了，建表并导入数据</p>
+</li>
+<li><p>尝试5：利用数据库，于是可以通过遍历所有样本，将每个样本的服务器ip和采样时间加入到sql语句中在数据库查询并返回异常信息到一个Dataframe进行处理，来提取特征。但这样的时间开销还是很大，怀疑是有的服务器异常信息较多，从数据库传输异常信息到Dataframe进行处理仍然有很大的时间开销</p>
+</li>
+<li><p>尝试6：于是尝试在数据库中就完成特征提取，进行一些尝试并分别考察他们的时间开销，包括COUNT和GROUP BY的方法来获取每种异常的出现次数、EXISTS获取某种异常在短时间内是否发生、LIMIT 1和LIMIT 1 ORDER BY desc方法或者MIN、MAX结合GROUP BY方法来取到采样时间两天内每种异常出现的起止时间等，但直到最后的时间开销依旧不理想，猜测是某些服务器异常信息太多，采用WHERE语句限制时间和异常名称后将其异常信息加载到内存并进行操作的时间开销还是很大</p>
+</li>
+<li><p>尝试7：感觉使用数据库的时间开销始终较大，开始重新考虑数据处理方式。于是考虑在仅依赖于Pandas的情况下，如何对异常信息只是读取一次来进行特征提取。结合对异常信息的理解，通过分块读取异常信息进行简化，仅保留每个服务器每种异常的起止时间。将异常信息、服务器信息和样本信息按服务器名称连接起来，于是可以利用服务器的异常起止时间和样本采样时间构建特征。相较数据库的方案，可能无法获得一定时间内异常发生的次数，但仍可以粗略的得到异常持续的时间和采样前一段时间内是否发生异常等特征，且时间开销被极大压缩，能够在一分钟左右完成初赛测试集的预测。后来意识到这种方案涉及到穿越数据，但经过尝试在复赛测试集不存在穿越数据的情况下仅利用采样前5分钟之后是否发生异常这一特征和服务器信息就达到了0.4+的成绩，认为通过利用训练集样本时间之后的一些信息能够丰富数据，遂将该方案作为保留方案</p>
+</li>
+<li><p>尝试9：认为判断服务器是否会宕机是比两天内是否发生宕机更好的分类方案，可以通过分类算法先找出会发生宕机的服务器，再对其发生宕机的时间使用回归算法进行预测，取发生宕机时间小于两天的作为结果。但简单的进行尝试发现效果并不理想</p>
+</li>
+<li><p>尝试10：之前一直忽略了对给出数据进行分析的步骤，为了加深对数据的理解，观察了宕机服务器在宕机之前各服务器发生的异常、异常发生的起止时间及异常发生的时间间隔等。发现1：存在部分宕机发生前一些异常会间隔稳定的时间进行报错，而大部分异常报错时间比较随机，怀疑一些异常周期性的出现持续时间较长会导致异常。发现2：异常不再发生到宕机会间隔不同时间，大致分为，宕机5天前集中出现异常然后无异常至宕机发生（这种情况下如果卡在宕机前两天便很难进行预测）；宕机前40分钟左右开始，前5分钟左右异常不再出现；若干天前开始，6小时左右不再发生；一天前开始，最近1小时左右结束这几种情况。另外，存在部分宕机发生前一些异常会间隔稳定的时间进行报错，而大部分异常报错时间比较随机，怀疑一些异常周期性的出现持续时间较长会导致异常。发现3：存在部分单独异常12导致宕机的情况</p>
+</li>
+<li><p>尝试11：分析宕机发生的原因，同时发生多种异常or异常发生的数量/频率达到一定程度or单个异常持续时间较长，据此建立特征。结合方向1可以根据异常是否有周期性选择持续时间或频率作为对于该异常的特征。直觉来讲，随机报错的异常发生频率变高更容易导致宕机，间隔报错的异常持续一段时间可能导致宕机，多种异常同时出现容易导致宕机（待验证）</p>
+</li>
+<li><p>尝试12：简单的尝试取5min，1h，1day三个时间窗口中各种异常出现的次数作为特征，直接利用这些特征存在严重的过拟合现象。通过对不平衡数据集进行特征选择、调参和使用KFold对5折得到五个模型预测结果取均值等操作尝试提升泛化性</p>
+</li>
+<li><p>尝试13：重新考察数据，根据训练样本观察样本时间前异常发生的情况，部分样本存在例如样本时间前5min内异常较少而在更早的某个5min中大量出现，于是考虑在使用某个大的时间窗口中固定时间间隔异常出现数量的峰值作为特征，考虑到特征提取的效率，使用了前1h中每分钟出现异常的峰值作为特征，结合尝试12</p>
+</li>
+<li><p>尝试14：在尝试6的基础上优化查询方案，将每次查询结果具体到对应特征，每收集1000条样本的查询结果进行整合后写入用于最终训练的csv</p>
+</li>
+<li><p>尝试15：为了保证模型泛化性，进行特征工程方面的学习优化，根据经验找出类别特征，并对其他特征进行归一化。考虑到大部分特征选择方案不适用于不平衡场景，使用多次欠拟合结合树模型的方法进行特征选择，不过效果似乎没有直接使用lightgbm的feature_importance好</p>
+</li>
+<li><p>模型训练方面：官方给了已经打上标签的样本信息和服务器宕机信息供模型训练</p>
+</li>
+<li><p>基本方案：对训练集的样本信息加入提取的特征进行训练，考虑到数据集有不平衡的特性，尝试了lightgbm的is_unbalance参数和imbalanced-ensemble的一些算法</p>
+</li>
+<li><p>改进思路1：预测目标是是否会在两天内发生宕机，可以考虑回归算法预测宕机时间</p>
+</li>
+<li><p>改进思路2：充分利用服务器宕机信息，关注不可预测的服务器宕机和会发生宕机的服务器</p>
+</li>
+<li><p>改进思路3：认为判断服务器是否会宕机是比两天内是否发生宕机更好的分类方案，可以通过分类算法先找出会发生宕机的服务器，再对其发生宕机的时间使用回归算法进行预测，取发生宕机时间小于两天的作为结果</p>
+</li>
+<li><p>实现方案1：考虑是否会宕机可能是一个更有效的分类点，并且能降低数据集的不平衡性。于是，先筛除不可预测的样本，按照宕机信息将样本分为会发生宕机和不会发生宕机的情况，进行二分类的训练，在另一边将样本按照将要发生宕机的时间进行回归训练。将预测样本投入两个模型，满足会宕机且回归预测结果小于两天的预测样本作为结果输出。在判断结果时也可以按照白样本可能的数量适当调整作为二分类预测结果判断的阈值</p>
+</li>
+<li><p>实现方案2：结合数据处理时的发现，根据提供的服务器宕机信息将宕机按是否会宕机、异常最后出现到宕机的空白期长短进行多分类，再结合每个分类回归预测其</p>
+</li>
+<li><p>实现方案3：基于给出的标签样本对异常统一提取特征并进行不平衡的二分类，并对存在异常12的样本额外训练模型</p>
+</li>
+<li><p>方案1在前期的测试中表现不好（可能当时也还没能构建合理的测试方案），方案2黑样本不足，进一步进行多分类认为效果不好，于是最终使用了方案3</p>
+</li>
+</ul>
+]]></content>
+      <categories>
+        <category>机器学习</category>
+        <category>比赛经历</category>
+      </categories>
+      <tags>
+        <tag>AIOps</tag>
+        <tag>机器学习</tag>
+        <tag>比赛经历</tag>
+        <tag>天池大赛</tag>
       </tags>
   </entry>
   <entry>
@@ -1998,8 +1998,8 @@
 <p>$$<br>\begin{aligned}<br>&amp;Softmax(\boldsymbol{x}) = \frac{e^{\boldsymbol{x}-\Vert\boldsymbol{x}\Vert_{\infty}}}{\Vert e^{\boldsymbol{x}-\Vert\boldsymbol{x}\Vert_{\infty}}\Vert_1}<br>\\&amp;g_i = Softmax(\hat{y_i}^{(t-1)}) - y_i<br>\\&amp;h_i = Softmax(\hat{y_i}^{(t-1)}) * (1-Softmax(\hat{y_i}^{(t-1)}))<br>\\&amp;\hat{y_i}^{(t)} = Softmax(w_j^*) = Softmax(-\frac{G_j}{H_j+\lambda}) = Softmax(-\frac{\sum_{i \in I_j}g_i}{\sum_{i \in I_j}h_i + \lambda})<br>\end{aligned}<br>$$</p>
 ]]></content>
       <categories>
-        <category>比赛经历</category>
         <category>机器学习</category>
+        <category>比赛经历</category>
       </categories>
       <tags>
         <tag>机器学习</tag>
