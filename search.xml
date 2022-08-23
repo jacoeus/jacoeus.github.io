@@ -777,13 +777,13 @@
 </ul>
 ]]></content>
       <categories>
-        <category>AIOps</category>
         <category>环境搭建</category>
+        <category>AIOps</category>
       </categories>
       <tags>
-        <tag>AIOps</tag>
         <tag>ELK</tag>
         <tag>环境搭建</tag>
+        <tag>AIOps</tag>
         <tag>istio</tag>
         <tag>云原生</tag>
       </tags>
@@ -1046,8 +1046,8 @@
         <category>时序分析</category>
       </categories>
       <tags>
-        <tag>异常检测</tag>
         <tag>论文阅读</tag>
+        <tag>异常检测</tag>
       </tags>
   </entry>
   <entry>
@@ -1416,6 +1416,146 @@
       </tags>
   </entry>
   <entry>
+    <title>分布式数据库技术整理</title>
+    <url>/2022/08/22/%E5%88%86%E5%B8%83%E5%BC%8F%E6%95%B0%E6%8D%AE%E5%BA%93%E6%8A%80%E6%9C%AF%E6%95%B4%E7%90%86/</url>
+    <content><![CDATA[<p>最近尝试对分布式数据库进行学习，才了解到目前的主流分布式事务型数据库，其底层也是基于LSM树的</p>
+<p>于是为了探究LSM树如何实现分布式以及如何实现事务控制，开始从单机场景的<strong>LevelDB</strong>，到支持分布式结构化数据表的<strong>BigTable</strong>，再到支持分布式事务的<strong>Spanner</strong>（NewSQL），以及在Spanner基础上增加列式存储支持的<strong>TiDB</strong>（HTAP）进行一系列基本的学习和整理</p>
+<a id="more"></a>
+
+<h1 id="LSM-Tree"><a href="#LSM-Tree" class="headerlink" title="LSM Tree"></a>LSM Tree</h1><p><a href="https://zhuanlan.zhihu.com/p/181498475">LSM树详解 - 知乎 (zhihu.com)</a></p>
+<p><a href="https://zhuanlan.zhihu.com/p/408611925">LSM核心实现讲解 - 知乎 (zhihu.com)</a></p>
+<p>LSM tree 是许多key-value型或日志型数据库所依赖的核心数据结构，例如 BigTable、HBase、LevelDB、RocksDB等</p>
+<p>LSM树的核心特点是利用顺序写来提高写性能，通过牺牲小部分读性能换来高性能写。考虑到磁盘或内存的连续读写性能远高于随机读写性能，使LSM树成为非常流行的存储结构</p>
+<ul>
+<li>写入（批量）：LSM树通过将写入数据（Key-Value键值）首先存储在内存中，在数据量达到一定的阈值后将内存中的所有数据按Key值排序形成SSTable(Sorted String Table)的结构写入磁盘</li>
+<li>WAL(Write-ahead logging，预写式日志)：为了防止数据在内存中因为宕机等原因丢失数据，在写入内存的同时预写进日志并落盘，来保证数据的可靠性。</li>
+<li>读取（随机）：对磁盘中的SSTable逐个查询，查找当前读的Key是否存在与该SSTable（可以通过索引/布隆过滤器来优化查找速度），有则根据SSTable对应的跳表或者红黑树结构查找对应的Value（一般维护一个稀疏索引来记录部分Key的在SSTable文件中的offset）</li>
+<li>合并：对于某个Key，在完成多次更新操作后，除了最新的那条记录外，其他的记录都是冗余无用的，但是仍然占用了存储空间。因此需要进行Compact操作(合并多个SSTable)来清除冗余的记录，另外因为SSTable是有序的，可以通过归并的方式对多个SSTable进行合并</li>
+</ul>
+<p>与另一个经典的B+树相比，巧妙的避免了在磁盘进行随机写的情况，但也导致无法通过随机读写完成更新删除操作，需要额外的开销来进行处理（读写放大问题）</p>
+<p>PS：B+树中数据在磁盘以表的形式存储，LSM树一般以Key-Value键值对为基础进行储存</p>
+<h2 id="LevelDB"><a href="#LevelDB" class="headerlink" title="LevelDB"></a>LevelDB</h2><p><a href="https://github.com/google/leveldb">google/leveldb: LevelDB is a fast key-value storage library written at Google that provides an ordered mapping from string keys to string values. (github.com)</a></p>
+<p>LevelDB应该时对LSM树一个经典的实现方案，核心在于对SSTable以层次结构，逐Level归并将大量SSTable合并成少量SSTable，从而降低文件数量、提高搜索效率同时及时剔除过期数据，降低磁盘占用</p>
+<ul>
+<li>Memtable在内存中使用跳表存储数据，维护一个有序的Key序列</li>
+<li>Memtable在达到容量上限后转换成Immutable Memtable，准备写入磁盘</li>
+<li>在磁盘上以SSTable(Sorted String Table)的形式存储数据，同时在SSTable数量达到一定程度时可以通过Compact操作将多个SSTable合并成少量SSTable</li>
+<li>合并过程以层级结构进行提现，每次合并层级+1</li>
+<li>Manifest文件记录各个SST层级以及Key的范围(读操作时首先根据此处记录的Key范围进行判断)</li>
+<li>不同于es，会对内存中的Memtable进行查询，即支持实时读</li>
+</ul>
+<h2 id="BigTable"><a href="#BigTable" class="headerlink" title="BigTable"></a>BigTable</h2><p><a href="https://zhuanlan.zhihu.com/p/150266419">理解 BigTable - 知乎 (zhihu.com)</a></p>
+<p>Google经典的三篇论文之一，提供了一种分布式结构化数据表方案。</p>
+<ul>
+<li>设计Chubby负责元数据存储和主服务器选择</li>
+<li>主服务器负责子表服务器的管理和子表分配</li>
+<li>使用SSTable作为数据存储格式，存储在GFS上，基于键进行查询</li>
+<li>存储逻辑可以表示为(row:string, column:string, time:int64)→string，通过这样将结构化数据表表达为key-value的形式进行存储</li>
+</ul>
+<h2 id="HBase"><a href="#HBase" class="headerlink" title="HBase"></a>HBase</h2><p><a href="https://zhuanlan.zhihu.com/p/159052841">https://zhuanlan.zhihu.com/p/159052841</a></p>
+<p>HBase是BigTable的一种实现，是Hadoop生态下核心技术之一</p>
+<blockquote>
+<p> PS：有些地方将HBase的数据模型表达为列式存储，但这跟OLAP的列式存储不是一个概念，可以理解为介于行式和列式之间的面向列族的存储模型</p>
+</blockquote>
+<p>HBase数据存储结构中主要包括：表、行、列族、列限定符、单元格和时间戳，读写操作主要依赖于行键RowKey</p>
+<p>整个数据时按照RowKey进行字典排序的，而相同RowKey的数据以(列族, 类限定符)作为Key来定位Value，于是相同一行的数据中列族相同的数据是顺序存放的，此为<em>column-oriented</em>，不同于将不同行同一列顺序存放的列式存储</p>
+<p>HBase由三种类型的服务器以主从模式构成：</p>
+<ul>
+<li>Region Server：负责数据的读写服务，用户通过与Region server交互来实现对数据的访问</li>
+<li>HBase HMaster：负责Region的分配及数据库的创建和删除等操作</li>
+<li>ZooKeeper：负责维护集群的状态（某台服务器是否在线，服务器之间数据的同步操作及master的选举等）</li>
+</ul>
+<h2 id="Spanner"><a href="#Spanner" class="headerlink" title="Spanner"></a>Spanner</h2><p><a href="https://zhuanlan.zhihu.com/p/85616742">解读Google Spanner - 知乎 (zhihu.com)</a></p>
+<p><a href="https://zhuanlan.zhihu.com/p/47504853">使用 KV 引擎存储结构化数据 - 知乎 (zhihu.com)</a></p>
+<p>考虑到BigTable在应用中仍然存在一些问题</p>
+<ol>
+<li>缺少类似SQL的界面，缺少关系数据库拥有的丰富的功能</li>
+<li>只支持单行事务，缺少跨行事务</li>
+<li>需要在跨数据中心的多个副本间保证一致性</li>
+</ol>
+<blockquote>
+<p>Spanner是Google公开的新一代分布式数据库，它既具有NoSQL系统的可扩展性，也具有关系数据库的功能。例如，它支持类似SQL的查询语言、表连接以及分布式事务</p>
+</blockquote>
+<ul>
+<li>采用了Megastore的数据模型，Chubby的数据复制和一致性算法，同时基于BigTable提供可扩展性</li>
+<li>使用高精度和可观测误差的本地时钟来判断分布式系统中事件的先后顺序，从而保证事务一致性</li>
+</ul>
+<p><strong>数据模型</strong></p>
+<p>Spanner继承了Megastore的设计，数据模型介于RDBMS和NoSQL之间，提供<strong>树形</strong>、<strong>层次化</strong>的数据库schema</p>
+<ul>
+<li>一方面支持类SQL的查询语言，提供表连接等关系数据库的特性，功能上类似于RDBMS</li>
+<li>一方面整个数据库中的所有记录都存储在同一个key-value大表中，实现上类似于BigTable</li>
+</ul>
+<p>Spanner通过将父表的主键作为子表主键的前缀来反映表之间的层次关系（一对多），并且将根节点表中的一条记录，和以其主键作为前缀的其他表中的所有记录的集合称作一个Directory，作为分区、 复制和迁移的基本单位</p>
+<p><strong>一致性</strong></p>
+<p>Spanner使用Paxos协议在多个副本间同步redo日志，从而保证数据在多个副本上是一致的</p>
+<p><strong>分布式事务</strong></p>
+<p>Spanner 系统中的分布式事务通过<strong>两阶段提交协议2PC</strong>实现。2PC可以保证当一个分布式事务涉及了多个数据节点时，在这些节点上的操作要么全部提交，要么全部失败，进而保证整个分布式事务的原子性（ACID里的A）。</p>
+<p>协议中包含两个角色：协调者coordinator和参与者participant/cohort。协调者是分布式事务的发起者，而参与者是参与了事务的数据节点，大致流程如下</p>
+<ol>
+<li><p>协调者向所有的参与者发送投票请求，每个参与者决定是否要提交事务。如果打算提交的话需要写好redo、undo等日志，并向协调者回复yes或no</p>
+</li>
+<li><p>协调者收到所有参与者的回复，如果都是yes，那么决定提交这个事务，写好日志后向所有参与者广播提交事务的通知。反之，则中止事务并且通知所有参与者</p>
+</li>
+</ol>
+<p>除了保证一致性以外，分布式事务的另一个问题是需要保证事务间执行的顺序性，这固然可以通过多次通信来进行保证，但Spanner提出了另一种解决方案，即借助时间来判断先后顺序</p>
+<blockquote>
+<p>TrueTime API是一个提供本地时间的接口，可以返回一个时间戳t，并给出一个误差ε</p>
+</blockquote>
+<p>Spanner通过TrueTime API在保证误差范围内上一个事务已经确保完成且不会与下一个事务重叠时才对上一个事务进行提交</p>
+<h2 id="TiDB"><a href="#TiDB" class="headerlink" title="TiDB"></a>TiDB</h2><p><a href="https://zhuanlan.zhihu.com/p/494715695">https://zhuanlan.zhihu.com/p/494715695</a></p>
+<p><a href="https://developer.aliyun.com/article/802291#slide-4">https://developer.aliyun.com/article/802291#slide-4</a></p>
+<blockquote>
+<p> TiDB是一个开源的NewSQL数据库，支持HTAP（Hybrid Transactional and Analytical Processing），既支持事务型操作，也支持数据分析</p>
+</blockquote>
+<p>TiDB包括3个核心组件：分布存储层，Placement Driver，计算引擎层</p>
+<ul>
+<li><p>存储层分为行存的TiKV和列存的TiFlash</p>
+<p><img src="1.png" alt="1"></p>
+<ul>
+<li><p>把key值按照range分区，每个分区称为一个<strong>Region</strong>，而每个Region对应一个Raft Group，对应有且仅有一个leader，多个follwer，leader异步的将log同步给TiFlash</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Key:&#123;table&#123;tableID&#125; record&#123;rowID&#125;&#125;</span><br><span class="line">Value: &#123;col0, col1, col2, col3&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>TiKV</strong>通过multi-Raft算法实现行存引擎，处理TP的更新和查询</p>
+</li>
+<li><p><strong>TiFlash</strong>通过给Raft算法增加learner角色，异步地从leader同步log到列存引擎TiFlash，把行存格式转成列存</p>
+</li>
+</ul>
+</li>
+<li><p><strong>Placement Driver</strong>负责维护Region，包括记录元数据，对region进行迁移以实现负载均衡，以及分发timestamp，提供严格递增且全局唯一的timestamp作为事务ID（不同于Spanneer，需要额外的通信开销）</p>
+</li>
+<li><p>SQL引擎层是无状态化可扩展的，可以根据SQL语句动态的选择基于哪个存储引擎操作数据</p>
+</li>
+</ul>
+<p>其中TiDB中每个组件满足高可用和扩展性，并且TiDB还适配了Spark，集成TiDB的数据和HDFS生态</p>
+<p><strong>TiKV</strong></p>
+<ul>
+<li>TiKV是对Spanner的一个开源实现，且底层本地存储依赖于RocksDB</li>
+<li>TiKV的MVCC 实现是通过在Key后面添加版本号来实现</li>
+</ul>
+<p><strong>TiFlash</strong></p>
+<p>TiFlash使用<a href="https://zhuanlan.zhihu.com/p/164490310">DeltaTree</a>作为其列存引擎来支持实时更新</p>
+<p><img src="2.png" alt="2"></p>
+<p>其中，对表数据按照主键进行range分区，并建立B+树，树的叶子节点，即切分后的数据块称为Segment，并在其内部采用了类似LSM Tree的分层结构（分为Delta层和Stable层），这样通过Segment分区降低区内数据量，可以减少LSM Tree的层数，减少读写放大</p>
+<p>更新数据加入后，先根据主键索引在B+树中找到对应的Segment，作为增量更新进行写入，待该Segment在内存中写满后刷入磁盘的Delta层，之后Delta层通过与Stable层进行合并（Delta Merge）得到更新后的Stable层</p>
+<p><strong>列式存储</strong></p>
+<p><a href="https://cloud.tencent.com/developer/article/1528525">数据库中的 “行式存储”和“列式存储” - 腾讯云开发者社区-腾讯云 (tencent.com)</a></p>
+<p>列式存储能极大提升查询效率和一定程度上提高物理存储利用率，因此适用于海量静态数据的分析场景中</p>
+<p>1、查询过程中，可针对各列的运算<strong>并发执行</strong>，在内存中聚合完整记录集，从而提升查询效率</p>
+<p>2、可在数据列中高效查找数据，无需维护索引，减少无关IO，避免全表扫描</p>
+<p>3、各列独立存储且数据类型相同，可以针对该列的数据类型以及数据量动态选择压缩算法，提高物理存储利用率</p>
+<h1 id="PS"><a href="#PS" class="headerlink" title="PS"></a>PS</h1><p><a href="https://zhuanlan.zhihu.com/p/452628664">投资数据库领域：2021年总结（OLTP、OLAP、streaming） - 知乎 (zhihu.com)</a></p>
+<p><a href="https://zhuanlan.zhihu.com/p/54439354">Snowflake：数据仓库的终极形态？ - 知乎 (zhihu.com)</a></p>
+]]></content>
+      <categories>
+        <category>学习笔记</category>
+        <category>Bigdata</category>
+      </categories>
+      <tags>
+        <tag>分布式数据库</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>协作学习与网络安全大赛参赛总结</title>
     <url>/2021/01/16/%E5%8D%8F%E4%BD%9C%E5%AD%A6%E4%B9%A0%E4%B8%8E%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8%E5%A4%A7%E8%B5%9B%E5%8F%82%E8%B5%9B%E6%80%BB%E7%BB%93/</url>
     <content><![CDATA[<p>前段时间一直在参加第一届全国大学生协作学习与网络安全大赛，刚答辩结束，于是在此对比赛过程做一个总结，也对决赛其他队伍的优秀思路做个简单的整理</p>
@@ -1503,8 +1643,8 @@
         <category>机器学习</category>
       </categories>
       <tags>
-        <tag>机器学习</tag>
         <tag>联邦学习</tag>
+        <tag>机器学习</tag>
         <tag>协作学习</tag>
         <tag>比赛经历</tag>
       </tags>
@@ -1804,6 +1944,288 @@
       </tags>
   </entry>
   <entry>
+    <title>Elasticsearch源码阅读</title>
+    <url>/2022/08/22/Elasticsearch%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB/</url>
+    <content><![CDATA[<p>Elasticsearch作为一个分布式的免费开源搜索和分析引擎，目前受到广泛支持，并且也具有丰富的生态</p>
+<p>本文尝试基于对Elasticsearch以及其下面的Lucene引擎在写入数据时源码的跟踪对Elasticsearch相关的概念进行整理，并对压测方案以及优化方案进行简单的调研，同时提供了一些进一步学习的链接</p>
+<p><code>#TODO</code>对比学习其他分布式OLAP数据库与Elasticsearch的异同</p>
+<a id="more"></a>
+
+<h1 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h1><p>主要基于写入流程对Elasticsearch涉及的概念进行整理</p>
+<h2 id="Elasticsearch"><a href="#Elasticsearch" class="headerlink" title="Elasticsearch"></a>Elasticsearch</h2><p><strong>基本架构</strong></p>
+<ul>
+<li><p>Elasticsearch集群一般包括一个主节点和多个数据节点，其中可以存在多个主节点候选节点</p>
+<p>采用类似raft的一致性算法来选择主节点，但选择过程会结合version</p>
+</li>
+<li><p><strong>Replica</strong>：集群以shard为单位组织数据，为了防止数据丢失，每个shard会在多个节点创建备份</p>
+</li>
+</ul>
+<p><strong>基本写入流程</strong></p>
+<ul>
+<li>es收到写入请求后对其进行解析根据index和_id将请求发给index对应的多个shard中由路由规则指定的shard</li>
+<li>主shard对请求进行分析，分流不同请求类型，计算version/seqNo/primaryTerm等字段后交由Lucene对数据进行写入，写入完成后更新TransLog和LocalCheckpoint</li>
+<li>由主shard处理完写入请求并在完成后再发送给其他replica</li>
+</ul>
+<p><strong>一致性解决方案</strong></p>
+<p><strong>TransLog</strong></p>
+<ul>
+<li>为了进行数据同步和避免机器宕机导致内存数据丢失，类似数据库的CommitLog，es使用TransLog记录操作</li>
+<li>es采用在将数据写入内存后，再写TransLog并落盘，从而在宕机后能从TransLog恢复之前正在处理的操作</li>
+</ul>
+<p><a href="https://zhuanlan.zhihu.com/p/34680841"><strong>系统字段</strong></a></p>
+<ul>
+<li>es在原始文档基础上增加了多个系统字段来保证分布式场景下的一致性和可用性<ul>
+<li><code>_version</code>: es使用version来保证文档变更能以正确的顺序执行</li>
+<li><code>_seq_no</code>: Shard级别严格递增，主shard向副本shard发送请求时加入该字段，保证备份信息的有序性</li>
+<li><code>_primary_term</code>：主分片重新分配时+1，防止恢复数据时出现多个文档_seq_no一样导致的冲突</li>
+</ul>
+</li>
+</ul>
+<p><a href="https://blog.csdn.net/wudingmei1023/article/details/103957629"><strong>checkPoint</strong></a></p>
+<ul>
+<li><p>结合<code>_seq_no</code>和<code>_primary_term</code>保证主分片失效后能在新主分片上继续之前的操作，并且不会丢失数据（<code>_primary_term</code>保证不会因为重复收到的文档而导致写入被覆盖，不会多写）</p>
+</li>
+<li><p>主分片记录一个GlobalCheckpoint，保证所有活跃分片都已经处理完检查点之前的操作，副本分片各自记录LocalCheckpoint，保证该分片已经处理完检查点之前的操作</p>
+</li>
+</ul>
+<p><a href="https://zhuanlan.zhihu.com/p/35294658"><strong>Meta</strong></a></p>
+<ul>
+<li><p>Meta数据由master节点进行更新，记录了整个集群的信息，包括ClusterState/MetaData/IndexMetaData，三者逐级包含</p>
+<ul>
+<li><p>ClusterState：记录当前集群的各种状态，Master节点是通过发布ClusterState来通知其他节点，集群中的每个节点都会在内存中维护一个当前的ClusterState，表示当前集群的各种状态，包括version当前版本号、routingTable所有index的路由表、nodes当前集群节点信息等</p>
+<p><img src="Step4.1.png" alt="Step4.1"></p>
+<p>MetaData：包括集群唯一id，indices包括所有index的indexMetaData等集群配置信息</p>
+<p><img src="Step3.1.png" alt="Step3.1"></p>
+</li>
+<li><p>IndexMetaData：每个索引的元数据，包括Index的shard数，replica数，mappings等</p>
+<p><img src="Step7.2.png" alt="Step7.2"></p>
+</li>
+</ul>
+</li>
+<li><p>Meta数据会在data文件夹下的_state目录中以.st文件的形式持久化，从而进行故障恢复</p>
+</li>
+</ul>
+<p><a href="https://www.cnblogs.com/wupeixuan/p/12514843.html"><strong>Mapping</strong></a></p>
+<ul>
+<li><p>类似于数据库中的表结构定义 schema，es支持根据文档信息来判断字段合适的类型</p>
+<p>完成写入操作时发现有新增字段的文档写入，Mapping也会被更新</p>
+</li>
+</ul>
+<h2 id="Lucene"><a href="#Lucene" class="headerlink" title="Lucene"></a>Lucene</h2><p><strong>基本写入流程</strong></p>
+<ul>
+<li>Lucene通过IndexWriter接受Add/Update/Delete/Commit四种请求调用</li>
+<li>IndexWriter =&gt; DocumentWriter，建立DocumentsWriterPerThread(DWPT)多线程写入</li>
+<li>DWPT写入过程除了写入<a href="https://juejin.cn/post/6978438790411091975#heading-12">文档数据</a>，还需要记录<a href="https://kkewwei.github.io/elasticsearch_learning/2020/02/28/Lucene8-2-0%E5%BA%95%E5%B1%82%E6%9E%B6%E6%9E%84-tim-tip%E8%AF%8D%E5%85%B8%E7%BB%93%E6%9E%84%E5%8E%9F%E7%90%86%E7%A0%94%E7%A9%B6/">倒排表</a>（termId=&gt;docId&amp;freq，在flush的时候更新FST和磁盘中的倒排表）、<a href="https://juejin.cn/post/6978653916439248903">DocValue</a>（用于在查询过程中对排序聚合效率进行优化，空间换时间）和<a href="https://cloud.tencent.com/developer/article/1366832">Point</a>（用于加速范围查询）</li>
+</ul>
+<p><strong>Delete实现方案</strong></p>
+<ul>
+<li>segment不可更改，通过.del记录删除操作，查询和Merge时进行过滤</li>
+<li>另外更新操作也依赖于删除操作，先删除后加入 ps：方案不适用于分布式场景，es的更新操作依赖版本控制</li>
+</ul>
+<p><strong>flush策略</strong>：</p>
+<ul>
+<li>将位于内存中的数据刷写到磁盘上，以Segment为单位进行组织</li>
+<li>但文档数量或者占用内存达到一定阈值，或者用户提交Commit请求时触发</li>
+</ul>
+<p><strong>Merge策略</strong></p>
+<ul>
+<li>segment数量会随着数据增长快速增长，而查询请求需要检查每个segment，大量segment不利于查询效率</li>
+<li>通过Merge过程不仅可以把小文件合并成大文件，而且更新segment中已经被删除的条目，减小存储开销，但该过程需要将segment加载到内存，会消耗大量资源</li>
+</ul>
+<p><strong>倒排索引</strong></p>
+<ul>
+<li>Lucene通过indexSearch支持对以落盘数据的查询，查询过程依赖在写入时建立的倒排索引结构</li>
+<li>通过从文档中提取term(关键字)，建立term到文档的映射，从而在进行关键字搜索时能够快速获取关联文档</li>
+<li>term相关信息在数据写入时进行缓存，但倒排索引的数据结构在flush的时候进行创建和更新</li>
+</ul>
+<p><strong>termVector</strong></p>
+<ul>
+<li>termVector用于保存一个文档内所有term的相关信息，包括出现次数以及位置等，可用于关键词高亮以及文档间的相似度匹配等，该部分会在写入过程进行记录，结合倒排索引作为查询结果返回</li>
+</ul>
+<p>于是，我们可以通过Lucene提供Add/Update/Delete/Commit四种接口，将数据先写入内存，当满足flush策略后，将内存中的数据作为一个segment进行flush写入磁盘，同时依赖Merge策略在提供正常写入查询操作之外对segment进行合并，最终磁盘中的数据通过indexSearch提供查询服务。</p>
+<p><strong>PS</strong></p>
+<ul>
+<li><code>#TODO</code> indexSearch部分</li>
+<li>底层数据结构，如何压缩和支持高效Merge，从内存到磁盘数据结构变化？</li>
+<li>FST&amp;SkipList&amp;BKDTree等数据结构的组织形式？</li>
+</ul>
+<h1 id="源码"><a href="#源码" class="headerlink" title="源码"></a>源码</h1><h2 id="写入部分源码"><a href="#写入部分源码" class="headerlink" title="写入部分源码"></a>写入部分源码</h2><p><img src="%E6%B5%81%E7%A8%8B%E5%9B%BE.jpg" alt="流程图"></p>
+<ol>
+<li><p>ES的写入请求一般会进过两层处理，首先Rest层进行<strong>请求参数解析</strong>，之后在Transport层进行实际的请求处理，其中由TransportService 提供传输服务</p>
+</li>
+<li><p>TransportAction.RequestFilterChain#proceed TransportAction通过调用一个过滤链来对请求进行<strong>预处理</strong></p>
+</li>
+<li><p>以bulk请求为例，TransportBulkAction#doExecute在对请求进行处理时，首先判断请求中或者请求元数据是否指定了pipeline，则使用相应的<strong>pipeline</strong>进行处理。然后判断本节点是否具备预处理（Ingest）的资格<code>clusterService.localNode().isIngestNode()</code>，否则需要将请求转发到有资格的节点。</p>
+<blockquote>
+<p>pipeline可以对原始文档做一些处理，比如HTML解析，自定义的处理</p>
+</blockquote>
+<p>如果需要<strong>自动创建索引</strong><code>needToCheck()</code>，则收集所有的索引信息，对于不存在且能成功创建的index，加入<code>autoCreateIndices</code>中，然后会调用createIndex方法创建index，待创建成功执行下一步</p>
+</li>
+<li><p>TransportBulkAction.BulkOperation#doRun 遍历BulkRequest的所有子请求 (CREATE INDEX UPDATE DELETE)，然后根据请求的操作类型执行相应代码，对于写入请求，会首先根据<strong>indexMetaData信息</strong>，resolveRouting方法为每条IndexRequest生成<strong>路由信息</strong>，并通过process方法按需生成uid</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">case</span> INDEX:</span><br><span class="line">    IndexRequest indexRequest = (IndexRequest) docWriteRequest;</span><br><span class="line">    <span class="keyword">final</span> IndexMetaData indexMetaData = metaData.index(concreteIndex);</span><br><span class="line">    MappingMetaData mappingMd = indexMetaData.mappingOrDefault();</span><br><span class="line">    Version indexCreated = indexMetaData.getCreationVersion();</span><br><span class="line">    indexRequest.resolveRouting(metaData);</span><br><span class="line">    indexRequest.process(indexCreated, mappingMd, concreteIndex.getName());</span><br><span class="line">    <span class="keyword">break</span>;</span><br></pre></td></tr></table></figure>
+
+<p>然后根据每个IndexRequest请求的路由信息得到所要写入的目标shardId，之后建立ShardId到请求的映射</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line">Map&lt;ShardId, List&lt;BulkItemRequest&gt;&gt; requestsByShard = <span class="keyword">new</span> HashMap&lt;&gt;();</span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; bulkRequest.requests.size(); i++) &#123;</span><br><span class="line">    DocWriteRequest&lt;?&gt; request = bulkRequest.requests.get(i);</span><br><span class="line">    <span class="keyword">if</span> (request == <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">continue</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    String concreteIndex = concreteIndices.getConcreteIndex(request.index()).getName();</span><br><span class="line">    ShardId shardId = clusterService.operationRouting().indexShards(clusterState, concreteIndex, request.id(),</span><br><span class="line">        request.routing()).shardId();</span><br><span class="line">    List&lt;BulkItemRequest&gt; shardRequests = requestsByShard.computeIfAbsent(shardId, shard -&gt; <span class="keyword">new</span> ArrayList&lt;&gt;());</span><br><span class="line">    shardRequests.add(<span class="keyword">new</span> BulkItemRequest(i, request));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>于是以BulkShardRequest<strong>封装每个shard对应的所有请求</strong>，并交由TransportShardBulkAction来处理，来将请求分发到不同shard</p>
+</li>
+<li><p>转发TransportShardBulkAction请求，TransportReplicationAction#doExecute进入TransportReplicationAction.ReroutePhase#doRun 进行路由转发<code>setPhase(task, &quot;routing&quot;)</code>标记<strong>路由阶段</strong>，此处判断主shard是否位于当前节点，从而决定将请求发送到哪</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> (primary.currentNodeId().equals(state.nodes().getLocalNodeId())) &#123;</span><br><span class="line">    performLocalAction(state, primary, node, indexMetaData);</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    performRemoteAction(state, primary, node); <span class="comment">//需要重路由，函数同时实现循环路由的避免</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>TransportReplicationAction.ReroutePhase#performAction向节点发送请求。至此将各个shard的BulkShard发送到shard的Primary Node</p>
+</li>
+<li><p>TransportReplicationAction#handlePrimaryRequest 主分片接收到请求信息调用TransportReplicationAction.AsyncPrimaryAction#doRun 检查当前是否为主分片、allocationId是否是预期值、PrimaryTerm是否是预期值等</p>
+<p>然后TransportReplicationAction.AsyncPrimaryAction#runWithPrimaryShardReference检测主分片是否已经被迁移<code>primaryShardReference.isRelocated()</code></p>
+</li>
+<li><p><code>setPhase(replicationTask, &quot;primary&quot;)</code>至此开始主shard对请求进行处理的阶段，这里定义了一个globalCheckpointSyncingListener来处理副本分片的<strong>全局检查点</strong>查询请求，处理后执行ReplicationOperation#execute =&gt; TransportReplicationAction.PrimaryShardReference#perform =&gt; TransportShardBulkAction#shardOperationOnPrimary =&gt; TransportShardBulkAction#performOnPrimary，在这里检查上下文并调用executeBulkItemRequest进行所有请求进行处理</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">while</span> (context.hasMoreOperationsToExecute()) &#123;</span><br><span class="line">    <span class="keyword">if</span> (executeBulkItemRequest(context, updateHelper, nowInMillisSupplier, mappingUpdater, waitForMappingUpdate,</span><br><span class="line">        ActionListener.wrap(v -&gt; executor.execute(<span class="keyword">this</span>), <span class="keyword">this</span>::onRejection)) == <span class="keyword">false</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">assert</span> context.isInitial();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>TransportShardBulkAction#executeBulkItemRequest 会<code>final long version = context.getRequestToExecute().version();</code>获取<strong>version</strong>，然后分流删除请求和其他请求，以index请求为例执行IndexShard#applyIndexOperationOnPrimary，这里会检查<strong>primaryTerm</strong>，然后进行index操作需要的准备</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">final</span> String resolvedType = mapperService.resolveDocumentType(sourceToParse.type());</span><br><span class="line"><span class="keyword">final</span> SourceToParse sourceWithResolvedType;</span><br><span class="line"><span class="keyword">if</span> (resolvedType.equals(sourceToParse.type())) &#123;</span><br><span class="line">     sourceWithResolvedType = sourceToParse;</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    sourceWithResolvedType = <span class="keyword">new</span> SourceToParse(sourceToParse.index(), </span><br><span class="line">        resolvedType, sourceToParse.id(),sourceToParse.source(), </span><br><span class="line">        sourceToParse.getXContentType(), sourceToParse.routing());</span><br><span class="line">&#125;</span><br><span class="line">operation = prepareIndex(docMapper(resolvedType),          </span><br><span class="line">    indexSettings.getIndexVersionCreated(), sourceWithResolvedType,seqNo,      </span><br><span class="line">    opPrimaryTerm, version, versionType, origin, autoGeneratedTimeStamp, isRetry, </span><br><span class="line">    ifSeqNo, ifPrimaryTerm); <span class="comment">//准备index操作的参数</span></span><br><span class="line">Mapping update = operation.parsedDoc().dynamicMappingsUpdate();</span><br><span class="line"><span class="keyword">if</span> (update != <span class="keyword">null</span>) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> Engine.IndexResult(update);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>进入InternalEngine#index打开一个ReadLock，首先制定执行策略<code>indexingStrategyForOperation(index)</code>，然后生成或注册一个sequence number，根据执行策略<code>plan.indexIntoLucene || plan.addStaleOpToLucene</code>执行InternalEngine#indexIntoLucene</p>
+<p>这里如果当前是副本分片，则需要通过解析Doc来更新SeqNo和version</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line">index.parsedDoc().updateSeqID(index.seqNo(), index.primaryTerm());</span><br><span class="line">index.parsedDoc().version().setLongValue(plan.versionForIndexing);</span><br></pre></td></tr></table></figure>
+
+<p>之后以增操作为例则进入InternalEngine#addDocs调用到<code>indexWriter.addDocuments(docs);</code>，正式进入Lucene引擎</p>
+</li>
+<li><p>IndexWriter#updateDocuments调用DocumentsWriter#updateDocuments并处理返回的<strong>SeqNo</strong>，updateDocuments通过**DocumentsWriterPerThread(DWPT)**实现多线程写入优化，每个DWPT对应独立的内存空间</p>
+<ul>
+<li><p>DocumentsWriterPerThread#updateDocuments</p>
+<p>DefaultIndexingChain#processDocument遍历Field执行DefaultIndexingChain#processField</p>
+<blockquote>
+<p>Lucene内部索引构建最关键的概念是IndexingChain，即链式的索引构建。Lucene提供了各种不同类型的索引类型，例如倒排、正排（列存）、StoreField、DocValues等。每个不同的索引类型对应不同的索引算法、数据结构以及文件存储，有些是列级别的，有些是文档级别的。所以一个文档写入后，需要被这么多种不同索引处理，有些索引会共享memory-buffer，有些则是完全独立的。</p>
+</blockquote>
+<p>DefaultIndexingChain#getOrAddField计算fp，如果在当前segment第一次碰到这个filed则新建<code>fp = new PerField(docWriter.getIndexCreatedVersionMajor(), fi, invert);</code>，然后存储在fieldHash中</p>
+</li>
+<li><p>DefaultIndexingChain.PerField#invert将field值通过分词器转换为tokenStream词元流TermsHashPerField#add()处理tokenStream将<strong>term</strong>加入TermsHash，这里对addTerm有两种不同实现，以FreqProxTermsWriterPerField#addTerm为例，能够记录term在文档中的词频和位置，分成新document、当前doc存在新出现term进行处理，然后将写入缓冲池</p>
+<p>在之后由<strong>flushPolicy</strong>更新，包括flushOnDocCount()和flushOnRAM()两种方案，对应文档数量和内存占用达到阈值</p>
+</li>
+<li><p>DefaultIndexingChain#processField中完成invert处理后调用CompressingStoredFieldsWriter#writeField，根据Field类型对值进行压缩存储到bufferedDocs，是GrowableByteArrayDataOutput类的实例 <a href="https://zhuanlan.zhihu.com/p/384486147">Lucene源码解析——StoredField存储方式 - 知乎 (zhihu.com)</a></p>
+</li>
+<li><p>DefaultIndexingChain#indexDocValue根据DocValue的类型(NUMERIC BINARY SORTED SORTED_NUMERIC SORTED_SET)</p>
+<blockquote>
+<p>DocValue记录DocId到Value的映射并序列化存储在磁盘，便于<strong>聚合排序</strong>等操作，避免这些操作时需要将所有文档加入内存</p>
+</blockquote>
+</li>
+<li><p>DefaultIndexingChain#indexPoint为了加速<strong>RangeQuery</strong>提出的一种数据结构，底层用BKDTree</p>
+</li>
+</ul>
+</li>
+<li><p><code>dwpt.updateDocuments</code>执行结束后，<code>flushingDWPT = flushControl.doAfterDocument(perThread, isUpdate);</code>查看是否满足flush条件，满足则进行flush</p>
+<p>DocumentsWriterFlushControl#doAfterDocument，flushPolicy对更新操作进行先删除后插入，对插入操作<code>flushPolicy.onInsert(this, perThread)</code></p>
+<p>每个DWPT的<a href="https://kkewwei.github.io/elasticsearch_learning/2020/02/28/Lucene8-2-0%E5%BA%95%E5%B1%82%E6%9E%B6%E6%9E%84-tim-tip%E8%AF%8D%E5%85%B8%E7%BB%93%E6%9E%84%E5%8E%9F%E7%90%86%E7%A0%94%E7%A9%B6/#flush%E5%88%B0%E6%96%87%E4%BB%B6%E4%B8%AD">flush操作</a>在DocumentsWriterPerThread#flush中执行，其中FreqProxTermsWriter#flush 对FreqProxTerms进行flush的同时执行BlockTreeTermsWriter#write，即<strong>FST</strong>的构建</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">write</span><span class="params">(Fields fields, NormsProducer norms)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">    String lastField = <span class="keyword">null</span>;</span><br><span class="line">    <span class="keyword">for</span>(String field : fields) &#123; <span class="comment">//遍历segment每个field</span></span><br><span class="line">        <span class="keyword">assert</span> lastField == <span class="keyword">null</span> || lastField.compareTo(field) &lt; <span class="number">0</span>;</span><br><span class="line">        lastField = field;</span><br><span class="line">        Terms terms = fields.terms(field);</span><br><span class="line">        <span class="keyword">if</span> (terms == <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">continue</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        TermsEnum termsEnum = terms.iterator();</span><br><span class="line">        TermsWriter termsWriter = <span class="keyword">new</span> TermsWriter(fieldInfos.fieldInfo(field));</span><br><span class="line">        <span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</span><br><span class="line">            BytesRef term = termsEnum.next();</span><br><span class="line">            <span class="keyword">if</span> (term == <span class="keyword">null</span>) &#123;</span><br><span class="line">                  <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            termsWriter.write(term, termsEnum, norms); <span class="comment">//将term加入词典并建立索引结构</span></span><br><span class="line">        &#125;</span><br><span class="line">        termsWriter.finish(); <span class="comment">//将词典索引结构FST放入tip文件</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在BlockTreeTermsWriter.TermsWriter#finish中调用FST#save(DataOutput)对FST进行存储</p>
+<p>fst.OnHeapFSTStore作为FST在堆内进行存储时进行读写的类，以BytesStore和byte[]两种形式组织数据，但FST大于1GB时采用BytesStore，否则使用一个byte数组存储</p>
+<p>fst.OffHeapFSTStore 发现Lucene8.1.0有将FST存储在堆外的类，但没有写入方法实现</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">writeTo</span><span class="params">(DataOutput out)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> UnsupportedOperationException(<span class="string">&quot;writeToOutput operation is not supported for OffHeapFSTStore&quot;</span>); </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>InternalEngine#index收到写入result后，如果写入成功，则将该写入操作写入<strong>TransLog</strong>并更新<strong>本地检查点</strong></p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> (index.origin().isFromTranslog() == <span class="keyword">false</span>) &#123;</span><br><span class="line">    <span class="keyword">final</span> Translog.Location location;</span><br><span class="line">    <span class="keyword">if</span> (indexResult.getResultType() == Result.Type.SUCCESS) &#123;</span><br><span class="line">        location = translog.add(<span class="keyword">new</span> Translog.Index(index, indexResult));</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (indexResult.getSeqNo() != SequenceNumbers.UNASSIGNED_SEQ_NO) &#123;</span><br><span class="line">        <span class="comment">// if we have document failure, record it as a no-op in the translog and Lucene with the generated seq_no</span></span><br><span class="line">        <span class="keyword">final</span> NoOp noOp = <span class="keyword">new</span> NoOp(indexResult.getSeqNo(), index.primaryTerm(), index.origin(),</span><br><span class="line">        index.startTime(), indexResult.getFailure().toString());</span><br><span class="line">        location = innerNoOp(noOp).getTranslogLocation();</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        location = <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    indexResult.setTranslogLocation(location);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">if</span> (plan.indexIntoLucene &amp;&amp; indexResult.getResultType() == Result.Type.SUCCESS) &#123;</span><br><span class="line">    <span class="keyword">final</span> Translog.Location translogLocation = trackTranslogLocation.get() ? indexResult.getTranslogLocation() : <span class="keyword">null</span>;</span><br><span class="line">    versionMap.maybePutIndexUnderLock(index.uid().bytes(), <span class="keyword">new</span> IndexVersionValue(translogLocation, plan.versionForIndexing, index.seqNo(), index.primaryTerm()));</span><br><span class="line">&#125;</span><br><span class="line">localCheckpointTracker.markSeqNoAsProcessed(indexResult.getSeqNo());</span><br><span class="line"><span class="keyword">if</span> (indexResult.getTranslogLocation() == <span class="keyword">null</span>) &#123;</span><br><span class="line">    <span class="comment">// the op is coming from the translog (and is hence persisted already) or it does not have a sequence number</span></span><br><span class="line">    <span class="keyword">assert</span> index.origin().isFromTranslog() || indexResult.getSeqNo() == SequenceNumbers.UNASSIGNED_SEQ_NO;</span><br><span class="line">    localCheckpointTracker.markSeqNoAsPersisted(indexResult.getSeqNo());</span><br><span class="line">&#125;</span><br><span class="line">indexResult.setTook(System.nanoTime() - index.startTime());</span><br><span class="line">indexResult.freeze();</span><br><span class="line"><span class="keyword">return</span> indexResult;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>对写入操作返回结果进行检查，根据返回结果执行相应操作，如果需要更新<strong>mapping</strong>，则执行MappingUpdatedAction#updateMappingOnMaster</p>
+</li>
+</ol>
+<h2 id="flush"><a href="#flush" class="headerlink" title="flush"></a>flush</h2><p>Lucene在内存占用或者文档数量达到阈值后会触发flush， <code>flushOnDocCount()</code>和<code>flushOnRAM()</code></p>
+<p>或者调用IndexWriter#flush(boolean, boolean) 将当前内存中的数据全部落盘</p>
+<h2 id="Merge"><a href="#Merge" class="headerlink" title="Merge"></a>Merge</h2><p><a href="https://elasticsearch.cn/question/12808">如何深入理解ES的merge策略 - Elastic 中文社区 (elasticsearch.cn)</a></p>
+<p><a href="https://cloud.tencent.com/developer/article/1846903">Elasticsearch merge 你懂了吗？ - 腾讯云开发者社区-腾讯云 (tencent.com)</a></p>
+<p>index.EsTieredMergePolicy es提供的Merge策略</p>
+<p>Lucene由ConcurrentMergeScheduler和SerialMergeScheduler控制merge操作，IndexWriter#merge进行段合并，Segment合并原理<a href="https://kkewwei.github.io/elasticsearch_learning/2021/06/13/Lucene8-6-2%E5%BA%95%E5%B1%82%E6%9E%B6%E6%9E%84-Segment-StoredFields%E5%90%88%E5%B9%B6%E5%8E%9F%E7%90%86%E8%AF%A6%E8%A7%A3/">Lucene8.6.2底层架构-Segment StoredFields合并原理详解 | Hexo (kkewwei.github.io)</a></p>
+<p>Luence</p>
+<p>TieredMergePolicy#getSortedBySegmentSize 提供了根据段提交信息来进行进行排序的方，可供采用的段信息在SegmentCommitInfo记录</p>
+<h1 id="数据结构"><a href="#数据结构" class="headerlink" title="数据结构"></a>数据结构</h1><p><strong>fst</strong>：有限状态转换器，用来代替哈希表，牺牲一部分查询效率但极大减小空间开销，且相较前缀树还能共享term单词的后缀，用于建立term到docID的映射关系。</p>
+<p><a href="https://zhuanlan.zhihu.com/p/354203255">Lucene-FST-1 - 知乎 (zhihu.com)</a></p>
+<p><a href="https://kkewwei.github.io/elasticsearch_learning/2020/02/25/Lucene8-2-0%E5%BA%95%E5%B1%82%E6%9E%B6%E6%9E%84-%E8%AF%8D%E5%85%B8fst%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/">Lucene8.2.0底层架构-词典fst原理解析 | Hexo (kkewwei.github.io)</a></p>
+<p><strong>skipList</strong>：<a href="https://kkewwei.github.io/elasticsearch_learning/2020/02/28/Lucene8-2-0%E5%BA%95%E5%B1%82%E6%9E%B6%E6%9E%84-tim-tip%E8%AF%8D%E5%85%B8%E7%BB%93%E6%9E%84%E5%8E%9F%E7%90%86%E7%A0%94%E7%A9%B6/#%E5%8D%95%E4%B8%AA%E8%AF%8D%E7%9A%84%E5%80%92%E6%8E%92%E7%B4%A2%E5%BC%95%E7%BB%93%E6%9E%84%E8%90%BD%E7%9B%98">单个词的倒排索引结构落盘</a></p>
+<p><strong>BKDTree</strong>：<a href="https://kkewwei.github.io/elasticsearch_learning/2020/11/01/Lucene8-6-2%E5%BA%95%E5%B1%82%E6%9E%B6%E6%9E%84-BKW%E6%A0%91%E6%9E%84%E5%BB%BA%E8%BF%87%E7%A8%8B/">Lucene8.6.2底层架构-BKW树构建过程 | Hexo (kkewwei.github.io)</a></p>
+<p><strong>IntBlockPool/ByteBlockPool</strong>：<a href="https://kkewwei.github.io/elasticsearch_learning/2019/10/06/Lucene8-2-0%E5%BA%95%E5%B1%82%E6%9E%B6%E6%9E%84-ByteBlockPool%E7%BB%93%E6%9E%84%E5%88%86%E6%9E%90/">Lucene8.2.0底层架构-ByteBlockPool结构分析 | Hexo (kkewwei.github.io)</a></p>
+<h2 id="data文件夹"><a href="#data文件夹" class="headerlink" title="data文件夹"></a>data文件夹</h2><p><a href="https://developer.aliyun.com/article/791498">Elasticsearch 内存占用分析及 page cache 监控-阿里云开发者社区 (aliyun.com)</a></p>
+<p><a href="https://kkewwei.github.io/elasticsearch_learning/2020/02/28/Lucene8-2-0%E5%BA%95%E5%B1%82%E6%9E%B6%E6%9E%84-tim-tip%E8%AF%8D%E5%85%B8%E7%BB%93%E6%9E%84%E5%8E%9F%E7%90%86%E7%A0%94%E7%A9%B6/#flush%E5%88%B0%E6%96%87%E4%BB%B6%E4%B8%AD">Lucene8.2.0底层架构-tim/tip词典结构原理研究 | Hexo (kkewwei.github.io)</a></p>
+<p><a href="https://kkewwei.github.io/elasticsearch_learning/2019/10/29/Lucenec%E5%BA%95%E5%B1%82%E6%9E%B6%E6%9E%84-fdt-fdx%E6%9E%84%E5%BB%BA%E8%BF%87%E7%A8%8B/">Lucene8.2.0底层架构-fdt/fdx构建过程 | Hexo (kkewwei.github.io)</a>、</p>
+<p><a href="https://kkewwei.github.io/elasticsearch_learning/2019/11/15/Lucene%E5%BA%95%E5%B1%82%E6%9E%B6%E6%9E%84-dvm-dvm%E6%9E%84%E5%BB%BA%E8%BF%87%E7%A8%8B/">Lucene8.2.0底层架构-dvd/dvm构建过程 | Hexo (kkewwei.github.io)</a></p>
+<h1 id="压测分析"><a href="#压测分析" class="headerlink" title="压测分析"></a>压测分析</h1><h2 id="esrally离线安装"><a href="#esrally离线安装" class="headerlink" title="esrally离线安装"></a>esrally离线安装</h2><p><a href="https://cloud.tencent.com/developer/article/1891569?from=10680">Elasticsearch压测工具esrally部署之踩坑实录（上） - 腾讯云开发者社区-腾讯云 (tencent.com)</a></p>
+<p><a href="https://cloud.tencent.com/developer/article/1892065">Elasticsearch压测工具Esrally部署之踩坑实录（下） - 腾讯云开发者社区-腾讯云 (tencent.com)</a></p>
+<p><a href="https://cloud.tencent.com/developer/article/1595367">ElasticSearch压测工具：esrally离线使用详解 - 腾讯云开发者社区-腾讯云 (tencent.com)</a></p>
+<p><a href="https://developer.aliyun.com/article/851848">【离线】esrally实践总结-阿里云开发者社区 (aliyun.com)</a></p>
+<ul>
+<li><p>其中数据集默认需要联网下载，可以通过在其他可联网linux机器上参考<a href="https://esrally.readthedocs.io/en/stable/offline.html#using-tracks">Offline Usage - Rally 2.6.0 documentation (esrally.readthedocs.io)</a>安装，然后打包对应.rally文件夹置入离线机器相应目录</p>
+</li>
+<li><p>离线向 x.x.x.x:9200 es服务器运行http_logs压测任务</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">esrally race --pipeline=benchmark-only --target-hosts=x.x.x.x:9200 --challenge=append-no-conflicts --offline --track-path=~/.rally/benchmarks/tracks/default/http_logs/  </span><br></pre></td></tr></table></figure>
+
+</li>
+</ul>
+<h2 id="堆内存分析"><a href="#堆内存分析" class="headerlink" title="堆内存分析"></a>堆内存分析</h2><p><img src="4.png" alt="mat"></p>
+<p>根据java堆内存占用发现，在esrally index-append过程中，es消耗的堆内存主要来自IndexService类、PainlessScriptEngine类和IndexWriter类的对象，其中，IndexWriter对象中包含多个dwpt分别占用一部分内存，每个dwpt的主要内存占用来自多个filed的pointValuesWriter和docValuesWriter</p>
+<h1 id="优化方案"><a href="#优化方案" class="headerlink" title="优化方案"></a>优化方案</h1><p><strong>存储优化</strong></p>
+<ul>
+<li><p>FST转移到堆外内存</p>
+<p><a href="https://cloud.tencent.com/developer/article/1770296">腾讯万亿级 Elasticsearch 内存效率提升解密 - 腾讯云开发者社区-腾讯云 (tencent.com)</a></p>
+</li>
+<li><p>Segment Merge策略优化</p>
+</li>
+</ul>
+<p><strong>性能优化</strong></p>
+<p><a href="https://developer.aliyun.com/article/745572">内核调优 | 如何提升Elasticsearch master调度性能40倍-阿里云开发者社区 (aliyun.com)</a></p>
+<p><a href="https://cloud.tencent.com/developer/article/1626392">腾讯Elasticsearch海量规模背后的内核优化剖析 - 腾讯云开发者社区-腾讯云 (tencent.com)</a> </p>
+<h1 id="Lucene段合并策略优化"><a href="#Lucene段合并策略优化" class="headerlink" title="Lucene段合并策略优化"></a>Lucene段合并策略优化</h1><h2 id="Lucene段合并策略"><a href="#Lucene段合并策略" class="headerlink" title="Lucene段合并策略"></a>Lucene段合并策略</h2><p><img src="%E6%AE%B5%E5%90%88%E5%B9%B6.png" alt="段合并"></p>
+<p>Elasticsearch底层采用Lucene引擎，在磁盘上以Segment段的形式组织数据。根据flush策略，每次完成文档写入操作后会检查当前DWPT的文档数量或内存占用是否达到阈值，则将内存中存储的文档flush到磁盘文件，或者由于自动刷新流程会根据refresh_interval间隔时间自动创建新段。</p>
+<p>我们需要及时将在内存中缓存的数据写入磁盘来提供查询功能，如果需要在数据写入1s后即可进行查询，则每1s需要创建若干个段（取决于线程数），这样很容易在较短时间产生大量的段。这样会导致：</p>
+<ul>
+<li>消耗资源：每一个段都会消耗文件句柄、内存和cpu运行周期。</li>
+<li>搜索变慢：每个查询请求会轮流检查每个段，因此段越多，查询效率也就越低。</li>
+<li>数据冗余：写放大问题，需要段合并来移除被标记为已删除的文档。</li>
+</ul>
+<p>当然另一方面，段合并需要额外的磁盘IO开销，在进行段合并时，写入查询效率也会收到影响。因此需要采取合适的段合并策略来解决上述问题。</p>
+<p>Lucene在下述场景下回触发段合并</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">enum</span> <span class="title">MergeTrigger</span> </span>&#123;</span><br><span class="line">  SEGMENT_FLUSH, <span class="comment">//段被flush到磁盘时触发</span></span><br><span class="line">  FULL_FLUSH, <span class="comment">//commit导致full flush时触发</span></span><br><span class="line">  EXPLICIT, <span class="comment">//被用户显式调用</span></span><br><span class="line">  MERGE_FINISHED, <span class="comment">//被已完成的段合并操作触发</span></span><br><span class="line">  CLOSING <span class="comment">//IndexWriter即将被关闭时触发</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Luence默认采用的段合并策略为TieredMergePolicy，同时支持LogMergePolicy、LogByteSizeMergePolicy、LogDocMergePolicy（这些方案通过对段大小进行log平滑运算，据此分层对相邻段文件进行合并）。</p>
+<p>这些段合并策略在触发后计算当前段应该以什么样的顺序相互进行合并，并将生成的方案交给MergeScheduler在后台选择合适的时机执行真正的段合并操作。</p>
+<p>其中，TieredMergePolicy会根据段大小进行排序，在排序结果中可以选择大小接近的段进行合并</p>
+<ol>
+<li>首先根据已知的段信息(sizeInBytes)对其timsort进行排序，采用的排序方案如下，其中SegmentCommitInfo记录了段中被标记删除的数量、文档存活代数、包含的文档数等信息。</li>
+<li>对排序结果筛除正在合并的段、删除比率低的大段。根据保留段的信息和设定的每一层合并的个数，计算当前层应该使用的levelSize大小。</li>
+<li>对保留的各段按照levelSize分组合并，通过score计算更优的组合进行放入MergeSpecification，重复计算直到不存在满足的merge组合，将多次merge操作及其对应的<code>List&lt;SegmentCommitInfo&gt;</code>交给MergeScheduler进行段合并。</li>
+</ol>
+<h2 id="日志场景下存在的问题"><a href="#日志场景下存在的问题" class="headerlink" title="日志场景下存在的问题"></a>日志场景下存在的问题</h2><p><img src="%E5%90%88%E5%B9%B6%E7%AD%96%E7%95%A50.png" alt="合并方案"></p>
+<p>TieredMergePolicy合并方式的优势在于<strong>合并高效</strong>，可以<strong>快速降低文件数</strong>。主要问题是<strong>数据不连续</strong>，这样会导致我们在查询的时候文件裁剪的能力很弱。</p>
+<blockquote>
+<p>比如查询最近一小时的数据，很有可能一小时的文件被分别合并到了几天前的文件中去了，导致需要遍历的文件增加了。</p>
+</blockquote>
+<ul>
+<li>在日志场景中，我们更关注<strong>不久前的日志</strong>，在针对日志的查询中，也经常会关注<strong>一段时间内的日志</strong>，因此，通过设计段合并策略来将时间因素纳入考虑来保证段内数据的<strong>连续性</strong>能够一定程度提升相关查询的效率。另外，日志场景中，<strong>删除和更新操作很少</strong>，因此在段合并过程可以基本不考虑写放大的相关问题。</li>
+</ul>
+<h2 id="解决方案调研"><a href="#解决方案调研" class="headerlink" title="解决方案调研"></a>解决方案调研</h2><p><img src="%E5%90%88%E5%B9%B6%E7%AD%96%E7%95%A51.png" alt="合并方案"></p>
+<p>典型的解决数据连续性的合并策略，包括以 Cassandra、HBase 为代表的基于时间窗口的合并策略，优点是数据按时间序合并，查询高效，且可以支持表内 TTL。但限制是只支持时序场景，而且文件大小可能不一致，从而影响合并效率。还有以 LevelDB、RocksDB 为代表的分层合并，一层一组有序，每次抽取部分数据向下层合并，优点是查询高效，但是写放大比较严重，相同的数据可能会被多次合并，影响写入吞吐。</p>
+<p><img src="%E5%90%88%E5%B9%B6%E6%96%B9%E6%A1%882.png" alt="合并方案2"></p>
+<p>腾讯提出的段合并策略：为了提升数据连续性、收敛文件数量，提升文件的裁剪能力来提高查询性能。通过主要是按时间序分层合并，<strong>每层文件之间按创建时间排序</strong>，除了第一层外，都按照时间序和目标大小进行合并，<strong>不固定每次合并文件数量</strong>，这样保证了合并的高效性。对于少量的未合并的文件以及冷分片文件，采用<strong>持续合并</strong>的策略，将超过默认五分钟不再写入的分片进行持续合并，并控制合并并发和范围，以降低合并开销。腾讯通过上述方案将搜索场景的查询性能提升了 40%。</p>
+<h2 id="一些优化思路"><a href="#一些优化思路" class="headerlink" title="一些优化思路"></a>一些优化思路</h2><ul>
+<li>考虑到Lucene采用DWPT来多线程的进行数据写入，文件的创建时间不能很好反映日志的生成时间，可以考虑结合每个段中日志的时间戳字段，取段内日志的时间范围作为段信息。</li>
+<li>在排序时控制不允许时间相差过大的段排在临近位置，时间重叠率高优先合并。</li>
+<li>通过查询命中情况来代表段的冷热程度，在查询时记录单位时间内查询命中次数作为段信息。</li>
+<li>在计算score时将各个段的冷热差异或时间重叠率作为依据。</li>
+</ul>
+<h1 id="PS"><a href="#PS" class="headerlink" title="PS"></a>PS</h1><p>To assist people in tracking down problems in analysis components, we wish to write the field name to the infostream when we fail. We expect some caller to eventually deal with the real exception, so we don’t want any ‘catch’ clauses, but rather a finally that takes note of the problem.</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#x2F;** A &#123;@link BytesStore&#125;, used during building, or during reading when *  the FST is very large (more than 1 GB).  If the FST is less than 1 *  GB then bytesArray is set instead. *&#x2F;final BytesStore bytes;</span><br></pre></td></tr></table></figure>
+
+<p>IndexSearcher#search()</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#x2F;&#x2F; TODO: should we make this&#x2F;&#x2F; threaded...?  the Collector could be sync&#39;d?&#x2F;&#x2F; always use single thread:</span><br></pre></td></tr></table></figure>
+
+]]></content>
+      <categories>
+        <category>学习笔记</category>
+        <category>Bigdata</category>
+      </categories>
+      <tags>
+        <tag>Elasticsearch</tag>
+        <tag>分布式数据库</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>GBDT协作学习实现</title>
     <url>/2020/11/30/GBDT%E5%8D%8F%E4%BD%9C%E5%AD%A6%E4%B9%A0%E5%AE%9E%E7%8E%B0/</url>
     <content><![CDATA[<p>GBDT梯度提升树因其本身是基于梯度来进行决策树构建的，使得他能够无损的支持分布式决策树构建</p>
@@ -2000,8 +2422,8 @@
         <category>比赛经历</category>
       </categories>
       <tags>
-        <tag>机器学习</tag>
         <tag>联邦学习</tag>
+        <tag>机器学习</tag>
         <tag>协作学习</tag>
         <tag>决策树算法</tag>
       </tags>
