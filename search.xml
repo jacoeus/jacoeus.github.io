@@ -1947,8 +1947,8 @@
     <title>Elasticsearch源码阅读</title>
     <url>/2022/08/22/Elasticsearch%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB/</url>
     <content><![CDATA[<p>Elasticsearch作为一个分布式的免费开源搜索和分析引擎，目前受到广泛支持，并且也具有丰富的生态</p>
-<p>本文尝试基于对Elasticsearch以及其下面的Lucene引擎在写入数据时源码的跟踪对Elasticsearch相关的概念进行整理，并对压测方案以及优化方案进行简单的调研，同时提供了一些进一步学习的链接</p>
-<p><code>#TODO</code>对比学习其他分布式OLAP数据库与Elasticsearch的异同</p>
+<p>本文尝试基于Elasticsearch以及其下面的Lucene引擎在写入数据时对源码的跟踪来整理Elasticsearch相关的概念，并对压测方案以及优化方案进行简单的调研，同时提供了一些进一步学习的链接</p>
+<p><code>#TODO</code> 对比学习其他分布式OLAP数据库与Elasticsearch的异同</p>
 <a id="more"></a>
 
 <h1 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h1><p>主要基于写入流程对Elasticsearch涉及的概念进行整理</p>
@@ -2128,7 +2128,7 @@
 <li><p>对写入操作返回结果进行检查，根据返回结果执行相应操作，如果需要更新<strong>mapping</strong>，则执行MappingUpdatedAction#updateMappingOnMaster</p>
 </li>
 </ol>
-<h2 id="flush"><a href="#flush" class="headerlink" title="flush"></a>flush</h2><p>Lucene在内存占用或者文档数量达到阈值后会触发flush， <code>flushOnDocCount()</code>和<code>flushOnRAM()</code></p>
+<h2 id="Flush"><a href="#Flush" class="headerlink" title="Flush"></a>Flush</h2><p>Lucene在内存占用或者文档数量达到阈值后会触发flush， <code>flushOnDocCount()</code>和<code>flushOnRAM()</code></p>
 <p>或者调用IndexWriter#flush(boolean, boolean) 将当前内存中的数据全部落盘</p>
 <h2 id="Merge"><a href="#Merge" class="headerlink" title="Merge"></a>Merge</h2><p><a href="https://elasticsearch.cn/question/12808">如何深入理解ES的merge策略 - Elastic 中文社区 (elasticsearch.cn)</a></p>
 <p><a href="https://cloud.tencent.com/developer/article/1846903">Elasticsearch merge 你懂了吗？ - 腾讯云开发者社区-腾讯云 (tencent.com)</a></p>
@@ -2171,7 +2171,7 @@
 <p><strong>性能优化</strong></p>
 <p><a href="https://developer.aliyun.com/article/745572">内核调优 | 如何提升Elasticsearch master调度性能40倍-阿里云开发者社区 (aliyun.com)</a></p>
 <p><a href="https://cloud.tencent.com/developer/article/1626392">腾讯Elasticsearch海量规模背后的内核优化剖析 - 腾讯云开发者社区-腾讯云 (tencent.com)</a> </p>
-<h1 id="Lucene段合并策略优化"><a href="#Lucene段合并策略优化" class="headerlink" title="Lucene段合并策略优化"></a>Lucene段合并策略优化</h1><h2 id="Lucene段合并策略"><a href="#Lucene段合并策略" class="headerlink" title="Lucene段合并策略"></a>Lucene段合并策略</h2><p><img src="%E6%AE%B5%E5%90%88%E5%B9%B6.png" alt="段合并"></p>
+<h2 id="Lucene段合并策略优化"><a href="#Lucene段合并策略优化" class="headerlink" title="Lucene段合并策略优化"></a>Lucene段合并策略优化</h2><p><img src="%E6%AE%B5%E5%90%88%E5%B9%B6.png" alt="段合并"></p>
 <p>Elasticsearch底层采用Lucene引擎，在磁盘上以Segment段的形式组织数据。根据flush策略，每次完成文档写入操作后会检查当前DWPT的文档数量或内存占用是否达到阈值，则将内存中存储的文档flush到磁盘文件，或者由于自动刷新流程会根据refresh_interval间隔时间自动创建新段。</p>
 <p>我们需要及时将在内存中缓存的数据写入磁盘来提供查询功能，如果需要在数据写入1s后即可进行查询，则每1s需要创建若干个段（取决于线程数），这样很容易在较短时间产生大量的段。这样会导致：</p>
 <ul>
@@ -2191,7 +2191,7 @@
 <li>对排序结果筛除正在合并的段、删除比率低的大段。根据保留段的信息和设定的每一层合并的个数，计算当前层应该使用的levelSize大小。</li>
 <li>对保留的各段按照levelSize分组合并，通过score计算更优的组合进行放入MergeSpecification，重复计算直到不存在满足的merge组合，将多次merge操作及其对应的<code>List&lt;SegmentCommitInfo&gt;</code>交给MergeScheduler进行段合并。</li>
 </ol>
-<h2 id="日志场景下存在的问题"><a href="#日志场景下存在的问题" class="headerlink" title="日志场景下存在的问题"></a>日志场景下存在的问题</h2><p><img src="%E5%90%88%E5%B9%B6%E7%AD%96%E7%95%A50.png" alt="合并方案"></p>
+<h3 id="日志场景下存在的问题"><a href="#日志场景下存在的问题" class="headerlink" title="日志场景下存在的问题"></a>日志场景下存在的问题</h3><p><img src="%E5%90%88%E5%B9%B6%E7%AD%96%E7%95%A50.png" alt="合并方案"></p>
 <p>TieredMergePolicy合并方式的优势在于<strong>合并高效</strong>，可以<strong>快速降低文件数</strong>。主要问题是<strong>数据不连续</strong>，这样会导致我们在查询的时候文件裁剪的能力很弱。</p>
 <blockquote>
 <p>比如查询最近一小时的数据，很有可能一小时的文件被分别合并到了几天前的文件中去了，导致需要遍历的文件增加了。</p>
@@ -2199,11 +2199,11 @@
 <ul>
 <li>在日志场景中，我们更关注<strong>不久前的日志</strong>，在针对日志的查询中，也经常会关注<strong>一段时间内的日志</strong>，因此，通过设计段合并策略来将时间因素纳入考虑来保证段内数据的<strong>连续性</strong>能够一定程度提升相关查询的效率。另外，日志场景中，<strong>删除和更新操作很少</strong>，因此在段合并过程可以基本不考虑写放大的相关问题。</li>
 </ul>
-<h2 id="解决方案调研"><a href="#解决方案调研" class="headerlink" title="解决方案调研"></a>解决方案调研</h2><p><img src="%E5%90%88%E5%B9%B6%E7%AD%96%E7%95%A51.png" alt="合并方案"></p>
+<h3 id="解决方案调研"><a href="#解决方案调研" class="headerlink" title="解决方案调研"></a>解决方案调研</h3><p><img src="%E5%90%88%E5%B9%B6%E7%AD%96%E7%95%A51.png" alt="合并方案"></p>
 <p>典型的解决数据连续性的合并策略，包括以 Cassandra、HBase 为代表的基于时间窗口的合并策略，优点是数据按时间序合并，查询高效，且可以支持表内 TTL。但限制是只支持时序场景，而且文件大小可能不一致，从而影响合并效率。还有以 LevelDB、RocksDB 为代表的分层合并，一层一组有序，每次抽取部分数据向下层合并，优点是查询高效，但是写放大比较严重，相同的数据可能会被多次合并，影响写入吞吐。</p>
 <p><img src="%E5%90%88%E5%B9%B6%E6%96%B9%E6%A1%882.png" alt="合并方案2"></p>
 <p>腾讯提出的段合并策略：为了提升数据连续性、收敛文件数量，提升文件的裁剪能力来提高查询性能。通过主要是按时间序分层合并，<strong>每层文件之间按创建时间排序</strong>，除了第一层外，都按照时间序和目标大小进行合并，<strong>不固定每次合并文件数量</strong>，这样保证了合并的高效性。对于少量的未合并的文件以及冷分片文件，采用<strong>持续合并</strong>的策略，将超过默认五分钟不再写入的分片进行持续合并，并控制合并并发和范围，以降低合并开销。腾讯通过上述方案将搜索场景的查询性能提升了 40%。</p>
-<h2 id="一些优化思路"><a href="#一些优化思路" class="headerlink" title="一些优化思路"></a>一些优化思路</h2><ul>
+<h3 id="一些优化思路"><a href="#一些优化思路" class="headerlink" title="一些优化思路"></a>一些优化思路</h3><ul>
 <li>考虑到Lucene采用DWPT来多线程的进行数据写入，文件的创建时间不能很好反映日志的生成时间，可以考虑结合每个段中日志的时间戳字段，取段内日志的时间范围作为段信息。</li>
 <li>在排序时控制不允许时间相差过大的段排在临近位置，时间重叠率高优先合并。</li>
 <li>通过查询命中情况来代表段的冷热程度，在查询时记录单位时间内查询命中次数作为段信息。</li>
